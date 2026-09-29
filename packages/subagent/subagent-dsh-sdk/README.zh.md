@@ -29,9 +29,9 @@ kind: "package-reference"
 
 ### 何时选择
 
-当子进程必须是完整的 harness 对等体——拥有自己的组合、会话持久化、模型路由与工具——而不是共享父进程的 agent 时，选择此后端。当子进程必须共享父级组合或遵守父级强制的非路由能力时，请选择进程内后端：本提供方接受 agent 路由选项，但会拒绝结构化输出、深度上限、工具过滤或 persona，而不是静默省略。
+当子进程必须是完整的 harness 对等体——拥有自己的组合、会话持久化、模型路由与工具——而不是共享父进程的 agent 时，选择此后端。当子进程必须共享父级组合或遵守父级强制的非路由能力时，请选择进程内后端：本提供方接受 agent 路由选项，但会拒绝结构化输出、深度上限、工具过滤、persona 或逐启动工作区，而不是静默省略。
 
-提供方声明 `agentOptions: true`，同时保持 `outputSchema`/`depthLimit`/`toolFilter`/`persona` 为 false，并且 `inheritsParentContext: false`。不可变的 `agentRouteDefaults` 会在模型覆盖与确切路由预检前，把配置的 provider／model 基线公开给 `dsh-tool-subagent`；`start()` 则为直接调用方独立应用同一份配置默认值，包括 `maxTokens`。agent 路由值通过显式白名单跨越 SDK 协议；子进程仍是另一进程里的全新运行时，唯一从父 agent 本身派生的值是工作区 cwd。基于本提供方的 `dsh-tool-subagent` 部署应设置 `maxDepth: 'provider-managed'`——子 harness 拥有自己的递归预算。
+提供方声明 `agentOptions: true`，同时保持 `outputSchema`/`depthLimit`/`toolFilter`/`persona`/`cwdOverride` 为 false，并且 `inheritsParentContext: false`。不可变的 `agentRouteDefaults` 会在模型覆盖与确切路由预检前，把配置的 provider／model 基线公开给 `dsh-tool-subagent`；`start()` 则为直接调用方独立应用同一份配置默认值，包括 `maxTokens`。agent 路由值通过显式白名单跨越 SDK 协议；子进程仍是另一进程里的全新运行时，唯一从父 agent 本身派生的值是工作区 cwd。基于本提供方的 `dsh-tool-subagent` 部署应设置 `maxDepth: 'provider-managed'`——子 harness 拥有自己的递归预算。
 
 ### 配置
 
@@ -138,7 +138,7 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-子运行时的模型会收到作为用户消息的独立任务，以及该运行时自身配置的系统提示词、工具和全新会话。它不会收到父级对话。父级工具调用可以为本次运行选择子级提供方、模型与推理强度；所选路由和由部署控制的可选输出上限会固定到这个新子进程。persona、工具过滤、深度强制与结构化输出仍不受支持，并会被拒绝而不是静默省略。
+子运行时的模型会收到作为用户消息的独立任务，以及该运行时自身配置的系统提示词、工具和全新会话。它不会收到父级对话。父级工具调用可以为本次运行选择子级提供方、模型与推理强度；所选路由和由部署控制的可选输出上限会固定到这个新子进程。persona、工具过滤、深度强制、结构化输出与逐启动工作区仍不受支持，并会被拒绝而不是静默省略。
 
 #### Token 影响
 
@@ -170,7 +170,7 @@ kind: "package-reference"
 这些限制说明本后端何时不合适，或何时需要特别的运维注意。它们是当前包约束，不是通用 SDK 对比或任务积压。
 
 - **每次运行都使用全新的运行时进程**——不使用进程池；harness 运行时需要启动完整的插件树，因此每次运行的 spawn 成本高于 ACP 后端通常使用的子进程。
-- **不支持路由之外的启动时能力**——父级可以选择子 agent 路由，但无法在子进程内强制执行 `outputSchema`、深度限制、工具过滤或 persona；应改为配置所选子 profile 及其有序 patch。
+- **不支持路由之外的启动时能力**——父级可以选择子 agent 路由，但无法在子进程内强制执行 `outputSchema`、深度限制、工具过滤或 persona，也无法为某次启动单独授予别的工作区（`cwd` 配置键作用于每一次运行）；应改为配置所选子 profile 及其有序 patch。
 - **子进程的 transcript（文本记录）保留在其自身的会话根目录中**——父级日志只记录委派工具调用与结果；流式 `session.event` 通道只用于提取输出，不会桥接到父级日志中。
 - **仅支持本地子进程**——解析出的工作目录是本地路径；远程运行时需要独立的后端。
 

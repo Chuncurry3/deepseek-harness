@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for 2026-09-29-subagent-per-start-cwd.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-29-subagent-per-start-cwd.md
+/agent-note-per-start-child-workspace-for-subagent-starts:
+  en: 87e0a824ca69b12c
+  zh: e11fed99b10d9d37
+/agent-note-per-start-child-workspace-for-subagent-starts/problem:
+  en: c863a3b3aa2b8355
+  zh: 735854f3bac5f72b
+/agent-note-per-start-child-workspace-for-subagent-starts/decision:
+  en: a19b7d0c64ed2671
+  zh: e1b73fcf4fd0fc30
+/agent-note-per-start-child-workspace-for-subagent-starts/decision/the-capability-contract:
+  en: c8eaa755c35a2d50
+  zh: fe658cd949c7dbf4
+/agent-note-per-start-child-workspace-for-subagent-starts/decision/the-validation-discipline:
+  en: aef19343ae075852
+  zh: ea09311a8af41592
+/agent-note-per-start-child-workspace-for-subagent-starts/decision/the-child-session-carries-the-grant:
+  en: 9954802726eebb23
+  zh: d35a8ae846f3cd5e
+/agent-note-per-start-child-workspace-for-subagent-starts/alternatives-considered:
+  en: 80256915baccc569
+  zh: 036dd789e59272cd
+/agent-note-per-start-child-workspace-for-subagent-starts/testing:
+  en: f7e1b45481d8c6ab
+  zh: 124f5b1db4151a80
+/agent-note-per-start-child-workspace-for-subagent-starts/consequences:
+  en: 086e5762bb887f74
+  zh: 6b2496f1a4f0152b

@@ -106,6 +106,8 @@ kind: "package-reference"
 
 请求先对照提供方声明的能力进行校验，随后对持久化描述符做快照，再由提供方构建子 agent。两个进程内提供方都声明 `agentOptions`：创建子级时把请求字段叠加到父级最新已记录请求的提供方、模型与推理强度之上；父级还没有请求时回退到创建选项，并保留配置的 token 上限。它们还会在第一次 await 前快照委派权限状态：Auto 或 Full access 父级让子级获得相同的 `permission/preset` 身份，而既有沙箱覆盖与审批策略固定仍然生效；同时记录这两个身份可防止 fork 中更早的同旋钮组合身份胜出。Auto 随后会独立审查 child 的每个受支持调用：普通项目内工作为低风险并直接允许；中风险工作必须在既有创建 prompt 或已核验的 human／直接父级消息中获得动作、准确目标和范围的明确授权，且不与 human 限制冲突；高风险工作始终拒绝。reviewer 从 `parentSession` 与既有消息派生这份上下文；委派不会新增父 call metadata、委派记录、review receipt 或 Session format。更改路由而不显式指定推理强度时，会清除继承的路由自有强度，使所选模型解析自己的默认值。DSH SDK 也声明 `agentOptions`，但会运行独立子运行时，因此不继承 Auto；ACP、Codex 与 Claude Code 同样在父级委派调用通过审查后保留各自的权限系统。成功时运行被发布、所有权转移给调用方；失败时提供方回滚每个尚未发布的资源。结果携带子 agent 的最终输出、可选的结构化值、停止原因与可选的安全诊断。
 
+`SubagentStartRequest.cwd` 为子 agent 授予一个不同于父会话的工作区：可选的绝对路径，必须指向存在且可进入的目录，并在两条启动路径上于任何提供方工作之前，通过 seam 共享的 `assertUsableCwd` 纪律校验。它要求提供方具备 `cwdOverride` 能力，因此 ACP 及其他进程外提供方在实现该能力之前会拒绝携带 `cwd` 的启动。进程内提供方将请求的 cwd 写入子会话 header 的 cwd，子 agent 因此在获授的工作区中运行并在冷恢复时回到该工作区，即使执行恢复的父级运行在别处；省略 `cwd` 的启动从父会话派生子工作区。
+
 ### 可继续流程
 
 管理器预留 child 身份、解析持久化描述符、创建（或冷恢复）child、把它安装进 Activation 并提交提示词。模型编写的消息通过固定 Steer 调度跨一条 parent/child 边；浏览器人类 prompt 通过内部适配器选择 Queue 或 best-effort Steer，其他 host 协议仍可保留 Queue 以创建独立轮次。Session queue command 仅根据 child 自身的 continuable descriptor 准入在线 subagent-owned Agent。Settlement 会等待 Agent 活动结束、Inbox 为空且没有所拥有子级，再在准入开放时 flush 最终 Session 状态。管理器随后在 child lock 内重新验证 wake generation、Session 序号、Inbox 与所拥有子级；`Agent.runMaintenance()` 的同步 task 入口会占用 idle 阶段，并在同一个 JavaScript turn 内关闭私有 subagent Inbox，然后才释放句柄。直接 child 不存在 Activation 时会从持久化会话冷恢复。当驻留 Activation 结算时，管理器会在 parent 自身的轮次流中告知该 child 的直接 parent。
@@ -117,7 +119,7 @@ kind: "package-reference"
 - **发布即边界**——发布前提供方拥有设置并须在失败时回滚；发布后调用方拥有运行并须 dispose（资源释放）它。
 - **注册受 effect 作用域约束**——移除提供方会阻止新启动，但绝不撤销已接受的运行。
 - **Agent 消息权限基于确切相邻关系**——`sendMessage()` 要求确切在线 sender；每个 sender 都可以指定直接可继续 child，只有具备驻留可继续 Activation 的 sender 可以指定自己的直接 parent。
-- **描述符仅进日志**——它是会话事件，不进入模型历史，并跨压缩（compaction）保留；可继续描述符会显式记录解析后的子级提供方、模型与推理强度，用于冷恢复。
+- **描述符仅进日志**——它是会话事件，不进入模型历史，并跨压缩（compaction）保留；可继续描述符会显式记录解析后的子级提供方、模型、推理强度，以及获授的逐启动 `cwd`，用于冷恢复。
 - **本 runtime 为子代理回答归档准入**（[接缝](../../workspace/workspace/README.zh.md)）——`workspace/session-activity` 把回合中的在线子代理子孙作为 `subagent` 族报告：按本包记录的持久化血缘查找（带 subagent 来源的 `parentSession`，任意深度，从不包括 fork），组合了 Session query 服务时经一次活会话 observation 从各 child 的描述符取名称，否则只报 id；`workspace/session-stop` 以父级原因逐个取消它们，一个拒绝取消的 child 只记日志，其兄弟仍会停止。父级自身的回合、它的任务以及已归档血缘的步骤门禁归 API Session Controller。
 
 </details>
