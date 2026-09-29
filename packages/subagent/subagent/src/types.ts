@@ -125,7 +125,7 @@ export interface SubagentRunEndInfo {
  * continuable children are composed by the continuation manager itself and are
  * gated by {@link SubagentProvider.prepareContinuable} instead. Each flag
  * corresponds one-to-one to a {@link SubagentStartRequest} option: `depthLimit`
- * to `maxDepth`; the other names match.
+ * to `maxDepth`, `cwdOverride` to `cwd`; the other names match.
  */
 export interface SubagentCapabilities {
   readonly agentOptions: boolean
@@ -133,6 +133,14 @@ export interface SubagentCapabilities {
   readonly depthLimit: boolean
   readonly toolFilter: boolean
   readonly persona: boolean
+  /**
+   * Whether the provider honors a per-start child workspace. Requires the
+   * request cwd to be absolute, existing, and enterable (the
+   * `assertUsableCwd` discipline); providers without the capability reject
+   * a request that sets `cwd` instead of silently deriving the parent
+   * session's workspace.
+   */
+  readonly cwdOverride: boolean
 }
 
 /**
@@ -198,6 +206,13 @@ export interface SubagentStartRequest {
    * persona (strict `{{…}}` interpolation against the registered variables).
    */
   readonly persona?: string
+  /**
+   * Optional absolute workspace for the child session's header cwd.
+   * Requires {@link SubagentCapabilities.cwdOverride}; rejected at start
+   * otherwise. In-process providers set the child session cwd from it;
+   * validation follows the `assertUsableCwd` discipline.
+   */
+  readonly cwd?: string
 }
 
 /**
