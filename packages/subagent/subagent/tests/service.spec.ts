@@ -370,6 +370,7 @@ describe('subagent descriptors', () => {
       agentReasoningEffort: ReasoningEffortId('high'),
       persona: 'reviewer',
       toolFilter: { allow: ['read'], deny: ['bash'] },
+      cwd: '/granted/workspace',
     }
     expect(snapshotSubagentDescriptor({
       mode: 'continuable',
@@ -380,6 +381,7 @@ describe('subagent descriptors', () => {
       agentReasoningEffort: complete.agentReasoningEffort,
       persona: complete.persona,
       toolFilter: complete.toolFilter,
+      cwd: complete.cwd,
     })).toEqual(complete)
     expect(foldSubagentDescriptor([event(complete)])).toEqual(complete)
     expect(foldSubagentDescriptor([
@@ -483,6 +485,13 @@ describe('subagent descriptors', () => {
       label: 'l',
       persona: {},
     }, 'persona must be a string'],
+    ['invalid cwd', {
+      version: SUBAGENT_DESCRIPTOR_VERSION,
+      mode: 'continuable',
+      provider: 'spawn',
+      label: 'l',
+      cwd: 7,
+    }, 'cwd must be a string'],
     ['non-object tool filter', {
       version: SUBAGENT_DESCRIPTOR_VERSION,
       mode: 'continuable',

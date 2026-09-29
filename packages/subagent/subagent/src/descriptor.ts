@@ -2,8 +2,9 @@
  * The durable subagent-child descriptor: the versioned, model-hidden
  * `subagent/descriptor` session event that identifies every session-backed
  * subagent and records whether it is one-shot or continuable. Continuable
- * descriptors additionally preserve the declared composition required for
- * cold resume. Providers append it turn-enclosed in the child's initial turn.
+ * descriptors additionally preserve the declared composition for cold resume
+ * and record the granted per-start workspace. Providers append it turn-enclosed
+ * in the child's initial turn.
  *
  * The descriptor deliberately snapshots explicit fields rather than the
  * merge-extensible `AgentOptions` object: an unrelated extension value cannot
@@ -45,7 +46,7 @@ declare module '@deepseek-ai/dsh-session/types' {
  * Supporting another composition input is a deliberate version change, never
  * an implicit extra field.
  */
-export const SUBAGENT_DESCRIPTOR_VERSION = 3
+export const SUBAGENT_DESCRIPTOR_VERSION = 4
 
 /** Fields shared by every supported `subagent/descriptor` payload. */
 interface SubagentDescriptorBase {
@@ -83,6 +84,11 @@ export interface ContinuableSubagentDescriptorData extends SubagentDescriptorBas
   readonly persona?: string
   /** Child tool scoping reapplied on resume. */
   readonly toolFilter?: ToolRestriction
+  /**
+   * The per-start workspace granted at delegation; the child session's header
+   * cwd names the same directory.
+   */
+  readonly cwd?: string
 }
 
 /** The supported durable subagent identity and optional continuation composition. */
@@ -120,6 +126,8 @@ export interface ContinuableSubagentDescriptorInput extends SubagentDescriptorIn
   readonly persona?: string
   /** Requested child tool scoping. */
   readonly toolFilter?: ToolRestriction
+  /** Requested per-child workspace. */
+  readonly cwd?: string
 }
 
 /** Inputs {@link snapshotSubagentDescriptor} validates and detaches. */
@@ -141,6 +149,7 @@ const CONTINUABLE_DESCRIPTOR_KEYS = new Set([
   'agentReasoningEffort',
   'persona',
   'toolFilter',
+  'cwd',
 ])
 const TOOL_FILTER_KEYS = new Set(['allow', 'deny'])
 
@@ -239,6 +248,7 @@ function parseSubagentDescriptor(value: unknown): SubagentDescriptorData | undef
   const agentModel = optionalString(value, 'agentModel')
   const agentReasoningEffort = optionalString(value, 'agentReasoningEffort') as ReasoningEffortId | undefined
   const persona = optionalString(value, 'persona')
+  const cwd = optionalString(value, 'cwd')
   const toolFilter = Object.hasOwn(value, 'toolFilter')
     ? parseToolFilter(value['toolFilter'])
     : undefined
@@ -252,6 +262,7 @@ function parseSubagentDescriptor(value: unknown): SubagentDescriptorData | undef
     ...agentReasoningEffort !== undefined ? { agentReasoningEffort } : {},
     ...persona !== undefined ? { persona } : {},
     ...toolFilter !== undefined ? { toolFilter } : {},
+    ...cwd !== undefined ? { cwd } : {},
   }
 }
 
@@ -294,6 +305,7 @@ export function snapshotSubagentDescriptor(input: SubagentDescriptorInput): Suba
       ...input.agentReasoningEffort !== undefined ? { agentReasoningEffort: input.agentReasoningEffort } : {},
       ...input.persona !== undefined ? { persona: input.persona } : {},
       ...input.toolFilter !== undefined ? { toolFilter: input.toolFilter } : {},
+      ...input.cwd !== undefined ? { cwd: input.cwd } : {},
     }
   const snapshot = snapshotJsonValue(candidate)
   if (snapshot === undefined) {

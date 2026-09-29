@@ -29,6 +29,8 @@ kind: "package-reference"
 
 ### 何时选择
 
+fork 声明 `{ outputSchema: true, depthLimit: true, toolFilter: true, persona: true, agentOptions: true, cwdOverride: true }`，与 spawn 相同。
+
 当子 agent 需要对话的已完成轮次时——后续分析、审查、延续——选择 fork。当子 agent 应全新开始时选择 spawn；当子 agent 不能共享本进程时选择进程外后端。初始内容只传递对话历史：子 agent 仍获得全新的工具作用域，且不继承父级的任何权限。
 
 ### 初始内容边界

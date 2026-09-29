@@ -25,6 +25,8 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
+spawn 声明 `{ outputSchema: true, depthLimit: true, toolFilter: true, persona: true, agentOptions: true, cwdOverride: true }`，因为它控制子 agent 的创建窗口，能够强制执行全部六项功能。
+
 在需要把工作委派给全新进程内子 agent 的组合中挂载此后端。常用配置路径很明确：加载 subagent 服务与本后端，再把 `dsh-tool-subagent` 之类的委派工具指向 `spawn` 提供方。
 
 ### 何时选择
@@ -51,7 +53,7 @@ kind: "package-reference"
 
 ### 一次委派会做什么
 
-一次工具调用启动一个子 agent 并等待其结果：子 agent 在自有会话中工作，父级只接收其最终输出；若运行被取消、拒绝、被 token 上限截断或在启动时被拒，则收到出错的工具结果。被拒绝的启动不会留下已发布的子 agent；完成的运行在结果收集后即被 dispose（资源释放）。
+一次工具调用启动一个子 agent 并等待其结果：子 agent 在自有会话中工作，父级只接收其最终输出；若运行被取消、拒绝、被 token 上限截断或在启动时被拒，则收到出错的工具结果。被拒绝的启动不会留下已发布的子 agent；完成的运行在结果收集后即被 dispose（资源释放）。`start(request)` 不传入 seed，直接委托给 [`startInProcessRun`](../subagent-in-process-driver/README.zh.md)，并在子 agent 发布后才返回；子 agent 的工作目录在请求声明了 `cwd` 时取该值，否则取父 agent 的。
 
 -----
 
@@ -80,7 +82,7 @@ kind: "package-reference"
 
 ### 所有权与作用域
 
-子 agent 获得全新的扁平注册作用域：父级工具限制与权限绝不会被导入，工具所施加的过滤属于组合而非父级派生授权。后端声明包括 `agentOptions` 在内的全部五项启动时能力，因为它控制子 agent 的创建窗口，可以逐一强制执行。
+子 agent 获得全新的扁平注册作用域：父级工具限制与权限绝不会被导入，工具所施加的过滤属于组合而非父级派生授权。后端声明包括 `agentOptions` 在内的全部六项启动时能力，因为它控制子 agent 的创建窗口，可以逐一强制执行。
 
 </details>
 
@@ -106,7 +108,7 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-全新子 agent 逐字接收任务内容，作为新空对话中的唯一用户消息，默认使用父级提供方、模型、推理强度、输出 token 上限与工作目录。配置的 persona 会在子 agent 作用域中遮蔽全局提示词文本；工具过滤器会从其 schema、可执行工具查找与 PTC mode SDK 绑定中移除指定的全局工具，但保留独立注册的指导内容。不包含任何父级对话消息；过滤属于组合，而非继承的权限授予。
+全新子 agent 逐字接收任务内容，作为新空对话中的唯一用户消息，默认使用父级提供方、模型、推理强度、输出 token 上限与工作目录（未声明 `cwd` 时即父级工作区）。配置的 persona 会在子 agent 作用域中遮蔽全局提示词文本；工具过滤器会从其 schema、可执行工具查找与 PTC mode SDK 绑定中移除指定的全局工具，但保留独立注册的指导内容。不包含任何父级对话消息；过滤属于组合，而非继承的权限授予。
 
 #### Token 影响
 

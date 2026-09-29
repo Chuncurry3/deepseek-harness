@@ -25,6 +25,8 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
+Spawn advertises `{ outputSchema: true, depthLimit: true, toolFilter: true, persona: true, agentOptions: true, cwdOverride: true }` because it controls the child's creation window and can enforce all six features.
+
 Mount this backend in a composition that delegates work to fresh in-process children. The common path is explicit: load the subagent service and this backend, then point a delegation tool such as `dsh-tool-subagent` at the `spawn` provider.
 
 ### When to choose it
@@ -51,7 +53,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-a
 
 ### What a delegation does
 
-One tool call starts one child and waits for its result: the child works in its own session and the parent receives only its final output, or an errored tool result when the run is cancelled, refused, truncated by its token limit, or rejected at startup. A rejected start leaves no published child; a completed run is disposed after its result is collected.
+One tool call starts one child and waits for its result: the child works in its own session and the parent receives only its final output, or an errored tool result when the run is cancelled, refused, truncated by its token limit, or rejected at startup. A rejected start leaves no published child; a completed run is disposed after its result is collected. `start(request)` delegates to [`startInProcessRun`](../subagent-in-process-driver/README.md) with no seed and awaits publication before returning; the child's working directory is the request's `cwd` when declared, else the parent's.
 
 -----
 
@@ -80,7 +82,7 @@ A start request resolves through the subagent service, then the shared driver va
 
 ### Ownership and scope
 
-The child gets a fresh flat registration scope: parent tool restrictions and authority are never imported, and the filter the tool applies is composition, not a parent-derived grant. The backend advertises all five start-time capabilities, including `agentOptions`, because it controls the child's creation window and can enforce each one.
+The child gets a fresh flat registration scope: parent tool restrictions and authority are never imported, and the filter the tool applies is composition, not a parent-derived grant. The backend advertises all six start-time capabilities, including `agentOptions`, because it controls the child's creation window and can enforce each one.
 
 </details>
 
@@ -106,7 +108,7 @@ Read these pages when the package-level contract is not enough; they move from t
 
 #### What the model sees
 
-The fresh child receives the task content verbatim as its only user message in a new empty conversation, with the parent provider, model, reasoning effort, output-token limit, and working directory by default. A configured persona shadows global prompt text in the child's scope; a tool filter removes named global tools from its schemas, executable lookup, and PTC mode SDK bindings while leaving independently registered guidance. No parent conversation message is included; the filter is composition, not an inherited authority grant.
+The fresh child receives the task content verbatim as its only user message in a new empty conversation, with the parent provider, model, reasoning effort, output-token limit, and working directory by default (the parent workspace unless the request declares `cwd`). A configured persona shadows global prompt text in the child's scope; a tool filter removes named global tools from its schemas, executable lookup, and PTC mode SDK bindings while leaving independently registered guidance. No parent conversation message is included; the filter is composition, not an inherited authority grant.
 
 #### Token effect
 

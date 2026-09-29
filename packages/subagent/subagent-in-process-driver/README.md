@@ -59,6 +59,8 @@ The driver follows this sequence:
 4. Publish the child, retain the returned handle, and drive one task.
 5. Read the child's own output — its last non-empty assistant message, or its accumulated assistant text when none exists — and the final durable turn reason from the complete owned run, excluding any fork seed.
 
+The child's working directory is the request's `cwd` when declared, else the parent's; it gets the parent's session lineage and inherits the parent provider, model, and output-token cap unless `request.agentOptions` overrides them. It gets a fresh flat registration scope: parent ownership does not import parent tool restrictions or establish an authority subset.
+
 ### Cancellation and ownership
 
 The required request signal covers both startup and the live run. Before publication, the creation transaction observes it, rolls back, and rejects; the driver re-checks once after publication to close the handoff race, then installs a minimal live-run listener. After fulfillment the caller owns the run: provider unload does not revoke it, and `dispose()` removes the abort listener, records cancellation, and delegates to the handle's memoized quiescence transaction, which stops the loop, removes the agent and session, and unwinds scoped registrations. Cancellation owns every non-completed in-flight outcome and reports `aborted`; an already-completed turn remains completed.

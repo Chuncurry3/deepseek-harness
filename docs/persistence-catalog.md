@@ -58,7 +58,7 @@ The [format references](persistence-changes/historical-formats/README.md) cover 
 | `event:step/end` | event | `e0a787e6ec76c7c94fecbc501b489164ab0293db05bc947914077ad01e674f05` | [`{ type: "step/end" }`](#persistence-type-sha256-e0a787e6ec76c7c94fecbc501b489164ab0293db05bc947914077ad01e674f05) |
 | `event:step/start` | event | `4513e088d43e6c68425be30451b9f961cc264fe7318ca62681c41d4d78615986` | [`{ type: "step/start" }`](#persistence-type-sha256-4513e088d43e6c68425be30451b9f961cc264fe7318ca62681c41d4d78615986) |
 | `event:subagent/catalog` | event | `3abae7324356f155cb42450c00b806d134ec93bd6439d2063b8d724162d58604` | [`{ type: "subagent/catalog" }`](#persistence-type-sha256-3abae7324356f155cb42450c00b806d134ec93bd6439d2063b8d724162d58604) |
-| `event:subagent/descriptor` | event | `b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5` | [`{ type: "subagent/descriptor" }`](#persistence-type-sha256-b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5) |
+| `event:subagent/descriptor` | event | `0c4deece1129b64bdcd900db10459207942262af4d2f38489dc76de148a9ad72` | [`{ type: "subagent/descriptor" }`](#persistence-type-sha256-0c4deece1129b64bdcd900db10459207942262af4d2f38489dc76de148a9ad72) |
 | `event:subagent/model-selection-policy` | event | `a6567ccb2e530606b775371eb4fa31468d72084339968e8b0440a516a23b39dc` | [`{ type: "subagent/model-selection-policy" }`](#persistence-type-sha256-a6567ccb2e530606b775371eb4fa31468d72084339968e8b0440a516a23b39dc) |
 | `event:system/message` | event | `69081694be231d56fd9580ba14645fd5e35373202605d5c5c841a9435b5fa3b1` | [`{ type: "system/message" }`](#persistence-type-sha256-69081694be231d56fd9580ba14645fd5e35373202605d5c5c841a9435b5fa3b1) |
 | `event:team/member` | event | `4fb59762612c3e3ac3a3bd4f84c9c148d3c3893bd422ba2b201cc039fabd49bc` | [`{ type: "team/member" }`](#persistence-type-sha256-4fb59762612c3e3ac3a3bd4f84c9c148d3c3893bd422ba2b201cc039fabd49bc) |
@@ -917,7 +917,7 @@ Source: [`packages/subagent/subagent/src/catalog.ts:43`](../packages/subagent/su
 'subagent/descriptor': SubagentDescriptorData
 ```
 
-Source: [`packages/subagent/subagent/src/descriptor.ts:38`](../packages/subagent/subagent/src/descriptor.ts)
+Source: [`packages/subagent/subagent/src/descriptor.ts:39`](../packages/subagent/subagent/src/descriptor.ts)
 
 <a id="subagentmodel-selection-policy--log-only"></a>
 
@@ -3181,7 +3181,7 @@ SHA-256: `c748fb42c80a120038a8c587af80ec39924803c401364db11c8974d5bf6d0262`
 
 Array of [`ContextSnapshotSection`](#persistence-type-sha256-86e1e384495ee09ac2d60c9db3610f1f1fddac2d248f6f1d6000e78054680219).
 
-<a id="persistence-type-sha256-6487b10ba7542f3c447b1e41a1c6a590b7bfafe0b9b66b49f34028da85bb970f"></a>
+<a id="persistence-type-sha256-58b5a33d8f291fadfa55b6fd753d72611b95687586f767066bd5d74b0bf14e24"></a>
 
 <a id="persistence-type-continuablesubagentdescriptordata"></a>
 
@@ -3189,15 +3189,16 @@ Array of [`ContextSnapshotSection`](#persistence-type-sha256-86e1e384495ee09ac2d
 
 ### `ContinuableSubagentDescriptorData`
 
-SHA-256: `6487b10ba7542f3c447b1e41a1c6a590b7bfafe0b9b66b49f34028da85bb970f`
+SHA-256: `58b5a33d8f291fadfa55b6fd753d72611b95687586f767066bd5d74b0bf14e24`
 
-Sources: [`packages/subagent/subagent/src/descriptor.ts:72`](../packages/subagent/subagent/src/descriptor.ts)
+Sources: [`packages/subagent/subagent/src/descriptor.ts:73`](../packages/subagent/subagent/src/descriptor.ts)
 
 | Property | Presence | Type |
 |---|---|---|
 | `agentModel` | optional | `string` |
 | `agentProvider` | optional | `string` |
 | `agentReasoningEffort` | optional | `string` |
+| `cwd` | optional | `string` |
 | `label` | required | `string` |
 | `mode` | required | `"continuable"` |
 | `persona` | optional | `string` |
@@ -4148,7 +4149,7 @@ Sources: [`packages/schedule/schedule/src/types.ts:237`](../packages/schedule/sc
 
 SHA-256: `5f758f3de5f00c18968a7c6d347083aac5c9ae13f6a79c78f6611b23c4973564`
 
-Sources: [`packages/subagent/subagent/src/descriptor.ts:61`](../packages/subagent/subagent/src/descriptor.ts)
+Sources: [`packages/subagent/subagent/src/descriptor.ts:62`](../packages/subagent/subagent/src/descriptor.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -4595,7 +4596,7 @@ One of:
 - [`{ childCreatedAt, childId, label?, mode, … }`](#persistence-type-sha256-b6896938660a1dfe4ddd100fb3164d9f8fa57feeabfe37441a80106c9942697a)
 - [`{ childCreatedAt, childId, label?, mode, … }`](#persistence-type-sha256-a0f25b5aeeebf2bf1542ce67726b095e3b139a39c71861d57e827f12dea1f499)
 
-<a id="persistence-type-sha256-86d1d0e9cfebb240421187e3dc37fb71cc38a1501885cf32f8f9adef7b0a2bde"></a>
+<a id="persistence-type-sha256-52b94470980694645273bf67113d6acad2d2a13dc793161ef86b86d5ef694ca9"></a>
 
 <a id="persistence-type-packagessubagentsubagentsrcdescriptortssubagentdescriptordata"></a>
 
@@ -4603,13 +4604,13 @@ One of:
 
 ### `SubagentDescriptorData`
 
-SHA-256: `86d1d0e9cfebb240421187e3dc37fb71cc38a1501885cf32f8f9adef7b0a2bde`
+SHA-256: `52b94470980694645273bf67113d6acad2d2a13dc793161ef86b86d5ef694ca9`
 
-Sources: [`packages/subagent/subagent/src/descriptor.ts:89`](../packages/subagent/subagent/src/descriptor.ts)
+Sources: [`packages/subagent/subagent/src/descriptor.ts:95`](../packages/subagent/subagent/src/descriptor.ts)
 
 One of:
 
-- [`ContinuableSubagentDescriptorData`](#persistence-type-sha256-6487b10ba7542f3c447b1e41a1c6a590b7bfafe0b9b66b49f34028da85bb970f)
+- [`ContinuableSubagentDescriptorData`](#persistence-type-sha256-58b5a33d8f291fadfa55b6fd753d72611b95687586f767066bd5d74b0bf14e24)
 - [`OneShotSubagentDescriptorData`](#persistence-type-sha256-5f758f3de5f00c18968a7c6d347083aac5c9ae13f6a79c78f6611b23c4973564)
 
 <a id="persistence-type-sha256-4e97c3d85c0fc817ee58873c38c25a2474abaaa0af4839311b50b68db3b8cf1a"></a>
@@ -8324,17 +8325,17 @@ SHA-256: `3abae7324356f155cb42450c00b806d134ec93bd6439d2063b8d724162d58604`
 | `time` | required | `number` |
 | `type` | required | `"subagent/catalog"` |
 
-<a id="persistence-type-sha256-b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5"></a>
+<a id="persistence-type-sha256-0c4deece1129b64bdcd900db10459207942262af4d2f38489dc76de148a9ad72"></a>
 
 <a id="persistence-type-eventsubagentdescriptor"></a>
 
 ### `{ type: "subagent/descriptor" }`
 
-SHA-256: `b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5`
+SHA-256: `0c4deece1129b64bdcd900db10459207942262af4d2f38489dc76de148a9ad72`
 
 | Property | Presence | Type |
 |---|---|---|
-| `data` | required | [`SubagentDescriptorData`](#persistence-type-sha256-86d1d0e9cfebb240421187e3dc37fb71cc38a1501885cf32f8f9adef7b0a2bde) |
+| `data` | required | [`SubagentDescriptorData`](#persistence-type-sha256-52b94470980694645273bf67113d6acad2d2a13dc793161ef86b86d5ef694ca9) |
 | `ignorable` | optional | `true` |
 | `seq` | required | `number` |
 | `time` | required | `number` |

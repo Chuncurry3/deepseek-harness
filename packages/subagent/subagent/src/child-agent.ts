@@ -120,10 +120,11 @@ export function resolveChildAgentOptions(
 }
 
 /**
- * Build the child session's durable creation metadata: the parent's workspace,
- * its direct lineage, coarse product origin, the recursion budget that must
- * survive persistence, the seed boundary that separates inherited parent
- * history from child work, and the composition the child runs under.
+ * Build the child session's durable creation metadata: the child workspace
+ * (the request's per-start cwd when declared, else the parent session's
+ * workspace), its direct lineage, coarse product origin, the recursion budget
+ * that must survive persistence, the seed boundary that separates inherited
+ * parent history from child work, and the composition the child runs under.
  *
  * The preset is read from the parent's LIVE scope chain rather than from its
  * header, because a parent that switched preset while blank runs on the newer
@@ -132,19 +133,24 @@ export function resolveChildAgentOptions(
  * resolves the deployment default and rebuilds turns under a tool set the
  * child never had.
  * @param parent - the delegating parent agent.
+ * @param requestCwd - the per-start workspace declared on the start request, or
+ *   `undefined` to derive the parent session's workspace.
  * @param childDepth - the resolved delegation depth to persist.
  * @param isSeeded - whether this child inherits a parent-log prefix, including an explicitly empty one.
  * @returns the `meta` for `ctx.agents.create()`.
  */
 export function childSessionMeta(
   parent: Agent,
+  requestCwd: string | undefined,
   childDepth: number,
   isSeeded: boolean,
 ): NonNullable<CreateAgentOptions['meta']> {
   const parentHeader = parent.session.header
   const agentPreset = parent.ctx.get('agentPresets')?.composedPreset(parent.ctx)
   return {
-    ...parentHeader.cwd !== undefined ? { cwd: parentHeader.cwd } : {},
+    ...requestCwd !== undefined
+      ? { cwd: requestCwd }
+      : parentHeader.cwd !== undefined ? { cwd: parentHeader.cwd } : {},
     ...agentPreset === undefined ? {} : { agentPreset },
     parentSession: parentHeader.id,
     isSeeded,

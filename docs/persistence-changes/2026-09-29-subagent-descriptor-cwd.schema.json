@@ -1,0 +1,182 @@
+{
+  "formatVersion": 2,
+  "roots": [
+    {
+      "key": "event:subagent/descriptor",
+      "kind": "event",
+      "event": "subagent/descriptor",
+      "surface": false,
+      "digest": "0c4deece1129b64bdcd900db10459207942262af4d2f38489dc76de148a9ad72",
+      "schema": {
+        "root": 0,
+        "nodes": [
+          {
+            "kind": "object",
+            "properties": [
+              {
+                "name": "data",
+                "type": 1,
+                "optional": false
+              },
+              {
+                "name": "ignorable",
+                "type": 10,
+                "optional": true
+              },
+              {
+                "name": "seq",
+                "type": 7,
+                "optional": false
+              },
+              {
+                "name": "time",
+                "type": 7,
+                "optional": false
+              },
+              {
+                "name": "type",
+                "type": 11,
+                "optional": false
+              }
+            ],
+            "indices": []
+          },
+          {
+            "kind": "union",
+            "types": [
+              2,
+              8
+            ]
+          },
+          {
+            "kind": "object",
+            "properties": [
+              {
+                "name": "agentModel",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "agentProvider",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "agentReasoningEffort",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "cwd",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "label",
+                "type": 3,
+                "optional": false
+              },
+              {
+                "name": "mode",
+                "type": 4,
+                "optional": false
+              },
+              {
+                "name": "persona",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "provider",
+                "type": 3,
+                "optional": false
+              },
+              {
+                "name": "toolFilter",
+                "type": 5,
+                "optional": true
+              },
+              {
+                "name": "version",
+                "type": 7,
+                "optional": false
+              }
+            ],
+            "indices": []
+          },
+          {
+            "kind": "primitive",
+            "type": "string"
+          },
+          {
+            "kind": "literal",
+            "value": "continuable"
+          },
+          {
+            "kind": "object",
+            "properties": [
+              {
+                "name": "allow",
+                "type": 6,
+                "optional": true
+              },
+              {
+                "name": "deny",
+                "type": 6,
+                "optional": true
+              }
+            ],
+            "indices": []
+          },
+          {
+            "kind": "array",
+            "element": 3
+          },
+          {
+            "kind": "primitive",
+            "type": "number"
+          },
+          {
+            "kind": "object",
+            "properties": [
+              {
+                "name": "label",
+                "type": 3,
+                "optional": true
+              },
+              {
+                "name": "mode",
+                "type": 9,
+                "optional": false
+              },
+              {
+                "name": "provider",
+                "type": 3,
+                "optional": false
+              },
+              {
+                "name": "version",
+                "type": 7,
+                "optional": false
+              }
+            ],
+            "indices": []
+          },
+          {
+            "kind": "literal",
+            "value": "one-shot"
+          },
+          {
+            "kind": "literal",
+            "value": true
+          },
+          {
+            "kind": "literal",
+            "value": "subagent/descriptor"
+          }
+        ]
+      }
+    }
+  ],
+  "types": []
+}

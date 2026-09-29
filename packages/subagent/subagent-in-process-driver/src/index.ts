@@ -134,7 +134,7 @@ export async function startInProcessRun(
   const handle = await parent.ctx.agents.create({
     sessionId: childId,
     parentAgent: parent,
-    meta: childSessionMeta(parent, childDepth, seed !== undefined),
+    meta: childSessionMeta(parent, request.cwd, childDepth, seed !== undefined),
     ...seed !== undefined ? { seed } : {},
     ...seed === undefined ? {} : { inheritedEventCount: activationBoundary },
     agentOptions: resolveChildAgentOptions(parent, request.agentOptions, childDepth),

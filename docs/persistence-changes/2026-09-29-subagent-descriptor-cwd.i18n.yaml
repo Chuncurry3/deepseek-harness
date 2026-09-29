@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-09-29-subagent-descriptor-cwd.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-09-29-subagent-descriptor-cwd.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-09-29-subagent-descriptor-cwd:
+  en: 869c9155951886fc
+  zh: defd2e54e2119c52
+/2026-09-29-subagent-descriptor-cwd/summary:
+  en: 2ea50c73c946261d
+  zh: 8c7983a0d1e0e788
+/2026-09-29-subagent-descriptor-cwd/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-09-29-subagent-descriptor-cwd/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-09-29-subagent-descriptor-cwd/compatibility:
+  en: 455f69933d0abf4b
+  zh: d437b5120a305d17
+/2026-09-29-subagent-descriptor-cwd/verification:
+  en: 8b8fc3e75d812cac
+  zh: 409ae5f38c4435bc
+/2026-09-29-subagent-descriptor-cwd/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269
