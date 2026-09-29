@@ -61,12 +61,12 @@ The seam change is its own decision with its own Agent Note; the loop family is 
 - Modify: `packages/subagent/subagent/src/types.ts` (SubagentCapabilities ~L86, SubagentStartRequest ~L100)
 - Modify: `packages/subagent/subagent/src/index.ts` (capability check list ~L486)
 - Modify: `packages/subagent/subagent/src/out-of-process.ts` (capability table ~L29)
-- Test: `packages/subagent/subagent/tests/start-cwd.test.ts`
+- Test: `packages/subagent/subagent/tests/start-cwd.spec.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-// packages/subagent/subagent/tests/start-cwd.test.ts
+// packages/subagent/subagent/tests/start-cwd.spec.ts
 import { describe, expect, it } from 'vitest'
 import type { SubagentCapabilities } from '../src/types.ts'
 
@@ -80,7 +80,7 @@ describe('SubagentCapabilities declares cwdOverride', () => {
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run: `pnpm vitest run packages/subagent/subagent/tests/start-cwd.test.ts`
+Run: `pnpm vitest run packages/subagent/subagent/tests/start-cwd.spec.ts`
 Expected: FAIL (type error: `cwdOverride` does not exist on `SubagentCapabilities`).
 
 - [ ] **Step 3: Add the flag and request field**
@@ -129,7 +129,7 @@ and reject non-absolute or non-enterable paths next to that check with the exist
 
 - [ ] **Step 4: Run the test — it must pass; add the rejection test**
 
-Append to `start-cwd.test.ts` (follow the existing service-level start tests in `packages/subagent/subagent/tests/` for harness setup — copy the nearest one's bootstrapping):
+Append to `start-cwd.spec.ts` (follow the existing service-level start tests in `packages/subagent/subagent/tests/` for harness setup — copy the nearest one's bootstrapping):
 
 ```ts
   it('start rejects cwd on a provider without cwdOverride', async () => {
@@ -139,13 +139,13 @@ Append to `start-cwd.test.ts` (follow the existing service-level start tests in 
   })
 ```
 
-Run: `pnpm vitest run packages/subagent/subagent/tests/start-cwd.test.ts`
+Run: `pnpm vitest run packages/subagent/subagent/tests/start-cwd.spec.ts`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/subagent/subagent/src/types.ts packages/subagent/subagent/src/index.ts packages/subagent/subagent/src/out-of-process.ts packages/subagent/subagent/tests/start-cwd.test.ts
+git add packages/subagent/subagent/src/types.ts packages/subagent/subagent/src/index.ts packages/subagent/subagent/src/out-of-process.ts packages/subagent/subagent/tests/start-cwd.spec.ts
 git commit -m "feat(subagent): capability-checked per-start child cwd"
 ```
 
@@ -153,7 +153,7 @@ git commit -m "feat(subagent): capability-checked per-start child cwd"
 
 **Files:**
 - Modify: `packages/subagent/subagent/src/child-agent.ts` (~L110, the `...parentHeader.cwd !== undefined ? { cwd: parentHeader.cwd } : {}` spread)
-- Test: `packages/subagent/subagent/tests/child-cwd.test.ts`
+- Test: `packages/subagent/subagent/tests/child-cwd.spec.ts`
 
 - [ ] **Step 1: Write the failing test** — mirror the existing in-process spawn test in `packages/subagent/subagent/tests/`; assert the created child session's header `cwd` equals a temp directory passed as `request.cwd`:
 
@@ -178,16 +178,18 @@ const cwd = request.cwd !== undefined
   : parentHeader.cwd !== undefined ? { cwd: parentHeader.cwd } : {}
 ```
 
-The in-process capability table (wherever the in-process provider declares `SubagentCapabilities` — grep `outputSchema: true` in `packages/subagent/subagent/src/`) gains `cwdOverride: true`. Also persist `cwd` in the durable child descriptor (descriptor.ts: pattern-match the `persona` persistence at ~L245/`286`) so resume of an in-flight child restores the workspace.
+The in-process capability tables are the `readonly capabilities` class properties in `packages/subagent/subagent-spawn-in-process/src/index.ts` (`SpawnInProcessProvider`) and `packages/subagent/subagent-fork-in-process/src/index.ts` (`ForkInProcessProvider`); both currently declare `cwdOverride: false` (multi-line literal, A1 landed them) — flip both to `true` and extend their class JSDoc capability enumerations. `subagent-acp` stays `false` (out-of-process). Also update the A1-landed mirrors: `scripts/gen-tool-catalog.ts` `registerCatalogSubagentProvider` capabilities (`cwdOverride: true`), the spawn/fork spec `toEqual` capability shapes, and the spawn/fork README capability enumerations. Also persist `cwd` in the durable child descriptor (descriptor.ts: pattern-match the `persona` persistence at ~L245/`286`) so resume of an in-flight child restores the workspace.
 
-- [ ] **Step 4: Run — expect PASS**; then `pnpm vitest run packages/subagent/subagent` for the whole package.
+- [ ] **Step 4: Run — expect PASS**; then `pnpm vitest run packages/subagent` for the whole subagent family (spawn, fork, acp, adapters, driver).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/subagent/subagent/src/child-agent.ts packages/subagent/subagent/src/descriptor.ts packages/subagent/subagent/tests/child-cwd.test.ts
+git add packages/subagent/subagent/src/child-agent.ts packages/subagent/subagent/src/descriptor.ts packages/subagent/subagent/tests/child-cwd.spec.ts packages/subagent/subagent-spawn-in-process/src/index.ts packages/subagent/subagent-fork-in-process/src/index.ts scripts/gen-tool-catalog.ts
 git commit -m "feat(subagent): in-process provider applies per-start cwd to the child session"
 ```
+
+plus any spawn/fork spec `toEqual` and README enumeration files the flip touches (verify each diff is purely capability-related before staging).
 
 ### Task A3: README + implemented Agent Note triplet + gates
 
@@ -195,7 +197,7 @@ git commit -m "feat(subagent): in-process provider applies per-start cwd to the 
 - Modify: `packages/subagent/subagent/README.md` (+ `README.zh.md`, regenerate `README.i18n.yaml` via the pairing script)
 - Create: `.agents/notes/implemented/feature/<today>-subagent-per-start-cwd.md` + `.zh.md` + `.i18n.yaml`
 
-- [ ] **Step 1: README** — add one paragraph under the start-request options: `cwd` (optional absolute path; requires the provider's `cwdOverride` capability; in-process providers set the child session workspace; ACP/remote providers reject until they implement it). Mirror the bilingual pairing workflow: edit both README files, then `pnpm run verify-translation-pairing --write packages/subagent/subagent/README.md`.
+- [ ] **Step 1: README** — add one paragraph under the start-request options: `cwd` (optional absolute path; requires the provider's `cwdOverride` capability; in-process providers set the child session workspace; ACP/remote providers reject until they implement it). Mirror the bilingual pairing workflow: edit both README files, then `pnpm run verify-translation-pairing --write packages/subagent/subagent/README.md`. Also refresh the type-equivalence pastes in `docs/subsystems/subagent.md` + `.zh.md` (verify-type-equiv gates them; dsh-translate-docs stays user-invoked), and the `dsh-sdk` README capability enumeration. `packages/extensions/tool-cordis/src/api-catalog.ts` is generated, freshness-gated, and carries another author's uncommitted edits — never hand-edit it; if its gate stays red because their in-flight work has not landed, record it as a registered exception at the phase checkpoint instead of entangling their file.
 
 - [ ] **Step 2: Agent Note** — write the implemented note (EN + zh + sidecar). Core clauses, in the note's own words: the decision (capability-checked per-start `cwd` on `SubagentStartRequest`), why (the loop relay family executes nodes in granted workspaces; deriving from the parent session cannot express cross-project execution), what was rejected (silently ignoring the field; deriving from the parent; waiting for a second consumer), the capability contract, the validation discipline, and the acceptance tests that exist. Follow the note format gates: `pnpm run verify-agent-note-format`, pairing `--write`, `pnpm run verify-md-links`.
 
@@ -249,7 +251,7 @@ git commit -m "chore(loop): scaffold @deepseek-ai/dsh-loop package"
 
 **Files:**
 - Create: `packages/loop/loop/src/types.ts`
-- Test: `packages/loop/loop/tests/types.test.ts` (compile-only assertions; types carry no runtime)
+- Test: `packages/loop/loop/tests/types.spec.ts` (compile-only assertions; types carry no runtime)
 
 - [ ] **Step 1: Write the types**
 
@@ -393,12 +395,12 @@ git commit -m "feat(loop): loop domain pure types"
 
 **Files:**
 - Create: `packages/loop/loop/src/domain.ts`, `src/fold.ts`, `src/runtime.ts`
-- Test: `packages/loop/loop/tests/fold.test.ts`
+- Test: `packages/loop/loop/tests/fold.spec.ts`
 
 - [ ] **Step 1: Write the failing fold tests** (pure; no Cordis):
 
 ```ts
-// packages/loop/loop/tests/fold.test.ts
+// packages/loop/loop/tests/fold.spec.ts
 import { describe, expect, it } from 'vitest'
 import { applyLoopEvent, emptyLoopFoldState } from '../src/fold.ts'
 
@@ -541,7 +543,7 @@ export function applyLoopEvent(state: LoopFoldState, event: SessionEvent): void 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/loop/loop/src/domain.ts packages/loop/loop/src/fold.ts packages/loop/loop/src/runtime.ts packages/loop/loop/tests/fold.test.ts
+git add packages/loop/loop/src/domain.ts packages/loop/loop/src/fold.ts packages/loop/loop/src/runtime.ts packages/loop/loop/tests/fold.spec.ts
 git commit -m "feat(loop): durable event vocabulary and strict replay fold"
 ```
 
@@ -549,7 +551,7 @@ git commit -m "feat(loop): durable event vocabulary and strict replay fold"
 
 **Files:**
 - Modify: `packages/loop/loop/src/index.ts`
-- Test: `packages/loop/loop/tests/service.test.ts`
+- Test: `packages/loop/loop/tests/service.spec.ts`
 
 - [ ] **Step 1: Write the failing service tests** — boot a REAL composition through the Loader (packages/AGENTS.md: hand-built `ctx.plugin` is insufficient): copy the boot pattern from an existing goal service test (`packages/goal/goal/tests/` — reuse its cordis.yml test composition file approach, adding `@deepseek-ai/dsh-loop`). Assert: `start` appends a `loop/change` create with revision 1 and arms; a second `start` rejects `LOOP_ALREADY_EXISTS`; `pause`/`resume` write revisions 2/3; CAS mismatch rejects `LOOP_STALE_REVISION`; `clear` writes the tombstone; activation is process-local (never serialized — assert the appended events carry no activation field).
 
@@ -595,7 +597,7 @@ Config (schemastery, validated): `defaultMaxRounds` (positive int, default 20), 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/loop/loop/src/index.ts packages/loop/loop/tests/service.test.ts
+git add packages/loop/loop/src/index.ts packages/loop/loop/tests/service.spec.ts
 git commit -m "feat(loop): ctx.loops service with CAS mutations and ledger appends"
 ```
 
@@ -603,7 +605,7 @@ git commit -m "feat(loop): ctx.loops service with CAS mutations and ledger appen
 
 **Files:**
 - Create: `packages/loop/loop/src/invariant.ts`
-- Test: `packages/loop/loop/tests/invariant.test.ts`
+- Test: `packages/loop/loop/tests/invariant.spec.ts`
 
 - [ ] **Step 1: Implement** — copy [goal's invariant.ts](../../packages/goal/goal/src/invariant.ts) structure: companion plugin name `loop-invariant`, `inject = ['invariants']`, a WeakMap of independent `LoopFoldState` per attached session, staged candidate-event validation with the strict decoders, failures attributed to the event seq. Manifest name: `@deepseek-ai/dsh-loop`.
 - [ ] **Step 2: Test** — a session with a valid stream passes; splice one duplicate ledger key into the event stream and the invariant fails naming the seq. Also assert loop fold failure does NOT fail other projections of the same session (isolation, spec § Durable record).
@@ -611,7 +613,7 @@ git commit -m "feat(loop): ctx.loops service with CAS mutations and ledger appen
 - [ ] **Step 4: Commit**
 
 ```bash
-git add packages/loop/loop/src/invariant.ts packages/loop/loop/tests/invariant.test.ts
+git add packages/loop/loop/src/invariant.ts packages/loop/loop/tests/invariant.spec.ts
 git commit -m "feat(loop): durable loop-stream invariant companion"
 ```
 
@@ -637,7 +639,7 @@ git commit -m "docs(loop): dsh-loop README"
 
 **Files:**
 - Create: `packages/loop/loop-chain-driver/src/chain.ts`
-- Test: `packages/loop/loop-chain-driver/tests/chain.test.ts`
+- Test: `packages/loop/loop-chain-driver/tests/chain.spec.ts`
 - Scaffold: package.json (name `@deepseek-ai/dsh-loop-chain-driver`), tsconfig (references loop/loop + subagent + interaction packages), tsconfig.host.json registration, as in B1.
 
 - [ ] **Step 1: Write the failing tests**
@@ -673,7 +675,7 @@ it('the default chain is one worker node plus the evaluator prompt', () => {
 - [ ] **Step 4: PASS; commit**
 
 ```bash
-git add packages/loop/loop-chain-driver/src/chain.ts packages/loop/loop-chain-driver/tests/chain.test.ts packages/loop/loop-chain-driver/package.json packages/loop/loop-chain-driver/tsconfig.json tsconfig.host.json
+git add packages/loop/loop-chain-driver/src/chain.ts packages/loop/loop-chain-driver/tests/chain.spec.ts packages/loop/loop-chain-driver/package.json packages/loop/loop-chain-driver/tsconfig.json tsconfig.host.json
 git commit -m "feat(loop): chain document parsing and default chain"
 ```
 
@@ -681,16 +683,16 @@ git commit -m "feat(loop): chain document parsing and default chain"
 
 **Files:**
 - Create: `packages/loop/loop-chain-driver/src/handoff.ts`
-- Test: `packages/loop/loop-chain-driver/tests/handoff.test.ts`
+- Test: `packages/loop/loop-chain-driver/tests/handoff.spec.ts`
 
 - [ ] **Step 1: Failing tests** — `assembleNodePrompt(view, round, nodeIndex)` produces a prompt carrying objective, round number, frozen role instruction, the named reports (same-round predecessors + carryOver + feedback per the spec's visibility rule), declared input session ids, prior child session ids, and the read-scope statement; never raw transcripts. `validateReport(node, report)`: schema-conformant via the seam's schema enforcement mirror, `maxHandoffChars` counted in UTF-16 code units (`report.text.length`-style measurement on the serialized report — surrogate pairs count 2 by construction), `inherited` required non-empty with one entry per declared input when `inputs` is declared, absent requirement otherwise. `evaluatorInputBudget(view, round)` sums the round's serialized reports + feedback and names round/node/report/exceeded-characters on `report-budget`.
-- [ ] **Step 2: FAIL → implement → PASS → commit** `git add packages/loop/loop-chain-driver/src/handoff.ts packages/loop/loop-chain-driver/tests/handoff.test.ts` with message `feat(loop): lean-push lossless-pull handoff assembly and validation`.
+- [ ] **Step 2: FAIL → implement → PASS → commit** `git add packages/loop/loop-chain-driver/src/handoff.ts packages/loop/loop-chain-driver/tests/handoff.spec.ts` with message `feat(loop): lean-push lossless-pull handoff assembly and validation`.
 
 ### Task C3: the driver loop
 
 **Files:**
 - Create: `packages/loop/loop-chain-driver/src/index.ts` (plugin: `name = 'loop-chain-driver'`, `inject = ['loops', 'subagents', 'sessions']`, Config: `provider: Schema.string()` — the subagent provider name; misconfiguration fails loud at load)
-- Test: `packages/loop/loop-chain-driver/tests/driver.test.ts`
+- Test: `packages/loop/loop-chain-driver/tests/driver.spec.ts`
 
 - [ ] **Step 1: Write the failing driver tests** with a stub subagent provider (registered through the real subagent service seam, capability `cwdOverride: true`, returning canned structured outputs) and the Loader-booted composition from B4:
   - one round settles one `loop/node` per node with validated reports, the evaluator settles as the final node index, and `advance` increments `roundsStarted` only when the verdict's change lands;
@@ -743,7 +745,7 @@ async function driveRound(agent: Agent, view: LoopView): Promise<void> {
 - [ ] **Step 3: PASS; run `pnpm vitest run packages/loop` — PASS; commit**
 
 ```bash
-git add packages/loop/loop-chain-driver/src/index.ts packages/loop/loop-chain-driver/tests/driver.test.ts
+git add packages/loop/loop-chain-driver/src/index.ts packages/loop/loop-chain-driver/tests/driver.spec.ts
 git commit -m "feat(loop): relay chain continuation driver"
 ```
 
@@ -755,7 +757,7 @@ git commit -m "feat(loop): relay chain continuation driver"
 
 **Files:**
 - Create: `packages/loop/command-loop/src/index.ts` (package `@deepseek-ai/dsh-command-loop`; scaffold as in B1/C1)
-- Test: `packages/loop/command-loop/tests/command.test.ts`
+- Test: `packages/loop/command-loop/tests/command.spec.ts`
 
 - [ ] **Step 1: Failing tests**
 
@@ -807,7 +809,7 @@ git commit -m "feat(loop): /loop command grammar and scope normalization"
 
 **Files:**
 - Create: `packages/loop/tool-loop-query/src/index.ts` (package `@deepseek-ai/dsh-tool-loop-query`; scaffold as above)
-- Test: `packages/loop/tool-loop-query/tests/tools.test.ts`
+- Test: `packages/loop/tool-loop-query/tests/tools.spec.ts`
 
 - [ ] **Step 1: Failing tests** — registration mirrors [tool-session-query](../../packages/session-query/tool-session-query/README.md) (tool Consumer pattern on `ctx.tools`); executor authorization is the behavior under test:
   - caller outside any run's lineage (plain session) → refused with the error naming lineage;
