@@ -10,9 +10,7 @@ import SubagentRuntime, {
   SUBAGENT_DESCRIPTOR_VERSION,
   SubagentError,
   assertSubagentMaxDepth,
-  type ResolvedSubagentStartRequest,
   type SubagentCapabilities,
-  type SubagentProvider,
   type SubagentResult,
   type SubagentRun,
   type SubagentRunEndInfo,
@@ -20,56 +18,15 @@ import SubagentRuntime, {
 } from '@deepseek-ai/dsh-subagent'
 import { Session, SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import { baseRequest, fakeParent, service, StubProvider } from './helpers.ts'
 
-function fakeParent(id = 'parent-1'): Agent {
-  return { id: SessionId(id) } as unknown as Agent
-}
-
-const ALL_CAPS: SubagentCapabilities = { agentOptions: true, outputSchema: true, depthLimit: true, toolFilter: true, persona: true, cwdOverride: true }
-const NO_CAPS: SubagentCapabilities = { agentOptions: false, outputSchema: false, depthLimit: false, toolFilter: false, persona: false, cwdOverride: false }
-
-function baseRequest(overrides: Partial<SubagentStartRequest> = {}): SubagentStartRequest {
-  return {
-    prompt: [{ type: 'text', text: 'do a thing' }],
-    parent: fakeParent(),
-    signal: new AbortController().signal,
-    ...overrides,
-  }
-}
-
-class StubProvider implements SubagentProvider {
-  readonly inheritsParentContext = false
-  startCount = 0
-  lastRequest: ResolvedSubagentStartRequest | undefined
-
-  constructor(
-    readonly name: string,
-    readonly capabilities: SubagentCapabilities = ALL_CAPS,
-    private readonly outcome: SubagentResult = {
-      output: [{ type: 'text', text: 'ok' }],
-      stopReason: 'completed',
-    },
-  ) {}
-
-  async start(request: ResolvedSubagentStartRequest): Promise<SubagentRun> {
-    this.startCount += 1
-    this.lastRequest = request
-    return {
-      id: SessionId(`child:${this.name}:${request.parent.id}`),
-      localAgent: undefined,
-      result: Promise.resolve(this.outcome),
-      async dispose() {},
-    }
-  }
-}
-
-async function service(): Promise<{ ctx: Context; subagents: SubagentRuntime }> {
-  const ctx = new Context()
-  // The registry is a required injection of SubagentRuntime (its projection
-  // units register in the constructor).
-  await ctx.plugin(SessionProjectionRegistry)
-  await ctx.plugin(SubagentRuntime)
-  return { ctx, subagents: ctx.subagents }
+const NO_CAPS: SubagentCapabilities = {
+  agentOptions: false,
+  outputSchema: false,
+  depthLimit: false,
+  toolFilter: false,
+  persona: false,
+  cwdOverride: false,
 }
 
 describe('SubagentRuntime', () => {

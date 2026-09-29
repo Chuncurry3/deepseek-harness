@@ -290,7 +290,7 @@ describe('dsh-subagent-spawn-in-process', () => {
     await parentHandle.dispose()
   })
 
-  it('advertises every start-time capability', async () => {
+  it('advertises every start-time capability except cwdOverride', async () => {
     const { ctx } = await setup([])
     const provider = ctx.subagents.getProvider('spawn')!
     expect(provider.capabilities).toEqual({

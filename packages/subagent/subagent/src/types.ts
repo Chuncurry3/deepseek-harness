@@ -134,11 +134,8 @@ export interface SubagentCapabilities {
   readonly toolFilter: boolean
   readonly persona: boolean
   /**
-   * Whether the provider honors a per-start child workspace. Requires the
-   * request cwd to be absolute, existing, and enterable (the
-   * `assertUsableCwd` discipline); providers without the capability reject
-   * a request that sets `cwd` instead of silently deriving the parent
-   * session's workspace.
+   * Whether the provider honors a per-start child workspace; the service
+   * rejects a `cwd`-carrying request when false.
    */
   readonly cwdOverride: boolean
 }

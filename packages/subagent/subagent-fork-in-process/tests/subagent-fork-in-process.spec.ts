@@ -196,7 +196,7 @@ describe('dsh-subagent-fork-in-process', () => {
     await run.dispose()
   })
 
-  it('advertises every start-time capability', async () => {
+  it('advertises every start-time capability except cwdOverride', async () => {
     const { ctx } = await setup([])
     expect(ctx.subagents.getProvider('fork')!.capabilities).toEqual({
       agentOptions: true,
