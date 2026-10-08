@@ -619,6 +619,15 @@ git add packages/loop/loop/src/index.ts packages/loop/loop/tests/service.spec.ts
 git commit -m "feat(loop): ctx.loops service with CAS mutations and ledger appends"
 ```
 
+### Task B4 review carry-forward (2026-10-07)
+
+All seven decisions adjudicated legitimate (goal mirror verified line-by-line; the plan surface is 15 methods — 9 CAS + 3 ledger appends + activation/arm/disarm). Follow-ups:
+
+- Fork fold-fence (MINOR): the note's first fence ("a fork folds loop events only from the seed boundary") is unimplemented — a fork currently inherits the parent's current loop in its projection and cannot start a fresh one (LOOP_ALREADY_EXISTS). The registry passes (header, inheritedEventCount) to def.init, so a state field + stateVersion bump expresses the fence; C3's session-id fence is the note's SECOND fence, not a substitute. **B5 owns it** (the invariant companion must fold with the same boundary); if B5's scope explodes, land a dedicated fixup before the phase checkpoint instead.
+- B3's type-aware lint debt (14 errors: 10 void-expression, 3 unnecessary casts, 1 deprecated toMatchTypeOf) cleared in 569e72f2a9 (the staged lint config runs type-unaware, so pre-commit never saw them).
+- Phase E implemented-note obligations accrued so far: the B3 hand-rolled decoders (zod dep removal at B6), the B4 error-code split (config validation raises plain Error at load; start-input failures under LOOP_INVALID_CHAIN), the public readonly resolved field for the driver's config reads, and this fork-fence routing. Goal's goal/activation-changed is an unpersisted ctx event with zero repo consumers — loop needs no equivalent.
+- The in-process Loader boot harness in service.spec is new (goal's service tests have no precedent); stronger than hand-mounted composition, acceptable.
+
 ### Task B5: `./invariant` companion
 
 **Files:**
