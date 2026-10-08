@@ -253,12 +253,14 @@ git commit -m "chore(loop): scaffold @deepseek-ai/dsh-loop package"
 
 - `verify-package-invariants` is red from B1 through B4 (the scaffold exports `./invariant` before `src/invariant.ts` exists); Task B5's commit must leave it green — run it at B5.
 - `verify-tsconfig-paths` stays red until `pnpm run gen-tsconfig-paths` lands with the first self-importing loop test (expected at B4) or B6's doc-sync gate, whichever comes first.
+- `verify-module-graph` is red from B1 (the graph regenerates when `packages/loop/loop` exists) until B6's doc-sync runs `gen-module-graph` and commits `docs/module-graph.md` + `docs/module-graph.zh.md`.
 - The B2 import list's `import type { ObjectJsonSchema, SessionId } from '@deepseek-ai/dsh-subagent'` does not resolve: the subagent root re-exports neither name. B2 decides the import home (subagent re-export, owner-package imports, or the `./src/*` subpath) and reconciles the B1 dependency enumeration with that decision.
 
 ### Task B2: pure types (`src/types.ts`)
 
 **Files:**
 - Create: `packages/loop/loop/src/types.ts`
+- Modify: `packages/loop/loop/src/index.ts` (goal-mirroring `export type *` re-export wiring), `packages/loop/loop/package.json` + `tsconfig.json` (dependency/reference reconciliation per the B1 carry-forward)
 - Test: `packages/loop/loop/tests/types.spec.ts` (compile-only assertions; types carry no runtime)
 
 - [ ] **Step 1: Write the types**
@@ -395,7 +397,7 @@ export type LoopLedgerEntry =
 - [ ] **Step 3: Commit**
 
 ```bash
-git add packages/loop/loop/src/types.ts
+git add packages/loop/loop/src/types.ts packages/loop/loop/src/index.ts packages/loop/loop/package.json packages/loop/loop/tsconfig.json packages/loop/loop/tests/types.spec.ts
 git commit -m "feat(loop): loop domain pure types"
 ```
 
@@ -679,7 +681,7 @@ it('the default chain is one worker node plus the evaluator prompt', () => {
 ```
 
 - [ ] **Step 2: Run — FAIL.**
-- [ ] **Step 3: Implement** — zod strict object schemas for `LoopChainDef` (unknown keys rejected, roles unique, nodes non-empty, output schemas validated through the subagent seam's `assertObjectJsonSchema` subset — import it from `@deepseek-ai/dsh-subagent`), YAML via the repo's existing YAML dependency if one is already used by settings/config packages (`grep -r "yaml" packages/settings packages/preset` and reuse the same library; do not add a new dependency without the dependencies-over-hand-rolling policy check). Provide `defaultChain(objective)` per the spec's default chain.
+- [ ] **Step 3: Implement** — zod strict object schemas for `LoopChainDef` (unknown keys rejected, roles unique, nodes non-empty, output schemas validated through the subagent seam's `assertObjectJsonSchema` subset — import it from `@deepseek-ai/dsh-tools`; the subagent root re-exports neither it nor the type names B2 relocated), YAML via the repo's existing YAML dependency if one is already used by settings/config packages (`grep -r "yaml" packages/settings packages/preset` and reuse the same library; do not add a new dependency without the dependencies-over-hand-rolling policy check). Provide `defaultChain(objective)` per the spec's default chain.
 - [ ] **Step 4: PASS; commit**
 
 ```bash
