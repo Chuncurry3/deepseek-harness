@@ -108,15 +108,15 @@ describe('loop durable fold', () => {
   it('rejects illegal phase transitions fail-loud', () => {
     const state = emptyLoopFoldState()
     applyLoopEvent(state, event(1, 'loop/change', create))
-    expect(() => applyLoopEvent(state, event(2, 'loop/change', snapshotChange('await-human', { ...baseSnapshot, revision: 2 })))).toThrow(/transition/)
+    expect(() => { applyLoopEvent(state, event(2, 'loop/change', snapshotChange('await-human', { ...baseSnapshot, revision: 2 }))) }).toThrow(/transition/)
   })
 
   it('ledger keys are unique and attempts require their node-started', () => {
     const state = emptyLoopFoldState()
     applyLoopEvent(state, event(1, 'loop/change', create))
     applyLoopEvent(state, event(2, 'loop/node-started', started))
-    expect(() => applyLoopEvent(state, event(3, 'loop/node-started', started))).toThrow(/duplicate/)
-    expect(() => applyLoopEvent(state, event(4, 'loop/attempt', { ...attemptFailure, nodeIndex: 9 }))).toThrow(/node-started/)
+    expect(() => { applyLoopEvent(state, event(3, 'loop/node-started', started)) }).toThrow(/duplicate/)
+    expect(() => { applyLoopEvent(state, event(4, 'loop/attempt', { ...attemptFailure, nodeIndex: 9 })) }).toThrow(/node-started/)
   })
 
   it('a clear tombstone ends the run; later ledger events for the old loopId are history', () => {
@@ -131,8 +131,8 @@ describe('loop durable fold', () => {
 
   it('fails loud on a malformed loop change payload', () => {
     const state = emptyLoopFoldState()
-    expect(() => applyLoopEvent(state, event(1, 'loop/change', { ...create, version: 2 }))).toThrow('unsupported loop change version 2')
-    expect(() => applyLoopEvent(state, event(2, 'loop/change', { kind: 'other' }))).toThrow('has an invalid kind')
+    expect(() => { applyLoopEvent(state, event(1, 'loop/change', { ...create, version: 2 })) }).toThrow('unsupported loop change version 2')
+    expect(() => { applyLoopEvent(state, event(2, 'loop/change', { kind: 'other' })) }).toThrow('has an invalid kind')
   })
 })
 
@@ -140,8 +140,8 @@ describe('loop ledger fold', () => {
   it('rejects settlements and attempts without their node-started', () => {
     const state = emptyLoopFoldState()
     applyLoopEvent(state, event(1, 'loop/change', create))
-    expect(() => applyLoopEvent(state, event(2, 'loop/node', settlement))).toThrow(/node-started/)
-    expect(() => applyLoopEvent(state, event(3, 'loop/attempt', attemptFailure))).toThrow(/node-started/)
+    expect(() => { applyLoopEvent(state, event(2, 'loop/node', settlement)) }).toThrow(/node-started/)
+    expect(() => { applyLoopEvent(state, event(3, 'loop/attempt', attemptFailure)) }).toThrow(/node-started/)
   })
 
   it('rejects a second settlement or a failure after a settlement for one attempt', () => {
@@ -149,8 +149,8 @@ describe('loop ledger fold', () => {
     applyLoopEvent(state, event(1, 'loop/change', create))
     applyLoopEvent(state, event(2, 'loop/node-started', started))
     applyLoopEvent(state, event(3, 'loop/node', settlement))
-    expect(() => applyLoopEvent(state, event(4, 'loop/node', settlement))).toThrow(/node-started/)
-    expect(() => applyLoopEvent(state, event(5, 'loop/attempt', attemptFailure))).toThrow(/node-started/)
+    expect(() => { applyLoopEvent(state, event(4, 'loop/node', settlement)) }).toThrow(/node-started/)
+    expect(() => { applyLoopEvent(state, event(5, 'loop/attempt', attemptFailure)) }).toThrow(/node-started/)
   })
 
   it('records retries as separate ledger keys', () => {
@@ -176,7 +176,7 @@ describe('loop ledger fold', () => {
   it('rejects a ledger event stamped with a revision the loop has not reached', () => {
     const state = emptyLoopFoldState()
     applyLoopEvent(state, event(1, 'loop/change', create))
-    expect(() => applyLoopEvent(state, event(2, 'loop/node-started', { ...started, atRevision: 2 }))).toThrow('exceeds the current change revision')
+    expect(() => { applyLoopEvent(state, event(2, 'loop/node-started', { ...started, atRevision: 2 })) }).toThrow('exceeds the current change revision')
   })
 })
 
@@ -185,7 +185,7 @@ describe('loop change transitions', () => {
     expect(() => changeState(snapshotChange('create', { ...baseSnapshot, revision: 2 }, 0, 0))).toThrow('fresh active revision-one')
     expect(() => changeState(snapshotChange('create', { ...baseSnapshot, phase: 'paused' }, 0, 0))).toThrow('fresh active revision-one')
     expect(() => changeState(snapshotChange('create', { ...baseSnapshot, roundsStarted: 1 }, 0, 0))).toThrow('fresh active revision-one')
-    expect(() => changeState(create, snapshotChange('create', { ...baseSnapshot, id: 'L2' as never }, 0, 1))).toThrow('fresh active revision-one')
+    expect(() => changeState(create, snapshotChange('create', { ...baseSnapshot, id: 'L2' }, 0, 1))).toThrow('fresh active revision-one')
   })
 
   it('rejects a replacement create that reuses a cleared identity', () => {
@@ -197,7 +197,7 @@ describe('loop change transitions', () => {
     applyLoopEvent(state, event(1, 'loop/change', create))
     applyLoopEvent(state, event(2, 'loop/node-started', started))
     applyLoopEvent(state, event(3, 'loop/change', snapshotChange('complete', { ...baseSnapshot, revision: 2, phase: 'complete' })))
-    applyLoopEvent(state, event(4, 'loop/change', snapshotChange('create', { ...baseSnapshot, id: 'L2' as never }, 5, 5)))
+    applyLoopEvent(state, event(4, 'loop/change', snapshotChange('create', { ...baseSnapshot, id: 'L2' }, 5, 5)))
     expect(state.loop?.id).toBe('L2')
     expect(state.loop?.revision).toBe(1)
     expect(state.ledger.size).toBe(0)
@@ -279,7 +279,7 @@ describe('loop change transitions', () => {
 
   it('rejects revision discontinuity', () => {
     expect(() => changeState(create, pause(3))).toThrow('must advance the current loop by one revision')
-    expect(() => changeState(create, snapshotChange('pause', { ...baseSnapshot, revision: 2, phase: 'paused', id: 'L2' as never }))).toThrow('must advance the current loop by one revision')
+    expect(() => changeState(create, snapshotChange('pause', { ...baseSnapshot, revision: 2, phase: 'paused', id: 'L2' }))).toThrow('must advance the current loop by one revision')
     expect(() => changeState(create, clearChange({ id: 'L1', revision: 1 }))).toThrow('must advance the current loop by one revision')
   })
 

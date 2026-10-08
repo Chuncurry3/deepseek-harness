@@ -35,7 +35,7 @@ describe('loop domain pure types', () => {
   })
 
   it('carries the compare-and-set ref on every snapshot and view', () => {
-    expectTypeOf<LoopSnapshot>().toMatchTypeOf<LoopRef>()
+    expectTypeOf<LoopSnapshot>().toExtend<LoopRef>()
     expectTypeOf<LoopView['loop']>().toEqualTypeOf<LoopSnapshot>()
     expectTypeOf<LoopView['activation']>().toEqualTypeOf<LoopActivation>()
   })
