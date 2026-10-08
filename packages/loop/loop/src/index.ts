@@ -11,8 +11,8 @@ import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { agentEvents } from '@deepseek-ai/dsh-agent'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SessionSeq } from '@deepseek-ai/dsh-session'
-import type { Session, SessionEvent, SessionLogOffset } from '@deepseek-ai/dsh-session'
+import { SessionLogOffset, SessionSeq } from '@deepseek-ai/dsh-session'
+import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-session-projection'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
@@ -223,7 +223,7 @@ function parseLoopProjection(value: unknown): LoopProjection {
 /** Validate one persisted projection-state row and return it unchanged. */
 function parseLoopProjectionState(value: unknown): LoopProjectionState {
   const state = requireRecord(value, 'loop projection state')
-  requireFields(state, 'loop projection state', ['current', 'failure', 'seenLoopIds'])
+  requireFields(state, 'loop projection state', ['current', 'failure', 'inheritedEventCount', 'seenLoopIds'])
   const failure = state['failure'] === null ? null : requireNonEmptyString(state['failure'], 'loop projection state failure')
   const seenLoopIds = requireStringArray(state['seenLoopIds'], 'loop projection state seenLoopIds')
   if (new Set(seenLoopIds).size !== seenLoopIds.length) {
@@ -233,7 +233,14 @@ function parseLoopProjectionState(value: unknown): LoopProjectionState {
   if (current !== null && current.loop !== undefined && !seenLoopIds.includes(current.loop.id)) {
     throw new Error('loop projection state current loop id must be retained among seenLoopIds')
   }
-  return { current, seenLoopIds: seenLoopIds.map(LoopId), failure }
+  return {
+    current,
+    seenLoopIds: seenLoopIds.map(LoopId),
+    failure,
+    inheritedEventCount: SessionLogOffset(
+      requireNonNegativeInteger(state['inheritedEventCount'], 'loop projection state inheritedEventCount'),
+    ),
+  }
 }
 
 /** Hand-rolled state validation duck-typed to the registry's schema slot. */
@@ -270,8 +277,8 @@ function loopFoldState(state: LoopProjectionState): LoopFoldState {
   }
 }
 
-/** Convert strict fold state into projection state. */
-function loopProjectionState(folded: LoopFoldState): LoopProjectionState {
+/** Convert strict fold state into projection state at one fork boundary. */
+function loopProjectionState(folded: LoopFoldState, inheritedEventCount: SessionLogOffset): LoopProjectionState {
   let current: LoopProjection | null = null
   if (folded.loop !== undefined) {
     const { createdAt, updatedAt } = folded
@@ -287,20 +294,22 @@ function loopProjectionState(folded: LoopFoldState): LoopProjectionState {
       ...folded.lastRef === undefined ? {} : { lastRef: { ...folded.lastRef } },
     }
   }
-  return { current, seenLoopIds: [...folded.seenLoopIds], failure: null }
+  return { current, seenLoopIds: [...folded.seenLoopIds], failure: null, inheritedEventCount }
 }
 
 /**
  * Fold durable loop events through the strict replay rules without throwing
- * from the projection registry's event drive. The first invalid owned event
- * is retained in `failure`; host loop access rejects that state while the
- * client view stays at the last valid loop.
+ * from the projection registry's event drive. Loop events before the fork
+ * seed boundary belong to the parent session's run and are skipped. The
+ * first invalid owned event is retained in `failure`; host loop access
+ * rejects that state while the client view stays at the last valid loop.
  * @param state - the projection covering all prior events.
  * @param event - the next committed session event.
  * @returns the next projection (same reference when the event is unrelated).
  */
 export function applyLoopProjection(state: LoopProjectionState, event: SessionEvent): LoopProjectionState {
   if (state.failure !== null) return state
+  if (event.seq < state.inheritedEventCount) return state
   if (event.type !== 'loop/change'
     && event.type !== 'loop/node-started'
     && event.type !== 'loop/attempt'
@@ -308,7 +317,7 @@ export function applyLoopProjection(state: LoopProjectionState, event: SessionEv
   const folded = loopFoldState(state)
   try {
     applyLoopEvent(folded, event)
-    return loopProjectionState(folded)
+    return loopProjectionState(folded, state.inheritedEventCount)
   } catch (error: unknown) {
     /* v8 ignore next -- the strict loop fold throws Error instances. */
     const message = error instanceof Error ? error.message : String(error)
@@ -316,14 +325,22 @@ export function applyLoopProjection(state: LoopProjectionState, event: SessionEv
   }
 }
 
-/** Loop projection unit: last-wins fold of the durable loop record. */
+/**
+ * Loop projection unit: last-wins fold of the durable loop record. A fork
+ * folds loop events only from its seed boundary, so it inherits no run.
+ */
 export const loopProjectionDefinition = {
   key: 'loop',
   stateSchema: loopProjectionStateSchema,
-  init: (): LoopProjectionState => ({ current: null, seenLoopIds: [], failure: null }),
+  init: (_header, inheritedEventCount): LoopProjectionState => ({
+    current: null,
+    seenLoopIds: [],
+    failure: null,
+    inheritedEventCount,
+  }),
   apply: applyLoopProjection,
   wire: { viewSchema: loopProjectionSchema, view: (state: LoopProjectionState): LoopProjection | null => state.current },
-  stateVersion: 1,
+  stateVersion: 2,
 } satisfies ProjectionDefinition<'loop', LoopProjectionState>
 /** Deployment defaults for loop runs and node handoffs. */
 export interface Config {

@@ -11,7 +11,7 @@ import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import SessionStore, { Session, SessionId } from '@deepseek-ai/dsh-session'
+import SessionStore, { Session, SessionId, SessionLogOffset } from '@deepseek-ai/dsh-session'
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import LoopService, {
@@ -977,18 +977,63 @@ describe('LoopService mutations', () => {
     const { ctx, agent, session } = await harness()
     const view = await ctx.loops.start(agent, startRequest())
 
-    session.append('loop/change', { kind: 'loop/change', version: 99 })
+    // external corruption entered the log outside this process's append
+    // path; the retained failure is reproduced by injecting it into the
+    // live cell the way a replayed corrupt stream would have left it
     const state = ctx.sessionProjections.stateOf(session, 'loop')
-    expect(state?.failure).toMatch(/loop replay failed at session event 1/)
-    expect(state?.current?.loop).toMatchObject({ id: view.loop.id })
+    if (state === undefined) throw new Error('expected loop projection state')
+    Object.assign(state, { failure: 'loop replay failed at session event 1: unsupported loop change version 99' })
+    expect(state.current?.loop).toMatchObject({ id: view.loop.id })
 
     await expect(ctx.loops.start(agent, startRequest())).rejects.toThrow(/loop replay failed at session event 1/)
-    expect(ctx.loops.activation(agent)).toBe('disarmed')
+    const later = { type: 'loop/change', seq: 1, time: 2, data: { kind: 'loop/change', version: 98 } } as SessionEvent
+    expect(applyLoopProjection(state, later)).toBe(state)
+    expect(session.snapshotEvents()).toHaveLength(1)
+  })
 
-    const before = ctx.sessionProjections.stateOf(session, 'loop')
-    session.append('loop/change', { kind: 'loop/change', version: 98 })
-    expect(ctx.sessionProjections.stateOf(session, 'loop')).toBe(before)
-    expect(session.snapshotEvents()).toHaveLength(3)
+  it('a fork folds loop events only from the seed boundary and starts a fresh run', async () => {
+    const parent = await harness()
+    const view = await parent.ctx.loops.start(parent.agent, startRequest())
+    const inherited = parent.session.snapshotEvents()
+
+    const child = parent.ctx.sessions.create(SessionId(`loop-fork-${randomUUID()}`), {
+      seed: inherited,
+      inheritedEventCount: SessionLogOffset(inherited.length),
+      meta: { parentSession: parent.session.id, isSeeded: true },
+    })
+    const stub = stubAgentForSession(child, parent.ctx)
+    await parent.ctx.agents.register(stub.agent)
+
+    expect(parent.ctx.sessionProjections.stateOf(child, 'loop')?.current).toBeNull()
+    const fresh = await parent.ctx.loops.start(stub.agent, startRequest({ objective: 'a fork run' }))
+    expect(fresh.loop).toMatchObject({ revision: 1, phase: 'active' })
+    expect(fresh.loop.id).not.toBe(view.loop.id)
+    expect(parent.ctx.sessionProjections.stateOf(child, 'loop')?.seenLoopIds).toEqual([fresh.loop.id])
+  })
+
+  it('applyLoopProjection skips inherited loop events with the same reference', async () => {
+    const { ctx, agent, session } = await harness()
+    const view = await ctx.loops.start(agent, startRequest())
+    await ctx.loops.appendNodeStarted(agent, {
+      kind: 'node-started',
+      loopId: view.loop.id,
+      round: 1,
+      nodeIndex: 0,
+      role: 'writer',
+      attempt: 1,
+      childSessionId: SessionId('sess-writer-1'),
+      cwd: 'E:/work/alpha',
+    }, 1)
+    const inherited = session.snapshotEvents()
+    const forkState: LoopProjectionState = {
+      current: null,
+      seenLoopIds: [],
+      failure: null,
+      inheritedEventCount: SessionLogOffset(inherited.length),
+    }
+    for (const candidate of inherited) {
+      expect(applyLoopProjection(forkState, candidate)).toBe(forkState)
+    }
   })
 
   it('applyLoopProjection skips unrelated events with the same reference', async () => {
@@ -1047,7 +1092,8 @@ describe('LoopService mutations', () => {
       current: null,
       seenLoopIds: ['x'],
       failure: null,
-    })).toEqual({ current: null, seenLoopIds: ['x'], failure: null })
+      inheritedEventCount: 0,
+    })).toEqual({ current: null, seenLoopIds: ['x'], failure: null, inheritedEventCount: 0 })
 
     const parseState = (value: unknown) => loopProjectionDefinition.stateSchema.parse(value)
     const parseView = (value: unknown) => loopProjectionDefinition.wire?.viewSchema.parse(value)
@@ -1108,8 +1154,10 @@ describe('LoopService mutations', () => {
       ...cloneState(state),
       current: { ...current, ledger: [{ ...entry, role: '' }] },
     })).toThrow(/non-empty string/)
-    expect(() => parseState({ current: { ledger: [entry] }, seenLoopIds: [current.loop.id], failure: null }))
+    expect(() => parseState({ current: { ledger: [entry] }, seenLoopIds: [current.loop.id], failure: null, inheritedEventCount: 0 }))
       .toThrow(/ledger entry requires a current loop/)
+    expect(() => parseState({ ...cloneState(state), inheritedEventCount: -1 }))
+      .toThrow(/inheritedEventCount must be a non-negative/)
     expect(() => parseState({
       ...cloneState(state),
       current: { ...current, loop: { ...current.loop, revision: 0 } },

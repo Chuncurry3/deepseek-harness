@@ -5,7 +5,7 @@
  * @module @deepseek-ai/dsh-loop/types
  */
 import type { Branded } from '@deepseek-ai/dsh-brand'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { SessionId, SessionLogOffset } from '@deepseek-ai/dsh-session/types'
 // Type-only: the projection map this module merges the `loop` key into.
 import type {} from '@deepseek-ai/dsh-session-projection/types'
 import type { ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
@@ -132,6 +132,8 @@ export interface LoopProjectionState {
   readonly seenLoopIds: LoopId[]
   /** First strict replay failure, or null while the durable stream is valid. */
   readonly failure: string | null
+  /** Fork seed boundary; inherited prefix loop events belong to the parent run. */
+  readonly inheritedEventCount: SessionLogOffset
 }
 
 /** One ledger entry: a spawn, a failure, or a settlement. */
