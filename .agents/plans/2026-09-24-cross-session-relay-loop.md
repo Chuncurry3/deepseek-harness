@@ -557,6 +557,14 @@ git add packages/loop/loop/src/domain.ts packages/loop/loop/src/fold.ts packages
 git commit -m "feat(loop): durable event vocabulary and strict replay fold"
 ```
 
+### Task B3 review carry-forward (2026-10-07)
+
+All twelve documented deviations adjudicated legitimate (note-wins or goal-template authority). Follow-ups:
+
+- zod stays declared in `packages/loop/loop/package.json` with no import inside the loop package (B3 hand-rolls the decoders, mirroring goal; no later task imports zod there either — C1's zod schemas live in loop-chain-driver). Remove the dependency at the B6 hygiene pass and record the hand-rolled-decoder decision in B6's README / the E2 implemented note.
+- `src/types.ts` ledger-map JSDoc still describes the key as {round, nodeIndex, attempt}; align it with the note's {loopId, round, nodeIndex, attempt} formula at the B6 docs pass.
+- Per-file coverage stays red on `src/index.ts`'s `export const name` line until B4/B5 import it; re-check at B5.
+
 ### Task B4: `ctx.loops` service (`src/index.ts`)
 
 **Files:**
