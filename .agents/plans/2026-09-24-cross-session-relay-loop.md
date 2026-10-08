@@ -12,6 +12,8 @@
 
 **Branching and commits:** start from a clean checkout of master. PR order is fixed: **PR 0** registers this plan's home directory (Task 0.5), **PR 1** lands Phase A (`feature/subagent-per-start-cwd`), **PR 2** lands Phases B–E (`feature/cross-session-relay-loop`, rebased onto PR 1 after it merges). Phase B does not start until PR 1 is merged — the loop packages import `SubagentStartRequest.cwd`, which does not exist before the seam lands. Every phase ends at a human review checkpoint (a two-stage review of the phase's diff); do not start the next phase before it passes. The shared working tree may contain others' uncommitted changes — every commit step adds ONLY the exact paths that task lists; never `git add -A` or `git add .`.
 
+**Landing addendum (2026-10-07):** the public github.com `deepseek-ai/deepseek-harness` repository is a read-only mirror — its pulls REST resource returns 404 and it reports zero pull requests and zero issues, while its git history cites pull-request numbers from an internal instance. The fork keeps `chore/register-agents-plans` (b784410ed9) and `feature/subagent-per-start-cwd` (323940c89d) as upstreamable artifacts. The PR gates are reinterpreted as local merges: PR 0 and PR 1 content is merged into this branch's baseline (commits 1-6, two-stage-reviewed), so Phase B starts from 323940c89d as the local trunk; Phases B-E land on `feature/cross-session-relay-loop` and merge locally at their review checkpoints.
+
 ---
 
 ### Task 0: Read the reference surfaces before touching anything
