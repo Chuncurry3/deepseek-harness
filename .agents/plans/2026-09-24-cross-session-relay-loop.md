@@ -249,6 +249,12 @@ git add packages/loop/loop/package.json packages/loop/loop/tsconfig.json package
 git commit -m "chore(loop): scaffold @deepseek-ai/dsh-loop package"
 ```
 
+### Task B1 review carry-forward (2026-10-07)
+
+- `verify-package-invariants` is red from B1 through B4 (the scaffold exports `./invariant` before `src/invariant.ts` exists); Task B5's commit must leave it green — run it at B5.
+- `verify-tsconfig-paths` stays red until `pnpm run gen-tsconfig-paths` lands with the first self-importing loop test (expected at B4) or B6's doc-sync gate, whichever comes first.
+- The B2 import list's `import type { ObjectJsonSchema, SessionId } from '@deepseek-ai/dsh-subagent'` does not resolve: the subagent root re-exports neither name. B2 decides the import home (subagent re-export, owner-package imports, or the `./src/*` subpath) and reconciles the B1 dependency enumeration with that decision.
+
 ### Task B2: pure types (`src/types.ts`)
 
 **Files:**
