@@ -16,6 +16,7 @@ import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import LoopService, {
   LOOP_CHANGE_VERSION,
+  LoopId,
   applyLoopProjection,
   decodeLoopChange,
   foldLoop,
@@ -83,7 +84,7 @@ const CHAIN = {
   objective: 'relay the monthly report',
   checkpoint: 'none',
   nodes: [
-    { role: 'writer', prompt: 'Draft the report.', cwd: 'E:/work/alpha', inputs: [{ session: 'sess-writer-1' }] },
+    { role: 'writer', prompt: 'Draft the report.', cwd: 'E:/work/alpha', inputs: [{ session: SessionId('sess-writer-1') }] },
     { role: 'reviewer', prompt: 'Review the draft.', carryOver: ['writer'], cwd: 'E:/work/alpha' },
   ],
 } as const
@@ -429,11 +430,11 @@ describe('LoopService mutations', () => {
 
   it('requires a current loop and an exact ref for every mutation', async () => {
     const { ctx, agent } = await harness()
-    await expect(ctx.loops.pause(agent, { id: 'loop-none', revision: 1 })).rejects.toThrow(
+    await expect(ctx.loops.pause(agent, { id: LoopId('loop-none'), revision: 1 })).rejects.toThrow(
       expect.objectContaining({ code: 'LOOP_NOT_FOUND' }),
     )
     const view = await ctx.loops.start(agent, startRequest())
-    await expect(ctx.loops.pause(agent, { id: 'loop-other', revision: 1 })).rejects.toThrow(
+    await expect(ctx.loops.pause(agent, { id: LoopId('loop-other'), revision: 1 })).rejects.toThrow(
       expect.objectContaining({ code: 'LOOP_STALE_REVISION' }),
     )
     await expect(ctx.loops.pause(agent, { id: view.loop.id, revision: 5 })).rejects.toThrow(
@@ -564,7 +565,7 @@ describe('LoopService mutations', () => {
     expect(resumed.loop.blockedReason).toBeUndefined()
     expect(foldLoop(session.snapshotEvents()).loop?.blockedReason).toBeUndefined()
 
-    await expect(ctx.loops.block(agent, refOf(resumed), { code: 'bogus', message: 'nope' })).rejects.toThrow(
+    await expect(ctx.loops.block(agent, refOf(resumed), { code: 'bogus', message: 'nope' } as never)).rejects.toThrow(
       /known loop block code/,
     )
 
@@ -603,7 +604,7 @@ describe('LoopService mutations', () => {
       nodeIndex: 0,
       role: 'writer',
       attempt: 1,
-      childSessionId: 'sess-writer-1',
+      childSessionId: SessionId('sess-writer-1'),
       cwd: 'E:/work/alpha',
       atRevision: 1,
     })
@@ -657,7 +658,9 @@ describe('LoopService mutations', () => {
     expect(current?.loop).toMatchObject({ revision: 1 })
 
     stopFlushFailure()
-    if (current === null || current.loop === undefined) throw new Error('expected current loop')
+    if (current === undefined || current === null || current.loop === undefined) {
+      throw new Error('expected current loop')
+    }
     ctx.loops.arm(agent, { id: current.loop.id, revision: current.loop.revision })
     expect(ctx.loops.activation(agent)).toBe('armed')
     const paused = await ctx.loops.pause(agent, { id: current.loop.id, revision: current.loop.revision })
@@ -669,7 +672,7 @@ describe('LoopService mutations', () => {
     ctx.on('session/flush', (flushed) => {
       if (flushed !== session) return
       const current = ctx.sessionProjections.stateOf(session, 'loop')?.current
-      if (current?.loop === undefined) return
+      if (current?.loop === undefined || current.createdAt === undefined || current.updatedAt === undefined) return
       const superseding: LoopSnapshotChangeMeta = {
         kind: 'loop/change',
         version: LOOP_CHANGE_VERSION,
@@ -911,7 +914,7 @@ describe('LoopService mutations', () => {
     expect(() => ctx.loops.activation(impostor)).toThrow(
       expect.objectContaining({ code: 'LOOP_AGENT_NOT_LIVE' }),
     )
-    expect(() => { ctx.loops.arm(impostor, { id: 'loop-none', revision: 1 }) }).toThrow(
+    expect(() => { ctx.loops.arm(impostor, { id: LoopId('loop-none'), revision: 1 }) }).toThrow(
       expect.objectContaining({ code: 'LOOP_AGENT_NOT_LIVE' }),
     )
     expect(() => { ctx.loops.disarm(impostor) }).toThrow(
@@ -986,7 +989,9 @@ describe('LoopService mutations', () => {
     expect(state.current?.loop).toMatchObject({ id: view.loop.id })
 
     await expect(ctx.loops.start(agent, startRequest())).rejects.toThrow(/loop replay failed at session event 1/)
-    const later = { type: 'loop/change', seq: 1, time: 2, data: { kind: 'loop/change', version: 98 } } as SessionEvent
+    // deliberately malformed: an externally corrupted record can never satisfy
+    // the typed payload, so the double cast keeps it on the SessionEvent side
+    const later = { type: 'loop/change', seq: 1, time: 2, data: { kind: 'loop/change', version: 98 } } as unknown as SessionEvent
     expect(applyLoopProjection(state, later)).toBe(state)
     expect(session.snapshotEvents()).toHaveLength(1)
   })
@@ -1059,7 +1064,7 @@ describe('LoopService mutations', () => {
       nodeIndex: 0,
       role: 'writer',
       attempt: 1,
-      childSessionId: 'sess-writer-1',
+      childSessionId: SessionId('sess-writer-1'),
       cwd: 'E:/work/alpha',
       atRevision: 1,
     })
@@ -1082,6 +1087,8 @@ describe('LoopService mutations', () => {
     const state = ctx.sessionProjections.stateOf(session, 'loop')
     if (state === undefined || state.current === null) throw new Error('expected current loop projection')
     const current = state.current
+    if (current.loop === undefined) throw new Error('expected current loop snapshot')
+    const currentLoopId = current.loop.id
 
     expect(loopProjectionDefinition.stateSchema.parse(state)).toEqual(state)
     expect(loopProjectionDefinition.wire?.viewSchema.parse(current)).toEqual(current)
@@ -1133,7 +1140,7 @@ describe('LoopService mutations', () => {
 
     const entry = {
       kind: 'node-started',
-      loopId: current.loop.id,
+      loopId: currentLoopId,
       round: 1,
       nodeIndex: 0,
       role: 'writer',
@@ -1154,7 +1161,7 @@ describe('LoopService mutations', () => {
       ...cloneState(state),
       current: { ...current, ledger: [{ ...entry, role: '' }] },
     })).toThrow(/non-empty string/)
-    expect(() => parseState({ current: { ledger: [entry] }, seenLoopIds: [current.loop.id], failure: null, inheritedEventCount: 0 }))
+    expect(() => parseState({ current: { ledger: [entry] }, seenLoopIds: [currentLoopId], failure: null, inheritedEventCount: 0 }))
       .toThrow(/ledger entry requires a current loop/)
     expect(() => parseState({ ...cloneState(state), inheritedEventCount: -1 }))
       .toThrow(/inheritedEventCount must be a non-negative/)
