@@ -644,6 +644,10 @@ git add packages/loop/loop/src/invariant.ts packages/loop/loop/tests/invariant.s
 git commit -m "feat(loop): durable loop-stream invariant companion"
 ```
 
+### Task B5 review carry-forward (2026-10-08)
+
+CHANGES_REQUESTED — one blocker, in fixup: tsc -b tsconfig.host.json (the host aggregate includes packages/*/*/tests/**/*.ts) is red with 19 strict-mode errors in service.spec.ts (1 B5 TS2352 at :989; 18 B4-era raw-string branded ids + possibly-undefined). The scoped tsc -b packages/loop/loop passes because it covers src only — every task's verification from B6 on MUST run the host aggregate and show only the two environmental TS2307 (ui-sidebar-documentpreview exceljs/xlsx). Everything else adjudicated legitimate: invariants gate green verified by construction; fork fold-fence correct per note L53 (all three tests); ownEvents() seed = the note's first fence at companion level (schedule precedent; seed events never dispatch); the corrupt-stream test rewrite follows "change obsolete behavior with its tests"; the tsconfig alias is generator-awarded and idempotent; --no-verify matches the environmental family. F3 (optional): the rewrite dropped the activation-disarmed assertion — re-added if cheap in the fixup.
+
 ### Task B6: README + note wiring
 
 **Files:**
