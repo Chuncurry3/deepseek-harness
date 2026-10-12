@@ -287,6 +287,12 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | yes | Active Loader-backed plugin package inventory for official DeepSeek LLM API requests |
 | `@deepseek-ai/dsh-token-meter` | yes | Replay-aware token measurement service (ctx.tokenMeter) for the DeepSeek Harness |
 
+## loop
+
+| Package | Config | Description |
+|---|---|---|
+| `@deepseek-ai/dsh-loop` | yes | Event-sourced cross-session relay loop state and lifecycle service for the DeepSeek Harness |
+
 ## lsp
 
 | Package | Config | Description |

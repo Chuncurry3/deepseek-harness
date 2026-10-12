@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-10-12-loop-events.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-10-12-loop-events.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: 1f5d90d3234cfa07
+/2026-10-12-loop-events:
+  en: 2fb668c188ff6e95
+  zh: 424c65adb10054bb
+/2026-10-12-loop-events/summary:
+  en: 75c356c186a1d59f
+  zh: 31fe3a07c4884f7e
+/2026-10-12-loop-events/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-10-12-loop-events/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-10-12-loop-events/compatibility:
+  en: c2c8d2db708d2817
+  zh: 8ecb11a34f59e3d0
+/2026-10-12-loop-events/verification:
+  en: 01b3c10a8a3d6edb
+  zh: 8c797aa4df57c5cc
+/2026-10-12-loop-events/dev-note:
+  en: b75c8458928b72b9
+  zh: b8227aa43454c831

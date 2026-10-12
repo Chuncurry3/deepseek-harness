@@ -258,6 +258,86 @@
       "source": "packages/goal/goal/src/domain.ts"
     },
     {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopRef",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopPhase",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopBlockReason",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopInputRef",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopChainNodeDef",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopChainDef",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopSnapshot",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopView",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopVerdict",
+      "source": "packages/loop/loop/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopSnapshotChangeMeta",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopClearChangeMeta",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopNodeStartedMeta",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopAttemptMeta",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopNodeSettledMeta",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "LoopChanged",
+      "source": "packages/loop/loop/src/domain.ts"
+    },
+    {
+      "doc": "docs/subsystems/loop.md",
+      "symbol": "StartLoopRequest",
+      "source": "packages/loop/loop/src/index.ts"
+    },
+    {
       "doc": "docs/subsystems/schedule.md",
       "symbol": "AfterScheduleRecord",
       "source": "packages/schedule/schedule/src/types.ts"

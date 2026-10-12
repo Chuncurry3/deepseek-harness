@@ -1965,6 +1965,29 @@ export type Config = Readonly<Record<string, never>>
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-llm-retry -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-loop -->
+<a id="deepseek-aidsh-loop"></a>
+
+## `@deepseek-ai/dsh-loop`
+
+- `inject`: `agents` · `sessionProjections` · `sessions`
+- `source`: [`packages/loop/loop/src/index.ts:346`](../packages/loop/loop/src/index.ts)
+
+```ts config-catalog
+/** Deployment defaults for loop runs and node handoffs. */
+export interface Config {
+  /** Round cap used when a start request omits its own. */
+  defaultMaxRounds?: number
+  /** Retry budget per node within one resume epoch. */
+  maxNodeRetries?: number
+  /** Character cap for one handed-over report. */
+  maxHandoffChars?: number
+  /** Character cap for the evaluator's aggregate round input. */
+  maxEvaluatorInputChars?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-loop -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-lsp-stdio -->
 <a id="deepseek-aidsh-lsp-stdio"></a>
 

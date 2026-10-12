@@ -1460,6 +1460,103 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'loops',
+    summary: 'Loop service (`ctx.loops`): compare-and-set lifecycle mutations and non-CAS node-ledger appends over the owning agent\'s session log.',
+    description: 'Loop service (`ctx.loops`): compare-and-set lifecycle mutations and non-CAS node-ledger appends over the owning agent\'s session log. Every mutation requires the agent to be live in this context and its session to be live in the session store (the durability barrier); a failed flush disarms the run and rethrows while the committed event stays in the log.',
+    methods: [
+      {
+        signature: 'readonly resolved: ResolvedConfig',
+        description: 'Resolved deployment defaults shared with the loop driver family.',
+        parameters: [],
+      },
+      {
+        signature: 'async start(agent: Agent, request: StartLoopRequest): Promise<LoopView>',
+        description: 'Create and arm one relay loop. A completed loop may be replaced with a fresh one; every other current phase must be cleared first.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'request', description: 'objective, frozen chain, scopes, and optional caps.' }],
+        returns: 'the created live view.',
+        throws: ['LoopError LOOP_AGENT_NOT_LIVE, LOOP_ALREADY_EXISTS, LOOP_INVALID_CHAIN, or LOOP_SCOPE_VIOLATION.'],
+      },
+      {
+        signature: 'async pause(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Pause the current loop and disarm it.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the paused view.',
+      },
+      {
+        signature: 'async resume(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Resume and arm the loop while its round budget still has capacity; the resume revision is the retry epoch floor.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the resumed view.',
+      },
+      {
+        signature: 'async awaitHuman(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Park the active loop at a human checkpoint awaiting an answer.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the awaiting view.',
+      },
+      {
+        signature: 'async continueFromHuman(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Continue the awaiting loop after its human answer.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the active view.',
+      },
+      {
+        signature: 'async advance(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Record one applied verdict by consuming a round of the budget.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the active view with the advanced round count.',
+      },
+      {
+        signature: 'async complete(agent: Agent, ref: LoopRef): Promise<LoopView>',
+        description: 'Mark the active loop complete and disarm it.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+        returns: 'the completed view.',
+      },
+      {
+        signature: 'async block(agent: Agent, ref: LoopRef, reason: LoopBlockReason): Promise<LoopView>',
+        description: 'Mark the loop blocked with a durable reason and disarm it.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }, { name: 'reason', description: 'policy-owned stable code and human-readable explanation.' }],
+        returns: 'the blocked view.',
+      },
+      {
+        signature: 'async clear(agent: Agent, ref: LoopRef): Promise<void>',
+        description: 'Clear the current loop from any phase while retaining the tombstone.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+      },
+      {
+        signature: 'async appendNodeStarted(agent: Agent, meta: Omit<LoopNodeStartedMeta, \'version\' | \'atRevision\'>, atRevision: number): Promise<void>',
+        description: 'Append one node-spawn record to the current loop\'s ledger.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'meta', description: 'spawn record without its version and revision stamp.' }, { name: 'atRevision', description: 'current loop revision the record was taken at.' }],
+      },
+      {
+        signature: 'async appendAttempt(agent: Agent, meta: Omit<LoopAttemptMeta, \'version\' | \'atRevision\'>, atRevision: number): Promise<void>',
+        description: 'Append one attempt-failure record to the current loop\'s ledger.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'meta', description: 'failure record without its version and revision stamp.' }, { name: 'atRevision', description: 'current loop revision the record was taken at.' }],
+      },
+      {
+        signature: 'async appendSettlement(agent: Agent, meta: Omit<LoopNodeSettledMeta, \'version\' | \'atRevision\'>, atRevision: number): Promise<void>',
+        description: 'Append one node settlement to the current loop\'s ledger.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'meta', description: 'settlement record without its version and revision stamp.' }, { name: 'atRevision', description: 'current loop revision the record was taken at.' }],
+      },
+      {
+        signature: 'activation(agent: Agent): LoopActivation',
+        description: 'Read the process-local activation for one exact live agent.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }],
+        returns: 'the current activation.',
+      },
+      {
+        signature: 'arm(agent: Agent, ref: LoopRef): void',
+        description: 'Arm the current loop at one exact revision without writing a durable event.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }, { name: 'ref', description: 'expected current revision.' }],
+      },
+      {
+        signature: 'disarm(agent: Agent): void',
+        description: 'Drop process-local continuation authority without a durable revision.',
+        parameters: [{ name: 'agent', description: 'owning live agent.' }],
+      },
+    ],
+  },
+  {
     key: 'lsp',
     summary: 'The LSP capability seam (`ctx.lsp`).',
     description: 'The LSP capability seam (`ctx.lsp`). Owns provider registration/selection and normalized query execution; exposes exactly the four operations and no protocol escape hatch.',
@@ -4134,6 +4231,14 @@ export const EVENT_API: readonly EventApiEntry[] = [
     parameters: [{ name: 'options', description: 'the full request. A LOOP-built request carries the process-local {@link markAgentLoopRequest} identity and arrives deep-frozen (mutation throws): its content is a pure function of the session log (the reconstructability Agent Note), so listeners read it, never rewrite it. Hand-built calls do not carry that marker; callers own their request inputs and must keep them unchanged until the stream settles.' }],
   },
   {
+    name: 'loop/changed',
+    mode: 'emit',
+    signature: '\'loop/changed\'(this: import(\'@deepseek-ai/dsh-scope\').Scoped<Agent>, payload: { agent: Agent; change: LoopChanged }): void',
+    summary: 'Loop mutation accepted by one live agent.',
+    description: 'Loop mutation accepted by one live agent. The matching `loop/change` session event has already committed. Listener failures are contained. Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.',
+    parameters: [{ name: 'payload', description: '.change - operation plus the fresh snapshot ref.' }],
+  },
+  {
     name: 'permission-presets/catalog-changed',
     mode: 'emit',
     signature: '\'permission-presets/catalog-changed\'(): void',
@@ -5648,6 +5753,66 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'LocalizedText',
     declaration: 'export type LocalizedText = string | {\n    readonly en: string;\n    readonly [locale: string]: string;\n};',
+  },
+  {
+    name: 'LoopActivation',
+    declaration: 'export type LoopActivation = \'armed\' | \'disarmed\';',
+  },
+  {
+    name: 'LoopAttemptMeta',
+    declaration: 'export interface LoopAttemptMeta {\n    readonly kind: \'attempt\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly attempt: number;\n    readonly failure: {\n        readonly code: string;\n        readonly message: string;\n    };\n    readonly atRevision: number;\n}',
+  },
+  {
+    name: 'LoopBlockReason',
+    declaration: 'export interface LoopBlockReason {\n    readonly code: \'node-failed\' | \'round-limit\' | \'evaluator-blocked\' | \'checkpoint-provider-missing\' | \'durability-failed\' | \'report-budget\';\n    readonly message: string;\n}',
+  },
+  {
+    name: 'LoopChainDef',
+    declaration: 'export interface LoopChainDef {\n    readonly objective: string;\n    readonly exit?: string;\n    readonly checkpoint: \'none\' | \'node\';\n    readonly nodes: readonly LoopChainNodeDef[];\n    readonly evaluatorPrompt?: string;\n}',
+  },
+  {
+    name: 'LoopChainNodeDef',
+    declaration: 'export interface LoopChainNodeDef {\n    readonly role: string;\n    readonly cwd?: string;\n    readonly prompt: string;\n    readonly output?: ObjectJsonSchema;\n    readonly inputs?: readonly LoopInputRef[];\n    readonly carryOver?: readonly string[];\n}',
+  },
+  {
+    name: 'LoopChanged',
+    declaration: 'export interface LoopChanged {\n    readonly operation: LoopOperation;\n    readonly ref: LoopRef;\n}',
+  },
+  {
+    name: 'LoopId',
+    declaration: 'export type LoopId = Branded<\'LoopId\'>;',
+  },
+  {
+    name: 'LoopInputRef',
+    declaration: 'export interface LoopInputRef {\n    readonly session: SessionId;\n}',
+  },
+  {
+    name: 'LoopNodeSettledMeta',
+    declaration: 'export interface LoopNodeSettledMeta {\n    readonly kind: \'settlement\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly role: string;\n    readonly attempt: number;\n    readonly childSessionId: SessionId;\n    readonly cwd: string;\n    readonly report: unknown;\n    readonly atRevision: number;\n}',
+  },
+  {
+    name: 'LoopNodeStartedMeta',
+    declaration: 'export interface LoopNodeStartedMeta {\n    readonly kind: \'node-started\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly role: string;\n    readonly attempt: number;\n    readonly childSessionId: SessionId;\n    readonly cwd: string;\n    readonly atRevision: number;\n}',
+  },
+  {
+    name: 'LoopOperation',
+    declaration: 'export type LoopOperation = \'create\' | \'pause\' | \'resume\' | \'await-human\' | \'continue\' | \'advance\' | \'complete\' | \'block\' | \'clear\';',
+  },
+  {
+    name: 'LoopPhase',
+    declaration: 'export type LoopPhase = \'active\' | \'awaiting-human\' | \'paused\' | \'blocked\' | \'complete\';',
+  },
+  {
+    name: 'LoopRef',
+    declaration: 'export interface LoopRef {\n    readonly id: LoopId;\n    readonly revision: number;\n}',
+  },
+  {
+    name: 'LoopSnapshot',
+    declaration: 'export interface LoopSnapshot extends LoopRef {\n    readonly objective: string;\n    readonly phase: LoopPhase;\n    readonly blockedReason?: LoopBlockReason;\n    readonly maxRounds: number;\n    readonly checkpoint: \'none\' | \'node\';\n    readonly readScopes: readonly string[];\n    readonly writeScopes: readonly string[];\n    readonly chain: LoopChainDef;\n    readonly roundsStarted: number;\n}',
+  },
+  {
+    name: 'LoopView',
+    declaration: 'export interface LoopView {\n    readonly loop: LoopSnapshot;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly activation: LoopActivation;\n}',
   },
   {
     name: 'LspHover',
@@ -7204,6 +7369,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SshStreamEndpoint',
     declaration: 'export type SshStreamEndpoint = z.infer<typeof streamEndpointSchema>;',
+  },
+  {
+    name: 'StartLoopRequest',
+    declaration: 'export interface StartLoopRequest {\n    readonly objective: string;\n    readonly chain: LoopChainDef;\n    readonly readScopes: readonly string[];\n    readonly writeScopes: readonly string[];\n    readonly maxRounds?: number;\n    readonly checkpoint?: \'none\' | \'node\';\n}',
   },
   {
     name: 'StorageBackend',

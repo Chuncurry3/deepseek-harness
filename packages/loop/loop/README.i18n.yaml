@@ -1,0 +1,73 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/loop/loop/README.md
+/:
+  en: 4c580775fc5d6698
+  zh: 3f55c5dc9d4c43bf
+/deepseek-ai-dsh-loop:
+  en: 08b9db0f2f44523e
+  zh: e66b8a2851e4a73f
+/deepseek-ai-dsh-loop/summary:
+  en: c592e22faca238ba
+  zh: c9cc841d81e3f4b8
+/deepseek-ai-dsh-loop/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-loop/use-this-package:
+  en: 9cdf569e49ec445c
+  zh: 3355348688a7f969
+/deepseek-ai-dsh-loop/use-this-package/when-to-use-it:
+  en: f6579b373c405708
+  zh: c7fc649b28ea51e2
+/deepseek-ai-dsh-loop/use-this-package/set-up-the-service:
+  en: 4c370021dbccd910
+  zh: 6ad6ebb4b42c55bf
+/deepseek-ai-dsh-loop/use-this-package/session-projection:
+  en: 73a86202c3c1e339
+  zh: a50a0731c210634d
+/deepseek-ai-dsh-loop/use-this-package/drive-the-lifecycle:
+  en: 7b613c79459e8eb9
+  zh: 493d2810ad719c11
+/deepseek-ai-dsh-loop/use-this-package/what-survives-and-what-does-not:
+  en: e8487728284de29b
+  zh: aea29474f9835fe8
+/deepseek-ai-dsh-loop/use-this-package/observing-a-loop:
+  en: 695a78441b814c4a
+  zh: 4a0003480e106419
+/deepseek-ai-dsh-loop/understand-the-implementation:
+  en: 592af7e68423bd1c
+  zh: 9b1f08393db1b14e
+/deepseek-ai-dsh-loop/understand-the-implementation/design:
+  en: 55f98bed2f1c83e7
+  zh: 50b237ad23732163
+/deepseek-ai-dsh-loop/understand-the-implementation/source-map:
+  en: dffa613a34b8e0a4
+  zh: b6319a96cc7a6343
+/deepseek-ai-dsh-loop/understand-the-implementation/events-and-attribution:
+  en: c6aa2c32bac59066
+  zh: 359744d6022e33f8
+/deepseek-ai-dsh-loop/further-exploration:
+  en: fcf3e9522e0ac97c
+  zh: fe1ca36cf234473d
+/deepseek-ai-dsh-loop/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-loop/model-experience/loop-state-mutations:
+  en: b9bf3e89a71eb06b
+  zh: b10cd9d6ce145dcd
+/deepseek-ai-dsh-loop/model-experience/loop-state-mutations/what-the-model-sees:
+  en: bbb30c5753b105bc
+  zh: aeb0734282619fb6
+/deepseek-ai-dsh-loop/model-experience/loop-state-mutations/token-effect:
+  en: efa43ca30b435f4b
+  zh: 996b2e42d6a7104c
+/deepseek-ai-dsh-loop/model-experience/loop-state-mutations/kv-cache-effect:
+  en: 28970845ceb78aac
+  zh: 9e6742d98f829725
+/deepseek-ai-dsh-loop/known-limitations-and-deferred-work:
+  en: 376321402aad2860
+  zh: 351d37a4393d640a
+/deepseek-ai-dsh-loop/known-limitations-and-deferred-work/dev-note:
+  en: 0f78aedf616bdabf
+  zh: 64eb24f54034ec1b

@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for loop.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/loop.md
+/cross-session-relay-loops:
+  en: 6565a80673fdda5e
+  zh: 0c682cc21edcbf79
+/cross-session-relay-loops/identity-and-lifecycle:
+  en: 0a275a88c5f50050
+  zh: 7ef6d9415a48a706
+/cross-session-relay-loops/durable-ledger:
+  en: b9b58a0cfff68838
+  zh: 5b36fa3b26ded5d8
+/cross-session-relay-loops/requests-and-notifications:
+  en: 77ab0b6573649b5d
+  zh: 95c4da7a21c28c13
+/cross-session-relay-loops/service-behavior:
+  en: 94487b42f0661667
+  zh: 094bc168364137a9
