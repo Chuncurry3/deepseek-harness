@@ -109,7 +109,7 @@ declare module '@deepseek-ai/dsh-session-projection/types' {
      * The session's current loop (the latest `loop/change` whole value) plus
      * the append-only node ledger, or `null` before the first create and
      * after a clear tombstone. The `loop/change` fold is last-wins; ledger
-     * events fold into the ledger map by `{round, nodeIndex, attempt}`.
+     * events fold into the ledger map by `{loopId, round, nodeIndex, attempt}`.
      */
     loop: LoopProjection | null
   }
