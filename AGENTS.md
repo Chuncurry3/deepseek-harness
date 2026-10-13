@@ -44,6 +44,7 @@ packages/    @deepseek-ai/dsh-<pkg> workspaces at packages/<group>/<pkg>/
   todo/                 todo_write tool
   plan/                 logged planning
   goal/                 session goals
+  loop/                 relay loops
   schedule/             scheduled follow-ups
   preset/               agent composition
   guard/                loop/tool guards

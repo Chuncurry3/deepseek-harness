@@ -32,6 +32,7 @@ Every package lives in exactly one group; new packages join existing groups, and
 | [`api/`](api/README.md) | Remote BFF assembly and Typert RPC gateway |
 | [`typert/`](typert/README.md) | Type graph generation, artifact loading, and runtime registry |
 | [`goal/`](goal/README.md) | Same-session goal persistence and lifecycle |
+| [`loop/`](loop/README.md) | Cross-session relay loop persistence and lifecycle |
 | [`schedule/`](schedule/README.md) | Host-owned scheduled follow-ups |
 | [`feedback/`](feedback/README.md) | Human feedback capture and command |
 | [`telemetry/`](telemetry/README.md) | Shared Cordis OTel reporting channels |
