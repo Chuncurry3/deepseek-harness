@@ -664,6 +664,13 @@ git commit -m "docs(loop): dsh-loop README"
 
 ---
 
+### Task B6 review carry-forward (2026-10-08)
+
+APPROVED — every claim reproduced to the digit (40/3 doc-sync, 96/96, host tsc = the two environmental TS2307 only, all catalog/persistence/pairing gates green). Two INFO notes:
+
+- zh line counts reported via PowerShell 5.1 Get-Content (ANSI decode of BOM-less UTF-8) undercounted: true counts are README.zh 184 / loop.zh 391 (git numstat). Measure zh files with git numstat or -Encoding utf8.
+- "loop" rides the module-graph/doc-graphs MAX_SAFE_INTEGER alphabetical tail while "goal" is curated in GROUP_ORDER — deterministic and gate-green; an optional later docs pass may seat loop next to goal for narrative symmetry.
+
 ## Phase C — `packages/loop/loop-chain-driver`: the continuation policy (PR 2, task 2)
 
 ### Task C1: chain parsing + validation
