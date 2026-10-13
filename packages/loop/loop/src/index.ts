@@ -947,6 +947,7 @@ export class LoopService extends TypertRemoteService {
     }
     agent.session.append(key, meta)
     await this.flushMutation(agent)
+    // Post-commit fold check: a fold failure retained by this append throws here instead of passing silently.
     this.state(agent.session)
   }
 

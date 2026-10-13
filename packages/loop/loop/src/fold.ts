@@ -88,6 +88,9 @@ export function emptyLoopFoldState(): LoopFoldState {
   }
 }
 
+/* jscpd:ignore-start -- goal-template mirror: these strict decoder primitives deliberately
+   mirror dsh-goal's fold decoders (only the failure-message prefix differs) until a shared
+   fold-primitives home extracts them. */
 /** Whether a value is a JSON record rather than an array. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -108,6 +111,7 @@ function nonNegativeInteger(value: unknown, field: string): number {
   }
   return value
 }
+/* jscpd:ignore-end */
 
 /** Require one string with non-whitespace content. */
 function nonEmptyString(value: unknown, field: string): string {

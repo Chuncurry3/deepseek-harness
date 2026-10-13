@@ -102,6 +102,7 @@ The package is built on event sourcing: a `Session` is an append-only log of typ
 | [`dsh-util-values`](../../util/values/README.md) | Shared lossless JSON validation and detached snapshots |
 | [`src/repair.ts`](src/repair.ts) | Shared tool-result recovery for failed steps, interrupted logs, and fork seeds |
 | [`src/invariant.ts`](src/invariant.ts) | Invariant companion: seq, turn/step enclosure, tool call/result pairing |
+| [`src/fold-companion.ts`](src/fold-companion.ts) | Fold-based invariant companion factory: per-session incremental folds with two-phase candidate staging |
 
 ### Append validation
 

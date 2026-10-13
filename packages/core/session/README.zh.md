@@ -102,6 +102,7 @@ session.deriveMessages()         // the derived model history
 | [`dsh-util-values`](../../util/values/README.zh.md) | 共享无损 JSON 校验与分离式快照 |
 | [`src/repair.ts`](src/repair.ts) | 失败步骤、中断日志与 fork 种子共享的工具结果恢复 |
 | [`src/invariant.ts`](src/invariant.ts) | 不变式配套：序号、轮次／步骤闭合、工具调用／结果配对 |
+| [`src/fold-companion.ts`](src/fold-companion.ts) | 基于折叠的不变式配套工厂：按会话增量折叠，两阶段候选事件暂存 |
 
 ### 追加校验
 
