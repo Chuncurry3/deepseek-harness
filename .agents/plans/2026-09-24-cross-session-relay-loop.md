@@ -671,6 +671,29 @@ APPROVED — every claim reproduced to the digit (40/3 doc-sync, 96/96, host tsc
 - zh line counts reported via PowerShell 5.1 Get-Content (ANSI decode of BOM-less UTF-8) undercounted: true counts are README.zh 184 / loop.zh 391 (git numstat). Measure zh files with git numstat or -Encoding utf8.
 - "loop" rides the module-graph/doc-graphs MAX_SAFE_INTEGER alphabetical tail while "goal" is curated in GROUP_ORDER — deterministic and gate-green; an optional later docs pass may seat loop next to goal for narrative symmetry.
 
+## Phase B checkpoint verdict (2026-10-08)
+
+The two-stage checkpoint on e9013f660d..c566a8cfa5 returned: spec stage **PHASE-PASSES** (all 34 note requirements for the domain package verified with file:line evidence; cross-task seams clean; the carry-forward chain closed at the right commits); quality stage **CHANGES-REQUESTED** on one blocker — `pnpm run duplication` red with three loop↔goal clones. The fix round closed it:
+
+- `packages/core/session/src/fold-companion.ts` exports `installFoldInvariant(ctx, fail, config)` + `FoldInvariantConfig` (home forced to dsh-session: an invariants→session reference is a TS6202 cycle; the package-invariants gate statically requires each companion to keep a local `install` arrow and a local `ctx.invariants.register(PACKAGE_NAME, install)` call, so each companion keeps a ~6-line skeleton delegating to the factory). **The Phase C/D companions (the note requires ./invariant for all four loop packages) MUST use this factory — never hand-roll the staging protocol again.**
+- Clones b+c cleared by the factory; clone a (fold primitives) dispositioned as a justified loop-side jscpd ignore — goal's `goal change` message prefix makes true sharing behavior-changing; a shared-primitives extraction stays deferred (not routed to any task).
+- Routing updates: F4 (in-package fold/index primitive asymmetry) stays with C1's parsing work; F5 (superseded-commit emit gap) routes to C3 — one JSDoc sentence on `loop/changed`; loop's client.ts/domain.ts client-lane coverage is Phase E-owned; the lockfile importer now has its in-tree disposition (Phase E Step 3).
+- The E2 implemented-note obligations list gains the fold-invariant factory decision (dsh-session home, gate-mandated skeleton, cloneState interleave below the clone threshold).
+- Battery at the fix HEAD: duplication 0 clones, goal 103/103, loop 96/96, topology 13/13, session 560/560, host tsc = the two environmental TS2307 only, oxlint 0/0, doc-sync 40/3 (the sanctioned environmental trio).
+
+## External design references (2026-10-08 research — binding for Phase C/D)
+
+A survey of public analogs (LangGraph, Temporal, MS Agent Framework, AutoGen 0.4, OpenAI Agents SDK, CrewAI, Google ADK, Mastra, vibe-kanban, goose, DBOS, Claude Code) confirmed most of this plan's driver design and yielded six adoptable ideas, reconciled against the note where they conflict:
+
+1. **Memoized-attempt resume (LangGraph pending-writes + DBOS memoization) — task C3.** CONFIRMS the existing resume design and adds one ordering rule: a node with a settled `loop/node` event contributes its recorded report as carry-over and is never re-invoked (`firstUnsettledIndex` already guarantees this); the `loop/node`/`loop/attempt` append must be durable BEFORE the driver marks the node settled in memory. Attempt identity includes attemptIndex + childSessionId.
+2. **Typed handoff carry contract (OpenAI Agents SDK input_filter/input_type + AutoGen HandoffMessage) — task C2.** Formalize the carry as an explicit typed, schema-validated object built by `assembleNodePrompt`'s inputs (named reports, carryOver, feedback, declared input session ids — the note's visibility rule, NOT raw last-messages: lean-push forbids transcript pushes). The driver never spawns a node outside the frozen chain's declared node set (load-time validation — C1 already enforces role uniqueness).
+3. **Failure classification (Temporal nonRetryableErrorTypes) — task C3.** Not every child failure retries: scope violations, invariant violations, and missing-project-dir failures block immediately with their reason (retrying cannot fix them); only transient tool/LLM failures retry within `maxNodeRetries` and the epoch. Bounded backoff between retries is an OPTIONAL refinement (config keys, never hardcoded) — record as deferred if C3's scope is tight. Per-node token/turn budgets stay deferred per the note.
+4. **Crash ≠ resume (MS Agent Framework) — task C3.** CONFIRMS the existing restart semantics (new driver instance starts no work until explicit resume); the paused state after a crash carries block reason `interrupted-by-shutdown`.
+5. **Replay-from-node (CrewAI `replay -t`) — task D1.** `/loop resume --from <node|role>` reuses settled nodes' recorded outputs and re-runs only the tail — a resume variant over the append-only ledger, never a rewrite.
+6. **Fork mints new identities (LangGraph #4987 + Claude Code --fork-session) — task C3 tests.** The fork-fence tests also assert the child's events never append into the parent's log and node identity is keyed by (sessionId, boundary), not bare nodeIndex.
+
+D2's query surface reports why a run continues (round budget consumed, node retries remaining) derived from the ledger — the AutoGen composable-termination-conditions idea without new state. Non-adopted anti-patterns: central servers/queues, opaque state blobs, prompt-heuristic routing, unbounded context snowballing, identity reuse across forks. The ADK `temp:` transient-partition idea is recorded for the E2 note as a possible future snapshot-slimming pass, not a Phase C requirement.
+
 ## Phase C — `packages/loop/loop-chain-driver`: the continuation policy (PR 2, task 2)
 
 ### Task C1: chain parsing + validation
