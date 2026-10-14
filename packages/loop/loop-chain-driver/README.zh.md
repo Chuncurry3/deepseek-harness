@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-loop-chain-driver` 解析人工编写的中继链文档——那份为每个角色节点写明工作区、提示词、声明的输入会话、carryOver 引用与输出 schema 的 YAML 文件——得到 `@deepseek-ai/dsh-loop` 所持久化的冻结 `LoopChainDef`。校验严格且失败直接：未知键、重复角色、未知 carryOver 引用、空白字符串与超出子集的输出覆盖会在一个聚合错误中一并列出每条出错路径。`defaultChain` 为未指定文档的启动提供单工作节点链。
+`dsh-loop-chain-driver` 解析人工编写的中继链文档——为每个节点写明工作区、提示词、inputs、carryOver 与输出 schema 的 YAML 文件——得到 `@deepseek-ai/dsh-loop` 持久化的冻结 `LoopChainDef`；校验严格且高声，一个聚合错误具名每条出错路径，`defaultChain` 提供单工作节点回退。本包同时持有节点交接：`assembleNodePrompt` 把具名报告、开场反馈与拉取面组成的 lean-push 携带渲染为每个节点子会话的提示词，`validateReport` 校验结算报告是否符合 schema 与 `maxHandoffChars` 预算，`evaluatorInputBudget` 度量评估器的聚合。
 
 ## 目录
 
@@ -36,7 +36,7 @@ const fallback = defaultChain('Ship the migration')
 
 ### 何时使用
 
-启动中继 loop 的消费方在启动时解析工作区链文档——约定为 `loop.yaml`，或 `--chain <file>` 指定的文件；文件缺失时退回 `defaultChain(objective)`，校验通过的链冻结进第一条 `loop/change` 快照。其他所有消费方从 loop 快照读取冻结的链，而不是重新解析。
+启动中继 loop 的消费方在启动时解析工作区链文档——约定为 `loop.yaml`，或 `--chain <file>` 指定的文件；文件缺失时退回 `defaultChain(objective)`，校验通过的链冻结进第一条 `loop/change` 快照。其他所有消费方从 loop 快照读取冻结的链，而不是重新解析。交接引擎服务于每次节点派生：它以普通参数接收折叠后的 loop 视图、正在驱动的轮次与已解析的预算上限。
 
 ### 链文档
 
@@ -63,6 +63,14 @@ const fallback = defaultChain('Ship the migration')
 
 未知键在所有层级都会被拒绝。失败抛出一个 `Error`，其消息把每个问题列为一行 `- <path>: <message>`；YAML 语法失败会写明 YAML 解析器拒绝的行。
 
+### 节点交接
+
+交接函数位于 `src/handoff.ts`；驱动器插件与包内测试是其调用方。`assembleNodePrompt(view, round, nodeIndex)` 返回一个节点的提示词字符串——objective、轮次编号、冻结的角色指令、可见性规则具名的报告、开场评估器反馈、声明的输入会话 id、先前子会话 id 与读作用域声明。原始转录永不进入提示词：接收节点按需通过 `loop_session_search` / `loop_session_read` 从具名会话拉取细节。
+
+可见性规则：节点默认看到同轮前驱报告，加上其 `carryOver` 具名角色的上一轮报告；上一轮 `continue` 裁决的反馈强制进入首个节点，并传给每个声明 `carryOver` 的节点。最后一个节点索引是评估器，它看到本轮全部报告、开场反馈与退出条件。
+
+声明 `inputs` 的节点在其 schema 之上结算，外加驱动器注入的必填 `inherited` 数组——每个声明的输入会话恰好一个字符串条目；注入会替换任何作者声明的 `inherited` 属性。`validateReport(node, report, maxHandoffChars)` 返回违规列表，为空表示报告可以结算：schema 一致性走持久折叠强制的同一以对象为根的 JSON Schema 子集、`inherited` 条目数精确匹配、序列化报告的 UTF-16 码元尺寸对照预算。`evaluatorInputBudget(view, round, maxEvaluatorInputChars)` 求本轮序列化报告与开场反馈之和；超限聚合返回 `report-budget` 阻断要素，具名轮次、肇事报告与超出字符数。两个预算都是普通参数——模块不依赖 Config。
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -80,19 +88,22 @@ const fallback = defaultChain('Ship the migration')
 - **一个高声的聚合错误。** `safeParse` 收集全部问题，失败消息把它们渲染为带路径前缀的行，而不是停在第一个问题。
 - **解析时品牌化。** 每个 `inputs[].session` 字符串在解析时成为 `SessionId`，冻结的定义因此端到端携带品牌 id。
 - **默认链。** `defaultChain(objective)` 返回一个 `iterate` 节点，带默认交接待遇、无输出覆盖；它不携带 `evaluatorPrompt`，因为默认评估器指令属于运行链的续行驱动器，且 objective 遵循与解析文档相同的规范化字符串规则。
+- **Lean push、lossless pull。** `assembleNodeCarry` 构造提示词渲染所用的类型化携带对象，并经 zod 严格镜像校验，因此报告不是无损 JSON 值的账目结算会在任何提示词渲染前高声失败。提示词只携带具名报告并点名拉取面：声明的输入会话、先前子会话与 loop 会话查询工具所服务的读作用域。
 
 ### 源码地图
 
 | 文件 | 职责 |
 |---|---|
 | [`src/chain.ts`](src/chain.ts) | 链文档解析、校验与默认链 |
+| [`src/handoff.ts`](src/handoff.ts) | 节点交接组装、报告校验与评估器输入预算 |
 | [`src/index.ts`](src/index.ts) | 包入口；尚不承载运行时 API |
-| — | 不发布运行时不变量伴生模块；本包在自身的输入操作处解析并校验链文档，没有可供复查的可变运行时关系 |
+| — | 不发布运行时不变量伴生模块；本包在解析处校验链文档、以纯函数校验结算报告，没有可供复查的可变运行时关系 |
 | [`tests/chain.spec.ts`](tests/chain.spec.ts) | 解析、拒绝与默认链行为 |
+| [`tests/handoff.spec.ts`](tests/handoff.spec.ts) | 可见性规则、预算与校验行为 |
 
 ### 不变量归属
 
-本包不发布不变量伴生模块，因为它是链文档解析器：其不可信输入在归属的解析操作（`parseChainDocument`）处校验，本包自身没有可供复查的可变运行时关系。
+本包不发布不变量伴生模块，因为它持有作用于折叠 loop 状态的纯函数：其不可信输入在归属的解析操作（`parseChainDocument`）处校验，并在结算校验（`validateReport`）处再次校验，本包自身没有可供复查的可变运行时关系。
 
 </details>
 
@@ -127,13 +138,27 @@ const fallback = defaultChain('Ship the migration')
 
 在续行驱动器把解析出的链文本放入模型可见输入之前，不会影响 KV Cache。
 
+### 节点提示词
+
+#### 模型看到什么
+
+`assembleNodePrompt` 产出每个节点子会话完整的首轮指令：中继轮次与节点位置、objective、冻结的角色指令（最终节点索引用链的 `evaluator.prompt` 覆盖或默认评估器指令）、以单行 JSON 呈现的携带报告及其轮次、角色与子会话 id、开场评估器反馈、声明的输入会话 id、先前子会话 id，以及点名 `loop_session_search` / `loop_session_read` 的读作用域声明。原始转录永不被推送；提示词引导节点按需从具名会话拉取细节。
+
+#### Token 影响
+
+每个携带报告都受已解析的 `maxHandoffChars` 约束——其序列化 UTF-16 尺寸已在结算时校验——评估器的聚合受 `maxEvaluatorInputChars` 约束，超限以 `report-budget` 阻断而非截断。提示词长度随携带报告的数量伸缩，从不随会话的转录尺寸伸缩。
+
+#### KV Cache 影响
+
+节点提示词发给全新子会话，轮内与跨轮都没有 KV Cache 复用；确定性的段落顺序与报告序列化让重驱动轮次的提示词保持稳定。
+
 ## 已知限制与延期工作
 
 <a id="known-limitations-and-deferred-work"></a>
 
 这些限制说明什么时候不该找本包。它们是当前包约束，不是任务积压。
 
-- **目前只做解析**——续行驱动器插件（推进节点、派生全新子会话、校验报告、运行评估器）与 `/loop` 命令面在本阶段稍后交付；今天本包只暴露链文档解析与默认链。
+- **尚无驱动器插件**——续行驱动器插件（推进节点、派生全新子会话、运行评估器）与 `/loop` 命令面在本阶段稍后交付；今天本包暴露链文档解析、默认链与纯交接函数。
 - **文档语言是子集**——解析器接受的恰好是 `@deepseek-ai/dsh-loop` 中持久折叠能回放的内容；链语言扩展必须先落在 loop 服务，否则解析出的链会在回放校验中失败。
 - **不检查工作区存在性**——`cwd` 只校验为非空字符串；目录是否存在由驱动器在派生时解决。
 - **会话 id 只品牌化、不解析**——`inputs[].session` 成为 `SessionId` 品牌而不做查找；会话是否存在在 loop 启动时限定，不在解析时。
@@ -144,6 +169,6 @@ const fallback = defaultChain('Ship the migration')
 <details>
 <summary>维护者的工作上下文——点击展开</summary>
 
-本开发备注是维护者的工作上下文，明确不具权威性。`src/chain.ts` 用 zod 严格对象 schema 按 `@deepseek-ai/dsh-loop` 回放时应用的同一套字段规则做校验；折叠拥有权威规则，持久语言变更必须两侧同步。重复角色检查挂在 nodes 数组上，carryOver 引用检查挂在整个文档上，因此基础解析失败时仍会尽可能报告所有问题。`yaml` 与 settings 文件提供方解析用户文档所用的库相同。
+本开发备注是维护者的工作上下文，明确不具权威性。`src/chain.ts` 用 zod 严格对象 schema 按 `@deepseek-ai/dsh-loop` 回放时应用的同一套字段规则做校验；折叠拥有权威规则，持久语言变更必须两侧同步。重复角色检查挂在 nodes 数组上，carryOver 引用检查挂在整个文档上，因此基础解析失败时仍会尽可能报告所有问题。`yaml` 与 settings 文件提供方解析用户文档所用的库相同。`src/handoff.ts` 直接读取折叠账目：每个节点索引取最新结算、上一轮裁决仅取带可见反馈的 `continue` 决定、预算超限的肇事报告取最大贡献者。携带对象的 zod 镜像比折叠更严格——报告必须是无损 JSON——因为提示词经 `JSON.stringify` 渲染它们。
 
 </details>

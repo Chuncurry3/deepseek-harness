@@ -9,8 +9,8 @@
   en: 4fe96410062b1a18
   zh: fcd32a2dec2c592b
 /deepseek-ai-dsh-loop-chain-driver/summary:
-  en: 5de9499714d536e6
-  zh: 86d4c0b70ec9ee70
+  en: eac4cf7babcc0a2a
+  zh: 5ef0bd81cb2c9b43
 /deepseek-ai-dsh-loop-chain-driver/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,23 +18,26 @@
   en: a59ef51fd46004c8
   zh: 785478ad7b6f5d5a
 /deepseek-ai-dsh-loop-chain-driver/use-this-package/when-to-use-it:
-  en: 0275409bb3f1f0a8
-  zh: 466a18b288d7f2cf
+  en: 0c4b6404632e2877
+  zh: a3f1acd89e9433e7
 /deepseek-ai-dsh-loop-chain-driver/use-this-package/the-chain-document:
-  en: 27ff727f51146369
-  zh: bba43ffa4075bfbd
+  en: b59ffa68486aa02d
+  zh: 6c8462fb51b723be
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/the-node-handoff:
+  en: cd92d82cf1c5b399
+  zh: c9e5836fda490517
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation:
   en: 42f8b634b152cc39
   zh: c39c16ff04a9d5c0
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/design:
-  en: 8f2d347676dd4561
-  zh: 0602c48cebaf0afb
+  en: dd9698aac7129af5
+  zh: 99d5a0807e2aa2ce
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/source-map:
-  en: b0535e2d05d7fd5d
-  zh: e13ae95912a19781
+  en: d59a7ee63c9c74e5
+  zh: df86c3b2651c37ab
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/invariant-ownership:
-  en: 2c755bce3a46b6ba
-  zh: bf221bdf78b434ff
+  en: 5e465b730bff982c
+  zh: 514877ab279027d6
 /deepseek-ai-dsh-loop-chain-driver/further-exploration:
   en: 293162bd5fff81fa
   zh: d96e4d6cf3549db8
@@ -53,9 +56,21 @@
 /deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/kv-cache-effect:
   en: 64aa29c191dae1fc
   zh: 71e7b6a927a8b646
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts:
+  en: 2c7d6f1db8af48ca
+  zh: 4796cfbf7a2b140b
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/what-the-model-sees:
+  en: 4ab9e2e4d659c908
+  zh: ddfafca0db860a2b
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/token-effect:
+  en: 8ca32e74ed91b0c1
+  zh: 8e2d0e2bf2ab0b06
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/kv-cache-effect:
+  en: 5a3ac3a0fa3d3189
+  zh: 71c6e13e73b553cc
 /deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work:
-  en: 0fc4f7238e457013
-  zh: 0a713868a6bf4a03
+  en: 292164b6bcf5ee24
+  zh: 67c1f1667ca8d0b3
 /deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work/dev-note:
-  en: 75df64522f91fbba
-  zh: 855c40964f2ee432
+  en: c743fd9466b1070d
+  zh: c2e750546108071d
