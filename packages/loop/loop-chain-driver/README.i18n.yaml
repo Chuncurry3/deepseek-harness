@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/loop/loop-chain-driver/README.md
+/:
+  en: 4af4ca5d6ceb2de0
+  zh: 2932ffc82d6517d5
+/deepseek-ai-dsh-loop-chain-driver:
+  en: 4fe96410062b1a18
+  zh: fcd32a2dec2c592b
+/deepseek-ai-dsh-loop-chain-driver/summary:
+  en: 5de9499714d536e6
+  zh: 86d4c0b70ec9ee70
+/deepseek-ai-dsh-loop-chain-driver/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-loop-chain-driver/use-this-package:
+  en: a59ef51fd46004c8
+  zh: 785478ad7b6f5d5a
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/when-to-use-it:
+  en: 0275409bb3f1f0a8
+  zh: 466a18b288d7f2cf
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/the-chain-document:
+  en: 27ff727f51146369
+  zh: bba43ffa4075bfbd
+/deepseek-ai-dsh-loop-chain-driver/understand-the-implementation:
+  en: 42f8b634b152cc39
+  zh: c39c16ff04a9d5c0
+/deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/design:
+  en: 2a37724755effda8
+  zh: 640374723674a46d
+/deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/source-map:
+  en: b0535e2d05d7fd5d
+  zh: e13ae95912a19781
+/deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/invariant-ownership:
+  en: 2c755bce3a46b6ba
+  zh: bf221bdf78b434ff
+/deepseek-ai-dsh-loop-chain-driver/further-exploration:
+  en: 293162bd5fff81fa
+  zh: d96e4d6cf3549db8
+/deepseek-ai-dsh-loop-chain-driver/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents:
+  en: defe92b7e802e27b
+  zh: bf91166a1b446a25
+/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/what-the-model-sees:
+  en: e01c95b8422bb8aa
+  zh: 002eca3ae283b24c
+/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/token-effect:
+  en: 6bb778313e4d4764
+  zh: 1df0343eb769bddd
+/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/kv-cache-effect:
+  en: 64aa29c191dae1fc
+  zh: 71e7b6a927a8b646
+/deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work:
+  en: 0fc4f7238e457013
+  zh: 0a713868a6bf4a03
+/deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work/dev-note:
+  en: 75df64522f91fbba
+  zh: 855c40964f2ee432
