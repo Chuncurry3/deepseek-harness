@@ -740,6 +740,12 @@ git add packages/loop/loop-chain-driver/src/chain.ts packages/loop/loop-chain-dr
 git commit -m "feat(loop): chain document parsing and default chain"
 ```
 
+### Task C1 — review outcome (2026-10-08)
+
+Spec review: **APPROVED** — fold-parity confirmed statically AND empirically in both directions (11-document round-trip through decodeLoopChange, 18 invalid cases loud, no reverse seam; YAML duplicate keys throw with line numbers; non-JSON floats cannot reach the frozen chain); all 7 deviations adjudicated gate- or note-forced; the companion omission is gate-legal (OMITTED_COMPANION_REASON matched) and routed below. Two MINOR findings fixed in the follow-up commit: defaultChain's objective now validates through the shared normalized-string rule (one schema + one message constant), and the default-chain test title no longer contradicts the documented no-evaluatorPrompt behavior.
+
+Carry-forwards: **C3** — revisit the companion via the fold-companion factory once the driver owns runtime event relations, add the packages/loop/README.md group-map row (replacing the "Parsing only, for now" limitation wording), and turn src/index.ts into the plugin (the 2-line stub's `name` export exists for the config-catalog row; knip may flag it until C3 uses it). **E3** — lockfile importers for BOTH loop packages in a networked environment (Step 3's wording covers both), the third-party-notices environmental blocker (pdfjs-dist/xlsx/exceljs unreachable), and the stub-line coverage window until C3 imports it. The gitignored node_modules junctions (yaml, zod) are local-only resolution fallbacks and stay untracked.
+
 ### Task C2: node prompt assembly + handoff budget
 
 **Files:**
