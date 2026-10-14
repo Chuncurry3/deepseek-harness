@@ -45,10 +45,16 @@ describe('parseChainDocument', () => {
 })
 
 describe('defaultChain', () => {
-  it('the default chain is one worker node plus an evaluator prompt', () => {
+  it('the default chain is one worker node with the default prompt', () => {
     const chain = defaultChain('优化工具')
     expect(chain.nodes).toHaveLength(1)
     expect(chain.nodes[0]?.role).toBe('iterate')
     expect(chain.nodes[0]?.output).toBeUndefined()
+    expect(chain.evaluatorPrompt).toBeUndefined()
+  })
+
+  it('a blank or padded objective fails loud, like a parsed document', () => {
+    expect(() => defaultChain('')).toThrow(/objective/)
+    expect(() => defaultChain('  padded  ')).toThrow(/objective/)
   })
 })

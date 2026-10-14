@@ -22,6 +22,10 @@ const visibleString = (message: string) =>
 const normalizedString = (message: string) =>
   z.string().refine(value => value.trim().length > 0 && value === value.trim(), message)
 
+/** The objective rule and its message, shared by the document schema and the default chain. */
+const OBJECTIVE_MESSAGE = 'objective must be a non-empty string without surrounding whitespace'
+const objectiveSchema = normalizedString(OBJECTIVE_MESSAGE)
+
 /** One declared input session, branded at parse time exactly like the durable fold. */
 const inputRefSchema = z.strictObject({
   session: visibleString('session must be a non-empty string').transform(SessionId),
@@ -58,7 +62,7 @@ const nodeSchema = z.strictObject({
 
 /** The whole chain document; every parsed chain must also survive the durable fold's replay validation. */
 const chainDocumentSchema = z.strictObject({
-  objective: normalizedString('objective must be a non-empty string without surrounding whitespace'),
+  objective: objectiveSchema,
   exit: visibleString('exit must be a non-empty string').optional(),
   checkpoint: z.enum(['none', 'node']).default('none'),
   nodes: z.array(nodeSchema).min(1).superRefine((nodes, ctx) => {
@@ -141,12 +145,16 @@ export function parseChainDocument(source: string): LoopChainDef {
  * override. It carries no `evaluatorPrompt` — the default evaluator
  * instruction belongs to the continuation driver that runs the chain, exactly
  * where a document's `evaluator.prompt` override would apply.
- * @param objective - the loop objective the worker advances.
+ * @param objective - the loop objective the worker advances, held to the same
+ * normalized-string rule as a parsed document's objective.
  * @returns The frozen one-node chain definition with checkpointing off.
+ * @throws When the objective is blank or carries surrounding whitespace.
  */
 export function defaultChain(objective: string): LoopChainDef {
+  const parsed = objectiveSchema.safeParse(objective)
+  if (!parsed.success) throw new Error(OBJECTIVE_MESSAGE)
   return {
-    objective,
+    objective: parsed.data,
     checkpoint: 'none',
     nodes: [{ role: 'iterate', prompt: DEFAULT_WORKER_PROMPT }],
   }

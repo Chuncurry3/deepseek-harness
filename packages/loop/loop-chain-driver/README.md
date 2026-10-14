@@ -79,7 +79,7 @@ This section explains how parsing realizes the behavior above; the accepted fiel
 - **Strict objects everywhere.** `z.strictObject` rejects unrecognized keys at the document, node, input-entry, and evaluator levels; `checkpoint` defaults to `none` and a document `evaluator.prompt` maps to the flat `evaluatorPrompt` field during parsing.
 - **One loud aggregate error.** `safeParse` collects every issue, and the failure message renders them as path-prefixed lines instead of stopping at the first.
 - **Branding at parse.** Each `inputs[].session` string becomes a `SessionId` during parsing, so the frozen definition carries branded ids end to end.
-- **The default chain.** `defaultChain(objective)` returns one `iterate` node with the default handoff expectations and no output override; it carries no `evaluatorPrompt` because the default evaluator instruction belongs to the continuation driver that runs the chain.
+- **The default chain.** `defaultChain(objective)` returns one `iterate` node with the default handoff expectations and no output override; it carries no `evaluatorPrompt` because the default evaluator instruction belongs to the continuation driver that runs the chain, and the objective is held to the same normalized-string rule as a parsed document's objective.
 
 ### Source map
 

@@ -79,7 +79,7 @@ const fallback = defaultChain('Ship the migration')
 - **处处严格对象。** `z.strictObject` 在文档、节点、inputs 条目与 evaluator 各层级拒绝未知键；`checkpoint` 缺省为 `none`，文档中的 `evaluator.prompt` 在解析时映射为扁平的 `evaluatorPrompt` 字段。
 - **一个高声的聚合错误。** `safeParse` 收集全部问题，失败消息把它们渲染为带路径前缀的行，而不是停在第一个问题。
 - **解析时品牌化。** 每个 `inputs[].session` 字符串在解析时成为 `SessionId`，冻结的定义因此端到端携带品牌 id。
-- **默认链。** `defaultChain(objective)` 返回一个 `iterate` 节点，带默认交接待遇、无输出覆盖；它不携带 `evaluatorPrompt`，因为默认评估器指令属于运行链的续行驱动器。
+- **默认链。** `defaultChain(objective)` 返回一个 `iterate` 节点，带默认交接待遇、无输出覆盖；它不携带 `evaluatorPrompt`，因为默认评估器指令属于运行链的续行驱动器，且 objective 遵循与解析文档相同的规范化字符串规则。
 
 ### 源码地图
 
