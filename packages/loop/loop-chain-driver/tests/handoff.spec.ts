@@ -189,6 +189,13 @@ describe('assembleNodePrompt', () => {
     expect(prompt).not.toContain('round-2-direct-marker')
   })
 
+  it('re-rendering the same folded view is byte-identical — a re-drive rebuilds the exact prompt', () => {
+    const first = assembleNodePrompt(viewRoundComplete, 3, 2)
+    const second = assembleNodePrompt(viewRoundComplete, 3, 2)
+    expect(second).toBe(first)
+    expect(assembleNodeCarry(viewRoundComplete, 3, 2)).toEqual(assembleNodeCarry(viewRoundComplete, 3, 2))
+  })
+
   it('a plain middle node receives same-round predecessor reports only — no feedback, no carry-over, no inputs', () => {
     const prompt = assembleNodePrompt(viewMidRound, 2, 1)
     expect(prompt).toContain('node 2 of 4: "experiment"')
