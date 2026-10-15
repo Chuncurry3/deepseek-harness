@@ -824,6 +824,16 @@ git commit -m "feat(loop): relay chain continuation driver"
 
 ---
 
+### Task C3 — review outcome (2026-10-09)
+
+Spec review: **CHANGES_REQUESTED → both blockers fixed.** (1) The note's spawn-time scope re-assert (L32) now lives in driveNode before `ctx.subagents.start` — exact-string comparison mirroring the service's `assertChainWithinWriteScopes` (including the undeclared-cwd skip), block `node-failed` with LOOP_SCOPE_VIOLATION in the message (non-retryable, no attempt consumed); the forged-corrupt-read-path test proves the fold accepts out-of-scope chains and the driver refuses the spawn. (2) module-graph regenerated with the loop-chain-driver node and its 8 dependency edges.
+
+Adjudications upheld: global attempt numbering is note-REQUIRED (epoch-scoped renumbering would collide with the ledger's duplicate-key rejection); **crash causes NO phase change** — note L81's disarm-without-phase-change model outranks research item #4's paused-with-reason (D/E never re-apply it); the agent/disposed abort+delete extension is justified (initiator-drain hang fix). MINORs fixed: the README restart paragraph splits the warn-only unledgered lane from the ledgered recovery; the fork-identity driver test pins child writes in the child's log and the ledger keyed by controlling-session identity + childSessionId.
+
+Reporting rules learned: `--no-verify` evidence is the pdfjs-dist third-party-notices crash (its glob includes `tsconfig.base*.json` — not only package.json stages); doc-sync counts must be exact (39/4 at the pre-reword HEAD; 40/3 steady state after the plan's hash reword — never cite raw commit identifiers in maintained files).
+
+**Binding for Phase D:** loop-chain-driver is a FUNCTION plugin with NO ctx service key — D1's planned `inject=['commands','loops','loopChainDriver']` is impossible; the command package composes against `ctx.loops` and registers the driver plugin in its own composition. E3: lockfile importers for BOTH loop packages; bounded retry backoff stays deferred (no Config keys yet).
+
 ## Phase D — command + query tools + composition (PR 2, task 3)
 
 ### Task D1: `/loop` command grammar
