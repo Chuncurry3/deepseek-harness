@@ -283,6 +283,50 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   /**
+   * The note's pause rule: a pause that interrupts an in-flight child records
+   * the open attempt as paused at pause time, so a later resume continues with
+   * the next attempt instead of recovering the aborted child.
+   * @param state - driving state of the exact agent.
+   * @param view - the pre-spawn view whose node-started stays open.
+   * @param round - the round being driven.
+   * @param nodeIndex - chain node index of the interrupted child.
+   * @param node - the frozen node definition.
+   * @param attempt - the open attempt number.
+   * @param childSessionId - the interrupted child's session id.
+   */
+  async function recordPausedAttempt(
+    state: DriverState,
+    view: LoopHandoffView,
+    round: number,
+    nodeIndex: number,
+    node: LoopChainNodeDef,
+    attempt: number,
+    childSessionId: SessionId,
+  ): Promise<void> {
+    const current = currentView(state)
+    if (current === undefined || current.loop.id !== view.loop.id) return
+    if (current.loop.phase !== 'paused') return
+    try {
+      await ctx.loops.appendAttempt(state.agent, {
+        kind: 'attempt',
+        loopId: view.loop.id,
+        round,
+        nodeIndex,
+        attempt,
+        failure: {
+          code: 'paused',
+          message: `in-flight child ${childSessionId} of node "${node.role}" (round ${round}) was interrupted by a pause`,
+        },
+      }, current.loop.revision)
+    } catch (error: unknown) {
+      /* v8 ignore next -- no await separates the phase check from the append, so only a
+         concurrently retired agent or cleared loop reaches here; the open node-started
+         then belongs to the restart recovery lane. */
+      ctx.logger.warn(`loop-chain-driver: could not record the paused attempt for agent "${state.agent.id}": ${renderThrown(error)}`)
+    }
+  }
+
+  /**
    * One drive pass: park an awaiting-human checkpoint answer, or drive one
    * whole round of the armed loop to its verdict application.
    * @param state - driving state of the exact agent.
@@ -495,7 +539,13 @@ export function apply(ctx: Context, config: Config): void {
       return 'stop'
     }
     await settleRunQuietly(run)
-    if (drivableView(state, loop.id) === undefined) return 'stop'
+    if (drivableView(state, loop.id) === undefined) {
+      // A pause that landed mid-child records its interrupted attempt now, per
+      // the note; every other de-fencing leaves the open node-started to the
+      // restart recovery lane.
+      await recordPausedAttempt(state, view, round, nodeIndex, node, attempt, run.id)
+      return 'stop'
+    }
 
     if (result.stopReason !== 'completed' || result.structured === undefined) {
       const failure = result.stopReason !== 'completed'
@@ -733,21 +783,27 @@ export function apply(ctx: Context, config: Config): void {
     let recovered: unknown
     let crashCode = 'interrupted-by-shutdown'
     if (query !== undefined) {
+      let events: Parameters<typeof finalAssistantOutput>[0] | undefined
+      // The session-query read rejects only when the crashed child's session is
+      // missing or unreadable — exactly the interrupted-attempt class.
       try {
-        const surface = await query.readSurface(inflight.childSessionId)
-        const output = finalAssistantOutput(surface.events)
+        events = (await query.readSurface(inflight.childSessionId)).events
+      } catch {
+        crashCode = 'interrupted-by-shutdown'
+      }
+      if (events !== undefined) {
+        const output = finalAssistantOutput(events)
         const text = output === undefined
           ? undefined
           : output.map(block => block.type === 'text' ? block.text : '').join('')
         if (text !== undefined && text.trim() !== '') {
+          // A JSON syntax failure in the extracted text names an invalid recovered report.
           try {
             recovered = JSON.parse(text) as unknown
           } catch {
             crashCode = 'invalid-recovered-report'
           }
         }
-      } catch {
-        crashCode = 'interrupted-by-shutdown'
       }
     }
     if (recovered !== undefined) {
@@ -809,7 +865,17 @@ export function apply(ctx: Context, config: Config): void {
       ctx.logger.warn(`loop-chain-driver: unledgered-child enumeration failed for agent "${state.agent.id}": ${renderThrown(error)}`)
       return
     }
-    const ledgerChildren = new Set(view.ledger.filter(entry => entry.kind === 'node-started').map(entry => entry.childSessionId))
+    // The match set spans every ledger entry carrying a childSessionId: an open
+    // node-started OR its replacing settlement — the fold closes each ledger key
+    // under {round, nodeIndex, attempt}, so a settled child disappears from the
+    // open set while staying covered. LoopAttemptMeta carries no childSessionId,
+    // so a failed attempt's child stays unmatchable here — the known residual
+    // carried to Phase E with the meta extension.
+    const ledgerChildren = new Set(
+      view.ledger
+        .filter(entry => entry.kind === 'node-started' || entry.kind === 'settlement')
+        .map(entry => entry.childSessionId),
+    )
     const unledgered = children.filter(child => !ledgerChildren.has(child.id))
     if (unledgered.length > 0) {
       ctx.logger.warn(

@@ -832,9 +832,18 @@ describe('restart and recovery', () => {
     readonly retire: () => Promise<void>
   }
 
+  /** Options of one reboot: forwarded to the underlying boot composition. */
+  interface RebootOptions {
+    /** Whether the session-query service composes; default true. */
+    readonly withSessionQuery?: boolean
+  }
+
   /** Boot one fresh context over the same module records and seed a session with captured events. */
-  async function reboot(seed: readonly SessionEvent[], script: readonly ScriptEntry[]): Promise<Rebooted> {
-    const booted = await boot({ script })
+  async function reboot(seed: readonly SessionEvent[], script: readonly ScriptEntry[], options: RebootOptions = {}): Promise<Rebooted> {
+    const booted = await boot({
+      script,
+      ...(options.withSessionQuery === false ? { withSessionQuery: false } : {}),
+    })
     const home = await workspace()
     const session = booted.ctx.sessions.create(SessionId(`loop-driver-${randomUUID()}`), { seed, meta: { cwd: home } })
     const controlling = stubAgentForSession(session, booted.ctx)
@@ -842,6 +851,44 @@ describe('restart and recovery', () => {
     await retire
     return { ctx: booted.ctx, session, agent: controlling.agent, spawns: booted.spawns, retire: () => retire() }
   }
+
+  it('degrades restart recovery to respawn and skips enumeration without the session-query service', async () => {
+    const alpha = await workspace()
+    const parked = new Promise<void>(() => {})
+    const first = await boot({ script: [{ gate: parked }] })
+    await first.ctx.loops.start(first.agent, startRequest(chain('none', alpha), [alpha]))
+    await waitUntil(() => {
+      expect(first.spawns.length).toBe(1)
+    })
+    const parentEvents = first.session.ownEvents()
+    const childEvents = (first.ctx.sessions.get(first.spawns[0]!.sessionId))!.ownEvents()
+    await first.retireAgent()
+    await first.ctx.fiber.dispose()
+
+    // The degraded composition mounts no session-query service, so recovery
+    // cannot read the crashed child's surface even though its session exists.
+    const second = await reboot(parentEvents, [
+      { structured: WORKER_REPORT },
+      { structured: { ...WORKER_REPORT, summary: 'reviewed' } },
+      { structured: VERDICT_COMPLETE },
+    ], { withSessionQuery: false })
+    const listChildren = vi.spyOn(second.ctx.subagents, 'listChildren')
+    second.ctx.sessions.create(first.spawns[0]!.sessionId, { seed: childEvents })
+    const view = loopOf(second.ctx, second.session)!.view
+    await second.ctx.loops.resume(second.agent, { id: view.loop.id, revision: view.loop.revision })
+
+    await waitUntil(() => {
+      expect(loopOf(second.ctx, second.session)?.view.loop.phase).toBe('complete')
+    })
+    const state = loopOf(second.ctx, second.session)!
+    // No surface read happened: the crashed child records interrupted-by-shutdown and respawns.
+    expect(attemptsOf(state.ledger).map(entry => (entry as { failure?: { code?: string } }).failure?.code)).toEqual(['interrupted-by-shutdown'])
+    expect(settlementsOf(state.ledger, 1).find(entry => entry.nodeIndex === 0)?.attempt).toBe(2)
+    expect(second.spawns).toHaveLength(3)
+    // Enumeration is skipped entirely without the service.
+    expect(listChildren).not.toHaveBeenCalled()
+    await second.retire()
+  })
 
   it('does no work at load, disarms, and after resume recovers the in-flight child and enumerates crashed children', async () => {
     const alpha = await workspace()
@@ -899,8 +946,10 @@ describe('restart and recovery', () => {
     expect(second.spawns.map(spawn => spawn.label)).toEqual(['reviewer', 'evaluator', 'writer', 'reviewer', 'evaluator'])
     // Only round 1's continue verdict advanced the count; round 2 ended complete.
     expect(state.view.loop.roundsStarted).toBe(1)
-    // The unledgered crash was reported, never recovered or settled.
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining(String(run.id)))
+    // The unledgered crash warns exactly once per driving round — never the settled children.
+    const unledgeredWarns = warn.mock.calls.filter(call => String(call[0]).includes('without loop ledger entries'))
+    expect(unledgeredWarns).toHaveLength(2)
+    for (const call of unledgeredWarns) expect(String(call[0])).toContain(String(run.id))
     expect(state.ledger.some(entry => entry.kind === 'settlement' && entry.childSessionId === run.id)).toBe(false)
     await second.retire()
   })
@@ -1124,6 +1173,29 @@ describe('restart and recovery', () => {
 })
 
 describe('lifecycle fences and containment', () => {
+  it('never warns about settled children across rounds after the ledger replaces their records', async () => {
+    const alpha = await workspace()
+    const booted = await boot({ script: [
+      { structured: WORKER_REPORT },
+      { structured: { ...WORKER_REPORT, summary: 'the review is done' } },
+      { structured: VERDICT_CONTINUE },
+      { structured: { ...WORKER_REPORT, summary: 'round two draft' } },
+      { structured: { ...WORKER_REPORT, summary: 'round two review' } },
+      { structured: VERDICT_COMPLETE },
+    ] })
+    const warn = vi.spyOn(booted.ctx.logger, 'warn')
+    await booted.ctx.loops.start(booted.agent, startRequest(chain('none', alpha), [alpha]))
+
+    await waitUntil(() => {
+      expect(loopOf(booted.ctx, booted.session)?.view.loop.phase).toBe('complete')
+    })
+    // Round 2's enumeration must match settled children through their replacing
+    // settlement records, not only open node-started entries.
+    const unledgeredWarns = warn.mock.calls.filter(call => String(call[0]).includes('without loop ledger entries'))
+    expect(unledgeredWarns).toEqual([])
+    expect(booted.spawns).toHaveLength(6)
+  })
+
   it('aborts the in-flight child, records nothing, and disarms at driver teardown', async () => {
     const alpha = await workspace()
     const parked = new Promise<void>(() => {})
@@ -1282,11 +1354,16 @@ describe('lifecycle fences and containment', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('loop-chain-driver'))
   })
 
-  it('stops the pass quietly when a concurrent pause races the settlement', async () => {
+  it('records the paused attempt when a concurrent pause interrupts an in-flight child and resumes with the next attempt', async () => {
     const alpha = await workspace()
     let release: () => void = () => {}
     const gate = new Promise<void>((resolve) => { release = resolve })
-    const booted = await boot({ script: [{ gate, structured: WORKER_REPORT }] })
+    const booted = await boot({ script: [
+      { gate, structured: WORKER_REPORT },
+      { structured: WORKER_REPORT },
+      { structured: { ...WORKER_REPORT, summary: 'reviewed' } },
+      { structured: VERDICT_COMPLETE },
+    ] })
     const view = await booted.ctx.loops.start(booted.agent, startRequest(chain('none', alpha), [alpha]))
     await waitUntil(() => {
       expect(booted.spawns.length).toBe(1)
@@ -1300,7 +1377,21 @@ describe('lifecycle fences and containment', () => {
     const state = loopOf(booted.ctx, booted.session)!
     expect(state.view.loop.phase).toBe('paused')
     expect(state.ledger.filter(entry => entry.kind === 'settlement')).toHaveLength(0)
+    // The note's pause rule: the interrupted attempt records code 'paused' at pause time.
+    expect(attemptsOf(state.ledger)).toHaveLength(1)
+    expect(attemptsOf(state.ledger)[0]).toMatchObject({
+      kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1, failure: { code: 'paused' },
+    })
     expect(booted.spawns).toHaveLength(1)
+
+    // Resume continues with the next attempt, never a recovery of the aborted child.
+    await booted.ctx.loops.resume(booted.agent, { id: view.loop.id, revision: state.view.loop.revision })
+    await waitUntil(() => {
+      expect(loopOf(booted.ctx, booted.session)?.view.loop.phase).toBe('complete')
+    })
+    const finished = loopOf(booted.ctx, booted.session)!
+    expect(settlementsOf(finished.ledger, 1).find(entry => entry.nodeIndex === 0)?.attempt).toBe(2)
+    expect(booted.spawns).toHaveLength(4)
   })
 
   it('blocks node-failed when the invariant companion rejects a driver append', async () => {
