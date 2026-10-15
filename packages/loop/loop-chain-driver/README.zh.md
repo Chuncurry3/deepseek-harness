@@ -42,11 +42,11 @@ loop 旋钮（`defaultMaxRounds`、`maxNodeRetries`、`maxHandoffChars`、`maxEv
 
 ### 每个 Round 做什么
 
-只要存在确切的存活控制 agent、active 且 armed 的 loop 与剩余 Round，驱动器就按链序驱动下一轮未结算的节点：在节点工作区内用组装好的提示词与输出 schema 派生全新子会话，记录打开的 attempt，等待结果，并结算通过校验的报告——否则追加 attempt 失败并带着失败原因重试，直到 epoch 预算以 `node-failed` 阻断。评估器是最终节点索引；其裁决 `complete`/`blocked` 结束 loop，`continue` 推进 Round。`node` 检查点在每次结算后把 loop 停入 `awaiting-human`，直到人类回答 continue、pause 或 terminate。每轮之前驱动器 flush 控制会话；flush 失败以 `durability-failed` 阻断并解除武装。
+只要存在确切的存活控制 agent、active 且 armed 的 loop 与剩余 Round，驱动器就按链序驱动下一轮未结算的节点：先以冻结的写作用域复核节点声明的工作区（越界工作区以不可重试的 `node-failed` 阻断），再在节点工作区内用组装好的提示词与输出 schema 派生全新子会话，记录打开的 attempt，等待结果，并结算通过校验的报告——否则追加 attempt 失败并带着失败原因重试，直到 epoch 预算以 `node-failed` 阻断。评估器是最终节点索引；其裁决 `complete`/`blocked` 结束 loop，`continue` 推进 Round。`node` 检查点在每次结算后把 loop 停入 `awaiting-human`，直到人类回答 continue、pause 或 terminate。每轮之前驱动器 flush 控制会话；flush 失败以 `durability-failed` 阻断并解除武装。
 
 ### 重启、暂停或卸载之后
 
-新加载的驱动器解除所有 loop 的武装且不做任何工作：推进权限不跨进程边界持久化。显式 `resume` 重新武装 loop，从持久日志重读在途子会话的最后 assistant 表面来恢复它，恰好一次地应用待定的评估器裁决，并通过 subagent 目录枚举崩溃且未入账的子会话，为未留报告者记录 `interrupted-by-shutdown` attempt。低于 resume 修订号的重启前 attempt 不消耗新的重试预算。`pause` 立即中止在途子会话；卸载插件会中止、不记录并解除武装。
+新加载的驱动器解除所有 loop 的武装且不做任何工作：推进权限不跨进程边界持久化。显式 `resume` 重新武装 loop，并恰好一次地应用待定的评估器裁决。`node-started` 记录在崩溃中幸存的在途子会话从持久日志重读其最后 assistant 表面来恢复；未留可恢复报告者记录一条 `interrupted-by-shutdown` attempt 并重新派生。台账未覆盖的子会话仅通过 subagent 目录枚举并告警——从不恢复、结算或记录。低于 resume 修订号的重启前 attempt 不消耗新的重试预算。`pause` 立即中止在途子会话；卸载插件会中止、不记录并解除武装。
 
 ### 解析链文档
 
@@ -175,7 +175,7 @@ const fallback = defaultChain('Ship the migration')
 
 - **尚无命令或查询面**——`/loop` 命令语法与 `loop_session_search` / `loop_session_read` 查询工具在本特性稍后交付；今天驱动器仅由配置组合。
 - **所有节点共用一个 provider**——`provider` 具名单个 subagent provider；按节点指定 provider 需要先在 loop 服务落地链语言扩展。
-- **工作区存在性是派生的栅栏**——不是写作用域的节点 `cwd` 在 loop 启动时失败（服务的范围检查），不存在的目录在派生时经 subagent 服务失败，以 `node-failed` 阻断且不记录 attempt。
+- **工作区存在性是派生的栅栏，作用域会被复核**——服务在 loop 启动时检查声明 `cwd` 是否属于写作用域，驱动器在派生时以同样的精确字符串比较复核该成员关系（恢复后声明工作区越出冻结作用域的链以不可重试的 `node-failed` 阻断）。目录存在性仍是 subagent 派生的栅栏：不存在的目录在派生时失败，以 `node-failed` 阻断且不记录 attempt。
 - **文档语言是子集**——解析器接受的恰好是 `@deepseek-ai/dsh-loop` 中持久折叠能回放的内容；链语言扩展必须先落在 loop 服务。
 
 <a id="dev-note"></a>
@@ -184,6 +184,6 @@ const fallback = defaultChain('Ship the migration')
 <details>
 <summary>维护者的工作上下文——点击展开</summary>
 
-本开发备注是维护者的工作上下文，明确不具权威性。驱动器插件是函数插件：不注册 `ctx` 服务，命令包应针对 loop 服务组合并自行注册本插件的生命周期。台账追加从不抬高 loop 修订号，因此派生前视图的修订号总是合法的 `atRevision`。台账的替换语义让打开的 `node-started` 条目的 attempt 编号成为下一个 attempt 的下限；跨全部条目类别的全局扫描让编号在替换之间保持单调。重启恢复经 session-query 服务重读崩溃子会话的最后 assistant 表面，并像存活结算一样校验；不可解析或违反 schema 的恢复报告记录 `invalid-recovered-report` 并重试。
+本开发备注是维护者的工作上下文，明确不具权威性。驱动器插件是函数插件：不注册 `ctx` 服务，命令包应针对 loop 服务组合并自行注册本插件的生命周期。台账追加从不抬高 loop 修订号，因此派生前视图的修订号总是合法的 `atRevision`。台账的替换语义让打开的 `node-started` 条目的 attempt 编号成为下一个 attempt 的下限；跨全部条目类别的全局扫描让编号在替换之间保持单调。派生时的作用域复核对冻结的 `writeScopes` 做精确字符串比较——折叠在读取路径上从不交叉检查链工作区，该栅栏由驱动器持有。重启恢复经 session-query 服务重读崩溃子会话的最后 assistant 表面，并像存活结算一样校验；不可解析或违反 schema 的恢复报告记录 `invalid-recovered-report` 并重试。
 
 </details>

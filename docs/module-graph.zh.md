@@ -312,6 +312,7 @@ flowchart TD
   end
   subgraph group_loop["packages/loop"]
     pkg_loop["loop"]
+    pkg_loop_chain_driver["loop-chain-driver"]
   end
   subgraph group_lsp["packages/lsp"]
     pkg_lsp["lsp"]
@@ -1286,6 +1287,15 @@ flowchart TD
   pkg_experimental_agent_team --> pkg_session_persistence
   pkg_experimental_agent_team --> pkg_session_projection
   pkg_experimental_agent_team --> pkg_subagent
+  pkg_loop_chain_driver --> pkg_agent
+  pkg_loop_chain_driver --> pkg_invariants
+  pkg_loop_chain_driver --> pkg_loop
+  pkg_loop_chain_driver --> pkg_session
+  pkg_loop_chain_driver --> pkg_session_projection
+  pkg_loop_chain_driver --> pkg_session_query
+  pkg_loop_chain_driver --> pkg_subagent
+  pkg_loop_chain_driver --> pkg_tools
+  pkg_loop_chain_driver --> pkg_user_questions
   pkg_sdk_protocol --> pkg_llm
   pkg_sdk_protocol --> pkg_session
   pkg_sdk_protocol --> pkg_subagent
@@ -1697,6 +1707,7 @@ flowchart TD
 | [`compaction-basic`](../packages/compaction/compaction-basic) | `compaction` | [`agent`](../packages/core/agent), [`commands`](../packages/interaction/commands), [`compaction`](../packages/compaction/compaction), [`compaction-tool-result-pruner`](../packages/compaction/compaction-tool-result-pruner), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`token-meter`](../packages/llm/token-meter) |
 | [`session-reference`](../packages/context/session-reference) | `context` | [`agent`](../packages/core/agent), [`compaction`](../packages/compaction/compaction), [`llm`](../packages/llm/llm), [`output-retention`](../packages/util/output-retention), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`session-projection-cache`](../packages/session/session-projection-cache), [`session-query`](../packages/session-query/session-query), [`session-title`](../packages/session/session-title), [`spill`](../packages/spill/spill), [`subagent`](../packages/subagent/subagent), [`system-prompt`](../packages/core/system-prompt), [`typert-protocol`](../packages/typert/protocol) |
 | [`experimental-agent-team`](../packages/experimental/agent-team) | `experimental` | [`agent`](../packages/core/agent), [`invariants`](../packages/runtime-diagnostics/invariants), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-persistence`](../packages/session/session-persistence), [`session-projection`](../packages/session/session-projection), [`subagent`](../packages/subagent/subagent) |
+| [`loop-chain-driver`](../packages/loop/loop-chain-driver) | `loop` | [`agent`](../packages/core/agent), [`invariants`](../packages/runtime-diagnostics/invariants), [`loop`](../packages/loop/loop), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`session-query`](../packages/session-query/session-query), [`subagent`](../packages/subagent/subagent), [`tools`](../packages/core/tools), [`user-questions`](../packages/interaction/user-questions) |
 | [`sdk-protocol`](../packages/sdk/protocol) | `sdk` | [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`subagent`](../packages/subagent/subagent) |
 | [`tool-ralph`](../packages/workflow/tool-ralph) | `workflow` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`subagent`](../packages/subagent/subagent), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`workflow`](../packages/workflow/workflow) |
 | [`workflow-ptc`](../packages/workflow/workflow-ptc) | `workflow` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`ptc-runtime`](../packages/ptc-runtime/ptc-runtime), [`sandbox`](../packages/sandbox/sandbox), [`sandbox-policy`](../packages/sandbox/sandbox-policy), [`session`](../packages/core/session), [`subagent`](../packages/subagent/subagent), [`tools`](../packages/core/tools), [`workflow`](../packages/workflow/workflow) |
