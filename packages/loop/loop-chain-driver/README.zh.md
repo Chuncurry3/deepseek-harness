@@ -38,7 +38,7 @@ kind: "package-reference"
     provider: 'subagent-local'
 ```
 
-loop 旋钮（`defaultMaxRounds`、`maxNodeRetries`、`maxHandoffChars`、`maxEvaluatorInputChars`）属于 `dsh-loop`；驱动器读取其解析值而不是复制它们。
+loop 旋钮（`defaultMaxRounds`、`maxNodeRetries`、`maxHandoffChars`、`maxEvaluatorInputChars`）属于 `dsh-loop`；驱动器读取其解析值而不是复制它们。`@deepseek-ai/dsh-session-query` peer 是可选的：缺少它时，重启恢复退化为带 attempt 记录的重新派生，且跳过未入账子会话的枚举。
 
 ### 每个 Round 做什么
 
@@ -46,7 +46,7 @@ loop 旋钮（`defaultMaxRounds`、`maxNodeRetries`、`maxHandoffChars`、`maxEv
 
 ### 重启、暂停或卸载之后
 
-新加载的驱动器解除所有 loop 的武装且不做任何工作：推进权限不跨进程边界持久化。显式 `resume` 重新武装 loop，并恰好一次地应用待定的评估器裁决。`node-started` 记录在崩溃中幸存的在途子会话从持久日志重读其最后 assistant 表面来恢复；未留可恢复报告者记录一条 `interrupted-by-shutdown` attempt 并重新派生。台账未覆盖的子会话仅通过 subagent 目录枚举并告警——从不恢复、结算或记录。低于 resume 修订号的重启前 attempt 不消耗新的重试预算。`pause` 立即中止在途子会话；卸载插件会中止、不记录并解除武装。
+新加载的驱动器解除所有 loop 的武装且不做任何工作：推进权限不跨进程边界持久化。显式 `resume` 重新武装 loop，并恰好一次地应用待定的评估器裁决。`node-started` 记录在崩溃中幸存的在途子会话从持久日志重读其最后 assistant 表面来恢复；未留可恢复报告者记录一条 `interrupted-by-shutdown` attempt 并重新派生。台账未覆盖的子会话仅通过 subagent 目录枚举并告警——从不恢复、结算或记录。低于 resume 修订号的重启前 attempt 不消耗新的重试预算。`pause` 立即中止在途子会话，并为其打开的 attempt 记录代码 `paused`，之后的 resume 从下一个 attempt 继续；卸载插件会中止、不记录并解除武装。
 
 ### 解析链文档
 

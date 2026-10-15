@@ -38,7 +38,7 @@ Mount the plugin beside the loop, subagent, and user-questions services; `provid
     provider: 'subagent-local'
 ```
 
-The loop knobs (`defaultMaxRounds`, `maxNodeRetries`, `maxHandoffChars`, `maxEvaluatorInputChars`) belong to `dsh-loop`; the driver reads their resolved values instead of duplicating them.
+The loop knobs (`defaultMaxRounds`, `maxNodeRetries`, `maxHandoffChars`, `maxEvaluatorInputChars`) belong to `dsh-loop`; the driver reads their resolved values instead of duplicating them. The `@deepseek-ai/dsh-session-query` peer is optional: without it, restart recovery degrades to respawn-with-attempt and unledgered-child enumeration is skipped.
 
 ### What each round does
 
@@ -46,7 +46,7 @@ With an exact live controlling agent, an active armed loop, and remaining rounds
 
 ### After restart, pause, or unload
 
-A freshly loaded driver disarms every loop and does no work: resuming authority crosses no process boundary. An explicit `resume` re-arms the loop and applies a pending evaluator verdict exactly once. An in-flight child whose `node-started` record survived the crash is recovered by re-reading its final assistant surface from the durable log; one that left no recoverable report records an `interrupted-by-shutdown` attempt and respawns. Children the ledger does not cover are enumerated through the subagent catalog and warned about only — never recovered, settled, or recorded. Pre-restart attempts below the resume revision do not consume the fresh retry budget. A `pause` aborts the in-flight child immediately; unloading the plugin aborts, records nothing, and disarms.
+A freshly loaded driver disarms every loop and does no work: resuming authority crosses no process boundary. An explicit `resume` re-arms the loop and applies a pending evaluator verdict exactly once. An in-flight child whose `node-started` record survived the crash is recovered by re-reading its final assistant surface from the durable log; one that left no recoverable report records an `interrupted-by-shutdown` attempt and respawns. Children the ledger does not cover are enumerated through the subagent catalog and warned about only — never recovered, settled, or recorded. Pre-restart attempts below the resume revision do not consume the fresh retry budget. A `pause` aborts the in-flight child immediately and records its open attempt with code `paused`, so a later resume continues with the next attempt; unloading the plugin aborts, records nothing, and disarms.
 
 ### Parse chain documents
 
