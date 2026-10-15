@@ -464,6 +464,31 @@ describe('full round driving', () => {
     expect(view.loop.blockedReason?.message).toContain('has no workspace')
     expect(booted.spawns).toHaveLength(0)
   })
+
+  it('keeps spawned child writes out of the controlling session log and keys the ledger by session identity', async () => {
+    const alpha = await workspace()
+    const parked = new Promise<void>(() => {})
+    const booted = await boot({ script: [{ structured: WORKER_REPORT }, { gate: parked }] })
+    await booted.ctx.loops.start(booted.agent, startRequest(chain('none', alpha), [alpha]))
+
+    await waitUntil(() => {
+      expect(booted.spawns.length).toBe(2)
+    })
+    const child = booted.ctx.sessions.get(booted.spawns[0]!.sessionId)!
+    // The child's model turns live in its own session log...
+    expect(child.ownEvents().some(event => event.type === 'turn/start' || event.type === 'user/message')).toBe(true)
+    // ...and never append into the controlling session's log, which carries only
+    // loop records and the subagent catalog pointers.
+    expect(booted.session.ownEvents().every(event => event.type.startsWith('loop/') || event.type === 'subagent/catalog')).toBe(true)
+    // The child session owns no loop events: the ledger lives in the controlling
+    // session's fold, so node identity is session-owned, not a bare global node index.
+    expect(child.ownEvents().every(event => !event.type.startsWith('loop/'))).toBe(true)
+    expect(loopOf(booted.ctx, child)).toBeUndefined()
+    const state = loopOf(booted.ctx, booted.session)!
+    expect(settlementsOf(state.ledger, 1).map(entry => entry.kind === 'settlement' && entry.nodeIndex)).toEqual([0])
+    expect(settlementsOf(state.ledger, 1)[0]).toMatchObject({ childSessionId: booted.spawns[0]!.sessionId })
+    await booted.retireAgent()
+  })
 })
 
 describe('node retries and failure classification', () => {
@@ -951,6 +976,50 @@ describe('restart and recovery', () => {
       'error', 'interrupted-by-shutdown',
     ])
     expect(settlementsOf(state.ledger, 1).find(entry => entry.nodeIndex === 0)?.attempt).toBe(3)
+    await second.retire()
+  })
+
+  it('refuses to spawn when a resumed chain workspace falls outside the write scopes', async () => {
+    const alpha = await workspace()
+    const parked = new Promise<void>(() => {})
+    const first = await boot({ script: [{ gate: parked }] })
+    await first.ctx.loops.start(first.agent, startRequest(chain('none', alpha), [alpha]))
+    await waitUntil(() => {
+      expect(first.spawns.length).toBe(1)
+    })
+    // Forge the corrupt read path: the replayed chain declares a workspace outside the
+    // frozen write scopes and the crashed spawn leaves no ledger record, so only the
+    // driver's spawn-time scope re-assert can refuse it.
+    const hostile = '/hostile-outside-write-scopes'
+    const forged = first.session.ownEvents()
+      .filter(event => event.type !== 'loop/node-started')
+      .map((event) => {
+        if (event.type !== 'loop/change' || event.data.operation === 'clear') return event
+        const data = structuredClone(event.data)
+        const nodes = data.loop.chain.nodes as unknown as { cwd?: string }[]
+        for (const node of nodes) node.cwd = hostile
+        return { ...event, data }
+      })
+    await first.retireAgent()
+    await first.ctx.fiber.dispose()
+
+    const second = await reboot(forged, [{ structured: WORKER_REPORT }])
+    const view = loopOf(second.ctx, second.session)!.view
+    // The fold accepted the out-of-scope chain: structure validation never cross-checks scopes.
+    expect(view.loop.chain.nodes.every(node => node.cwd === hostile)).toBe(true)
+    expect(view.loop.writeScopes).toEqual([alpha])
+    await second.ctx.loops.resume(second.agent, { id: view.loop.id, revision: view.loop.revision })
+
+    await waitUntil(() => {
+      expect(loopOf(second.ctx, second.session)?.view.loop.phase).toBe('blocked')
+    })
+    const state = loopOf(second.ctx, second.session)!
+    expect(state.view.loop.blockedReason).toMatchObject({ code: 'node-failed' })
+    expect(state.view.loop.blockedReason?.message).toContain('LOOP_SCOPE_VIOLATION')
+    expect(state.view.loop.blockedReason?.message).toContain(hostile)
+    // The refusal is non-retryable authorization: no spawn and no attempt consumed.
+    expect(second.spawns).toHaveLength(0)
+    expect(attemptsOf(state.ledger)).toHaveLength(0)
     await second.retire()
   })
 

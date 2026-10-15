@@ -431,6 +431,20 @@ export function apply(ctx: Context, config: Config): void {
       })
       return 'stop'
     }
+    // The durable fold validates chain structure on replay but never cross-checks
+    // node workspaces against the run's scopes, so a resumed corrupt or hostile
+    // log reaches here with an out-of-scope declared cwd. The driver re-asserts
+    // the note's spawn-time scope rule with the service's own comparison
+    // semantics: exact strings against the frozen, start-time-normalized
+    // writeScopes list, skipping nodes whose cwd is the implicitly granted
+    // session workspace (exactly like the start-time check).
+    if (node.cwd !== undefined && !view.loop.writeScopes.includes(cwd)) {
+      await blockFailed(state, {
+        code: 'node-failed',
+        message: `node "${node.role}" (round ${round}) cwd ${JSON.stringify(cwd)} falls outside the run's write scopes (LOOP_SCOPE_VIOLATION)`,
+      })
+      return 'stop'
+    }
 
     let run: SubagentRun
     try {
