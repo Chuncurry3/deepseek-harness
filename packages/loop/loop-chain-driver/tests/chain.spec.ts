@@ -10,6 +10,11 @@ describe('parseChainDocument', () => {
     expect(chain.evaluatorPrompt).toContain('裁决')
   })
 
+  it('carries a declared exit criterion through to the parsed chain', () => {
+    const chain = parseChainDocument('objective: o\nnodes:\n  - role: a\n    prompt: p\nexit: the report is delivered\n')
+    expect(chain.exit).toBe('the report is delivered')
+  })
+
   it('rejects duplicate roles, empty nodes, and unknown keys — loud', () => {
     expect(() => parseChainDocument('nodes:\n  - role: a\n    prompt: p\n  - role: a\n    prompt: q')).toThrow(/role/)
     expect(() => parseChainDocument('nodes: []')).toThrow(/nodes/)

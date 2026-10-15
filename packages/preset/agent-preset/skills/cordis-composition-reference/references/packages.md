@@ -292,6 +292,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@deepseek-ai/dsh-loop` | yes | Event-sourced cross-session relay loop state and lifecycle service for the DeepSeek Harness |
+| `@deepseek-ai/dsh-loop-chain-driver` | yes | Cross-session relay chain parsing and continuation driver for the DeepSeek Harness |
 
 ## lsp
 

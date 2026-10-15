@@ -371,12 +371,15 @@ Source: [`packages/loop/loop/src/index.ts`](../../packages/loop/loop/src/index.t
 
 #### `loop/changed` — emit
 
-Loop mutation accepted by one live agent. The matching `loop/change` session event has already committed. Listener failures are contained. Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.
+Loop mutation accepted by one live agent. The matching `loop/change` session event has already committed. Listener failures are contained. The emitted snapshot may already be superseded by a later concurrent mutation when a listener runs, so listeners needing current state must re-read it instead of trusting the payload. Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.
 
 ```ts cordis-catalog
 /**
  * Loop mutation accepted by one live agent. The matching `loop/change`
  * session event has already committed. Listener failures are contained.
+ * The emitted snapshot may already be superseded by a later concurrent
+ * mutation when a listener runs, so listeners needing current state must
+ * re-read it instead of trusting the payload.
  * Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.
  * @param payload.agent - agent whose session owns the loop.
  * @param payload.change - operation plus the fresh snapshot ref.

@@ -25,6 +25,7 @@ loop 组为每个控制会话记录一次跨会话中继运行。一条冻结的
 | 包 | 职责 | ctx 键 |
 |---|---|---|
 | [`loop`](loop/README.zh.md) | 每个控制会话一个持久中继 loop：带版本的事件、严格回放折叠、生命周期变更、节点台账 | `ctx.loops` |
+| [`loop-chain-driver`](loop-chain-driver/README.zh.md) | 运行链的续行驱动器插件：派生节点子会话、结算报告、检查点、重启后恢复 | —（函数插件） |
 
 -----
 

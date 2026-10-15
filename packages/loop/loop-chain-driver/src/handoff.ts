@@ -7,7 +7,7 @@
  * @module @deepseek-ai/dsh-loop-chain-driver/handoff
  */
 
-import type { LoopBlockReason, LoopChainNodeDef, LoopLedgerEntry, LoopView } from '@deepseek-ai/dsh-loop'
+import type { LoopBlockReason, LoopChainDef, LoopChainNodeDef, LoopLedgerEntry, LoopView } from '@deepseek-ai/dsh-loop'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { assertObjectJsonSchema, validateJsonSchemaValue, type ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
 import { z } from 'zod'
@@ -27,6 +27,38 @@ export const DEFAULT_EVALUATOR_INSTRUCTION
 
 /** The driver-owned `inherited` property form: one string entry per declared input session. */
 const inheritedSchema = { type: 'array', items: { type: 'string' } } as const
+
+/**
+ * The fixed report schema the final evaluator node settles against: a
+ * `decision` of `continue`, `complete`, or `blocked`, with optional feedback
+ * for the next round and a reason when blocking. Every round's verdict
+ * application reads this exact shape from the settlement.
+ */
+export const VERDICT_SCHEMA: ObjectJsonSchema = {
+  type: 'object',
+  properties: {
+    decision: { type: 'string', enum: ['continue', 'complete', 'blocked'] },
+    feedback: { type: 'string' },
+    reason: { type: 'string' },
+  },
+  required: ['decision'],
+  additionalProperties: false,
+}
+
+/**
+ * The synthetic final node every round drives: the evaluator. Its role
+ * instruction is the chain's `evaluatorPrompt` or the default instruction,
+ * and its report schema is the fixed verdict schema.
+ * @param chain - the frozen chain definition.
+ * @returns the evaluator node definition occupying `chain.nodes.length`.
+ */
+export function evaluatorNode(chain: LoopChainDef): LoopChainNodeDef {
+  return {
+    role: 'evaluator',
+    prompt: chain.evaluatorPrompt ?? DEFAULT_EVALUATOR_INSTRUCTION,
+    output: VERDICT_SCHEMA,
+  }
+}
 
 /**
  * The default handoff schema applied when a node omits `output`: `status`
@@ -142,8 +174,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** The latest settlement of one node index in one round, or undefined. */
-function settlementFor(ledger: readonly LoopLedgerEntry[], round: number, nodeIndex: number): Settlement | undefined {
+/**
+ * The latest settlement of one node index in one round, or undefined.
+ * @param ledger - folded node ledger of the current loop.
+ * @param round - the relay round the settlement belongs to.
+ * @param nodeIndex - the chain node index the settlement closes.
+ * @returns the highest-attempt settlement record, or undefined when the node is unsettled.
+ */
+export function settlementFor(ledger: readonly LoopLedgerEntry[], round: number, nodeIndex: number): Settlement | undefined {
   let found: Settlement | undefined
   for (const entry of ledger) {
     if (entry.kind !== 'settlement' || entry.round !== round || entry.nodeIndex !== nodeIndex) continue
@@ -325,6 +363,26 @@ export function handoffSchemaFor(node: LoopChainNodeDef): ObjectJsonSchema {
 }
 
 /**
+ * Validate one candidate node report against the node's handoff contract,
+ * without the deployment-configured budget: schema conformance plus the
+ * `inherited` entry count. The durable invariant companion reuses this for
+ * settled reports, where the handoff budget is not an invariant.
+ * @param node - the frozen chain node whose report settles.
+ * @param report - the settled or candidate report value.
+ * @returns Violations; empty means the report conforms to the node's schema contract.
+ * @throws When the effective schema falls outside `assertObjectJsonSchema`'s enforced subset.
+ */
+export function reportSchemaViolations(node: LoopChainNodeDef, report: unknown): readonly string[] {
+  const violations: string[] = [...validateJsonSchemaValue(handoffSchemaFor(node), report)]
+  const declared = node.inputs?.length ?? 0
+  const inherited = isRecord(report) ? report['inherited'] : undefined
+  if (declared > 0 && Array.isArray(inherited) && inherited.length !== declared) {
+    violations.push(`inherited must carry exactly ${declared} entries, one per declared input session (found ${inherited.length})`)
+  }
+  return violations
+}
+
+/**
  * Validate one candidate node report against the node's handoff contract.
  * @param node - the frozen chain node whose report is settling.
  * @param report - the candidate structured report value.
@@ -333,12 +391,7 @@ export function handoffSchemaFor(node: LoopChainNodeDef): ObjectJsonSchema {
  * @throws When the effective schema falls outside `assertObjectJsonSchema`'s enforced subset.
  */
 export function validateReport(node: LoopChainNodeDef, report: unknown, maxHandoffChars: number): readonly string[] {
-  const violations: string[] = [...validateJsonSchemaValue(handoffSchemaFor(node), report)]
-  const declared = node.inputs?.length ?? 0
-  const inherited = isRecord(report) ? report['inherited'] : undefined
-  if (declared > 0 && Array.isArray(inherited) && inherited.length !== declared) {
-    violations.push(`inherited must carry exactly ${declared} entries, one per declared input session (found ${inherited.length})`)
-  }
+  const violations = [...reportSchemaViolations(node, report)]
   const serialized = JSON.stringify(report)
   // oxlint-disable-next-line typescript/no-unnecessary-condition -- JSON.stringify returns undefined for non-JSON values.
   if (serialized !== undefined && serialized.length > maxHandoffChars) {

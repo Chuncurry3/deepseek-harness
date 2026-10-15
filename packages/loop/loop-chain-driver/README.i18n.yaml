@@ -3,74 +3,80 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/loop/loop-chain-driver/README.md
 /:
-  en: 4af4ca5d6ceb2de0
-  zh: 2932ffc82d6517d5
+  en: eb21d77b4a698539
+  zh: f170c3d801b65e2e
 /deepseek-ai-dsh-loop-chain-driver:
   en: 4fe96410062b1a18
   zh: fcd32a2dec2c592b
 /deepseek-ai-dsh-loop-chain-driver/summary:
-  en: eac4cf7babcc0a2a
-  zh: 5ef0bd81cb2c9b43
+  en: 4a76ed8da4675ad6
+  zh: 9a32a7807b4ed795
 /deepseek-ai-dsh-loop-chain-driver/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /deepseek-ai-dsh-loop-chain-driver/use-this-package:
-  en: a59ef51fd46004c8
-  zh: 785478ad7b6f5d5a
-/deepseek-ai-dsh-loop-chain-driver/use-this-package/when-to-use-it:
-  en: 0c4b6404632e2877
-  zh: a3f1acd89e9433e7
-/deepseek-ai-dsh-loop-chain-driver/use-this-package/the-chain-document:
-  en: b59ffa68486aa02d
-  zh: 6c8462fb51b723be
+  en: bbff250eba0f1b89
+  zh: 0a618f05cc88ee2b
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/compose-the-driver:
+  en: 9135818a9cacba2e
+  zh: 09bffeb64c3ac5c1
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/what-each-round-does:
+  en: 569353f20d5b0e3b
+  zh: 9e60e6c38d233937
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/after-restart-pause-or-unload:
+  en: 6f5263f28b12ae58
+  zh: 7b7c14ee4b7f4daf
+/deepseek-ai-dsh-loop-chain-driver/use-this-package/parse-chain-documents:
+  en: 866832b4fe41d2e9
+  zh: 24c91546f10d1dcd
 /deepseek-ai-dsh-loop-chain-driver/use-this-package/the-node-handoff:
-  en: cd92d82cf1c5b399
-  zh: c9e5836fda490517
+  en: 4aafd19d69f497c6
+  zh: beb4cf95628937f1
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation:
-  en: 42f8b634b152cc39
-  zh: c39c16ff04a9d5c0
+  en: 28217c26cbd61e20
+  zh: 9192830a9d054031
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/design:
-  en: dd9698aac7129af5
-  zh: 99d5a0807e2aa2ce
+  en: e66441e667a9735e
+  zh: 68139ed494355623
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/source-map:
-  en: d59a7ee63c9c74e5
-  zh: df86c3b2651c37ab
+  en: ec9f5aecb028ced8
+  zh: ed4c917031427526
 /deepseek-ai-dsh-loop-chain-driver/understand-the-implementation/invariant-ownership:
-  en: 5e465b730bff982c
-  zh: 514877ab279027d6
+  en: 0b2326293099a403
+  zh: 7ff9127392e24db6
 /deepseek-ai-dsh-loop-chain-driver/further-exploration:
-  en: 293162bd5fff81fa
-  zh: d96e4d6cf3549db8
+  en: cdeb1b15914fc7f7
+  zh: 52ea55d0daa5be50
 /deepseek-ai-dsh-loop-chain-driver/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents:
-  en: defe92b7e802e27b
-  zh: bf91166a1b446a25
-/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/what-the-model-sees:
-  en: e01c95b8422bb8aa
-  zh: 002eca3ae283b24c
-/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/token-effect:
-  en: 6bb778313e4d4764
-  zh: 1df0343eb769bddd
-/deepseek-ai-dsh-loop-chain-driver/model-experience/chain-documents/kv-cache-effect:
-  en: 64aa29c191dae1fc
-  zh: 71e7b6a927a8b646
-/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts:
-  en: 2c7d6f1db8af48ca
-  zh: 4796cfbf7a2b140b
-/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/what-the-model-sees:
-  en: 4ab9e2e4d659c908
-  zh: ddfafca0db860a2b
-/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/token-effect:
-  en: 8ca32e74ed91b0c1
-  zh: 8e2d0e2bf2ab0b06
-/deepseek-ai-dsh-loop-chain-driver/model-experience/node-prompts/kv-cache-effect:
-  en: 5a3ac3a0fa3d3189
-  zh: 71c6e13e73b553cc
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-child-sessions:
+  en: 2a94a447bd7ba1b1
+  zh: c9165422b1f64380
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-child-sessions/what-the-model-sees:
+  en: 3df0c97540aab05e
+  zh: f7844aba3218cd03
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-child-sessions/token-effect:
+  en: 669f29aea11de91e
+  zh: a0746083d85053ca
+/deepseek-ai-dsh-loop-chain-driver/model-experience/node-child-sessions/kv-cache-effect:
+  en: 98591594d6b82b9b
+  zh: afec14e0a552f969
+/deepseek-ai-dsh-loop-chain-driver/model-experience/checkpoint-asks:
+  en: d8376c9f87610afd
+  zh: 5dc3e20adea16837
+/deepseek-ai-dsh-loop-chain-driver/model-experience/checkpoint-asks/what-the-model-sees:
+  en: 413fbe0ab0f2ba11
+  zh: accc099049fbc3fb
+/deepseek-ai-dsh-loop-chain-driver/model-experience/checkpoint-asks/token-effect:
+  en: b78c397c9d1a4d38
+  zh: 8d55d23c668c059b
+/deepseek-ai-dsh-loop-chain-driver/model-experience/checkpoint-asks/kv-cache-effect:
+  en: 4a0c284f2feef306
+  zh: fe69818c7ae47c6a
 /deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work:
-  en: 292164b6bcf5ee24
-  zh: 67c1f1667ca8d0b3
+  en: 0f8ea07cb3e04ba1
+  zh: e0314239c39d264a
 /deepseek-ai-dsh-loop-chain-driver/known-limitations-and-deferred-work/dev-note:
-  en: c743fd9466b1070d
-  zh: c2e750546108071d
+  en: e19d9c2b83bfd558
+  zh: 1e9c04c4374aa6bf

@@ -22,29 +22,52 @@
       "types": "./lib/types/chain.d.ts",
       "default": "./lib/types/chain.js"
     },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.js",
+    "lib/invariant.js",
     "lib/types/**/*.js",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
   "peerDependencies": {
+    "@deepseek-ai/dsh-agent": "workspace:*",
+    "@deepseek-ai/dsh-invariants": "workspace:*",
     "@deepseek-ai/dsh-loop": "workspace:*",
     "@deepseek-ai/dsh-session": "workspace:*",
+    "@deepseek-ai/dsh-session-projection": "workspace:*",
+    "@deepseek-ai/dsh-session-query": "workspace:*",
+    "@deepseek-ai/dsh-subagent": "workspace:*",
     "@deepseek-ai/dsh-tools": "workspace:*",
+    "@deepseek-ai/dsh-user-questions": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~"
   },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-session-query": {
+      "optional": true
+    }
+  },
   "dependencies": {
+    "@deepseek-ai/schemastery": "workspace:~",
     "yaml": "^2.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@deepseek-ai/dsh-agent": "workspace:*",
+    "@deepseek-ai/dsh-invariants": "workspace:*",
     "@deepseek-ai/dsh-loop": "workspace:*",
     "@deepseek-ai/dsh-session": "workspace:*",
+    "@deepseek-ai/dsh-session-projection": "workspace:*",
+    "@deepseek-ai/dsh-session-query": "workspace:*",
+    "@deepseek-ai/dsh-subagent": "workspace:*",
     "@deepseek-ai/dsh-tools": "workspace:*",
+    "@deepseek-ai/dsh-user-questions": "workspace:*",
     "@deepseek-ai/cordis": "workspace:~"
   }
 }

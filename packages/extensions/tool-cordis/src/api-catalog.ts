@@ -4235,7 +4235,7 @@ export const EVENT_API: readonly EventApiEntry[] = [
     mode: 'emit',
     signature: '\'loop/changed\'(this: import(\'@deepseek-ai/dsh-scope\').Scoped<Agent>, payload: { agent: Agent; change: LoopChanged }): void',
     summary: 'Loop mutation accepted by one live agent.',
-    description: 'Loop mutation accepted by one live agent. The matching `loop/change` session event has already committed. Listener failures are contained. Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.',
+    description: 'Loop mutation accepted by one live agent. The matching `loop/change` session event has already committed. Listener failures are contained. The emitted snapshot may already be superseded by a later concurrent mutation when a listener runs, so listeners needing current state must re-read it instead of trusting the payload. Scope-filtered dispatch (`@deepseek-ai/dsh-scope`): agent-scoped listeners receive only that agent.',
     parameters: [{ name: 'payload', description: '.change - operation plus the fresh snapshot ref.' }],
   },
   {

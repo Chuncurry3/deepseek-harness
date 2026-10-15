@@ -12,16 +12,37 @@
       "path": "../../../vendor/cosmokit"
     },
     {
+      "path": "../../../vendor/schemastery"
+    },
+    {
       "path": "../../../vendor/cordis"
     },
     {
       "path": "../loop"
     },
     {
+      "path": "../../core/agent"
+    },
+    {
       "path": "../../core/session"
     },
     {
       "path": "../../core/tools"
+    },
+    {
+      "path": "../../session/session-projection"
+    },
+    {
+      "path": "../../session-query/session-query"
+    },
+    {
+      "path": "../../subagent/subagent"
+    },
+    {
+      "path": "../../runtime-diagnostics/invariants"
+    },
+    {
+      "path": "../../interaction/user-questions"
     }
   ]
 }

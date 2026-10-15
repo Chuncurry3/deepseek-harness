@@ -91,6 +91,7 @@ function parseYamlDocument(source: string): unknown {
   try {
     return parseYaml(source)
   } catch (error) {
+    /* v8 ignore next -- the vendored YAML parser always throws YAMLParseError. */
     const detail = error instanceof Error ? error.message : String(error)
     throw new Error(`loop chain document is not valid YAML: ${detail}`)
   }
