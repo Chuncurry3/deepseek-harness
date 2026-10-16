@@ -894,6 +894,12 @@ git add packages/loop/command-loop packages/loop/loop/src/paths.ts tsconfig.host
 git commit -m "feat(loop): /loop command grammar and scope normalization"
 ```
 
+### Task D1 — review outcome (2026-10-09)
+
+Spec review: **APPROVED** (no blockers), then one follow-up fix commit `9b61389493`. Adjudications: the inject deviation `['commands','loops','sessionProjections']` is the faithful goal-mirror analogue (ctx.loops exposes no durable read; the projection is the documented consumer path; the driver mounts via cordis.yml at D3, not by injection); the `--from` stub is honest (a valid target is as loud as an invalid one; grammar + validation only — D3 wires the replay lane; keep the item-#5 routing explicit); the companion omission is gate-legal and semantically right (note L181 rewording is an E2 obligation, not a code change). Fix round landed the five MINORs: empty-objective parse-time rejection, `status`/`start` control words (the note L32 `start <objective>` prefix form + `status` → show alias), the `resume --from` over-long-tail error attribution, grant lanes requiring directories (file grants refused loud), and the 120-char digest cap documented; plus the Activation process-local limitation, the token-start quoting rule, and a latent verify-concrete-terms repair (a forbidden term sat in untracked files during D1's gate run — the gate scans tracked files).
+
+Carry-forwards: **D2** — reuse `normalizeScopePath` from `@deepseek-ai/dsh-loop/paths` (subpath alias pattern proven); mirror tool-session-query's registration and render intent. **D3** — wire `--from` execution (tail re-run over the append-only ledger; replace the stub direct error); mount the family in the base bundle; finalize the driver README limitation line. **E2** — reconcile the note's wording: L181 four-companion phrasing (command-loop's documented omission), the grammar spelling (status alias + start prefix both live; a quoted control word still acts as the verb), and keep research item #5's routing explicit. Process: run the content gates after `git add` for new files. Battery at D1 closure: family 226/226, scoped 100% coverage on all three packages' src, host tsc = the 2 environmental TS2307, oxlint 0/0, duplication 0, invariants 40, pairing 1166, doc-sync 40/3.
+
 ### Task D2: `loop_session_search` / `loop_session_read` tools
 
 **Files:**
