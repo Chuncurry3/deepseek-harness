@@ -204,6 +204,35 @@ describe('parseLoopCommand grammar', () => {
     expect(parseLoopCommand('resumed')).toEqual({ kind: 'start', objective: 'resumed', reads: [], writes: [] })
   })
 
+  it('rejects an empty or blank objective and trims padded quotes', () => {
+    expect(() => parseLoopCommand('""')).toThrow(/objective/)
+    expect(() => parseLoopCommand('"  "')).toThrow(/objective/)
+    expect(parseLoopCommand('" hi "')).toEqual({ kind: 'start', objective: 'hi', reads: [], writes: [] })
+    expect(parseLoopCommand('" a" padded ')).toEqual({ kind: 'start', objective: 'a padded', reads: [], writes: [] })
+  })
+
+  it('treats status and start as control words, not objectives', () => {
+    expect(parseLoopCommand('status')).toEqual({ kind: 'show' })
+    expect(parseLoopCommand('STATUS')).toEqual({ kind: 'show' })
+    // status is a control word only as the complete input; trailing words make an objective.
+    expect(parseLoopCommand('status of the run')).toEqual({
+      kind: 'start',
+      objective: 'status of the run',
+      reads: [],
+      writes: [],
+    })
+    // The note spells /loop start <objective>; the verb is optional prefix data.
+    expect(parseLoopCommand('start iterate the tool')).toEqual({
+      kind: 'start',
+      objective: 'iterate the tool',
+      reads: [],
+      writes: [],
+    })
+    expect(parseLoopCommand('START iterate')).toEqual({ kind: 'start', objective: 'iterate', reads: [], writes: [] })
+    expect(() => parseLoopCommand('start --read "E:\\x"')).toThrow(/objective/)
+    expect(parseLoopCommand('start')).toEqual({ kind: 'invalid-start' })
+  })
+
   it('parses an optional --from target on resume only', () => {
     expect(parseLoopCommand('resume --from direct')).toEqual({ kind: 'resume', from: 'direct' })
     expect(parseLoopCommand('resume --from "role with spaces"')).toEqual({ kind: 'resume', from: 'role with spaces' })
@@ -212,9 +241,8 @@ describe('parseLoopCommand grammar', () => {
     expect(parseLoopCommand('resume extra')).toEqual({ kind: 'start', objective: 'resume extra', reads: [], writes: [] })
     expect(() => parseLoopCommand('resume --from')).toThrow(/--from/)
     expect(() => parseLoopCommand('resume --from ""')).toThrow(/non-empty/)
-    // Extra input after the --from value is not a resume: it falls through to
-    // the start grammar, which rejects --from as an unknown flag.
-    expect(() => parseLoopCommand('resume --from direct extra')).toThrow(/unknown \/loop flag: --from/)
+    // Extra input after the --from value is a resume-grammar violation, not a start.
+    expect(() => parseLoopCommand('resume --from direct extra')).toThrow(/at most one --from value/)
   })
 
   it('fails loud when a flag lacks its value', () => {
@@ -274,9 +302,46 @@ describe('/loop human command', () => {
     const mounted = await test()
     await expect(run(mounted)).resolves.toEqual({
       kind: 'success',
-      text: 'No loop is currently set.\nUsage: /loop [<objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear]',
+      text: 'No loop is currently set.\nUsage: /loop [status] | [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear',
     })
     expect(domainEvents(mounted.session)).toEqual([])
+  })
+
+  it('refuses a bare start and a blank quoted objective as direct errors', async () => {
+    const mounted = await test()
+    const bare = await run(mounted, ' start')
+    expect(bare).toEqual({
+      kind: 'error',
+      text: 'Starting a loop requires an objective.\nUsage: /loop [status] | [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear',
+    })
+    const blank = await run(mounted, ' ""')
+    expect(blank.kind).toBe('error')
+    expect(blank.text).toContain('the /loop start objective is required')
+    expect(blank.text).toContain('Usage: /loop')
+    expect(domainEvents(mounted.session)).toEqual([])
+  })
+
+  it('starts through the start verb with flags', async () => {
+    const mounted = await test()
+    const created = await run(mounted, ' start iterate the tool --max-rounds 3')
+    expect(created.kind).toBe('success')
+    expect(created.text).toContain('Objective: iterate the tool')
+    expect(created.text).toContain('Rounds: 0/3')
+  })
+
+  it('shows status for the status control word instead of starting an objective', async () => {
+    const mounted = await test()
+    const empty = await run(mounted, ' status')
+    expect(empty).toEqual({
+      kind: 'success',
+      text: 'No loop is currently set.\nUsage: /loop [status] | [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear',
+    })
+    await run(mounted, ' iterate the tool')
+    const count = domainEvents(mounted.session).length
+    const shown = await run(mounted, ' STATUS')
+    expect(shown.kind).toBe('success')
+    expect(shown.text).toContain('Status: active')
+    expect(domainEvents(mounted.session)).toHaveLength(count)
   })
 
   it('starts the default chain armed with the objective and implicit home scope', async () => {
@@ -333,6 +398,21 @@ describe('/loop human command', () => {
     expect(result.kind).toBe('error')
     expect(result.text).toContain('ENOENT')
     expect(result.text).toContain(missing)
+    expect(domainEvents(mounted.session)).toEqual([])
+  })
+
+  it('refuses a file granted as a scope with a direct command error', async () => {
+    const mounted = await test()
+    const file = join(mounted.root, 'notes.txt')
+    writeFileSync(file, 'data')
+    // A quoted flag value keeps its content verbatim, like a real typed path.
+    const read = await run(mounted, ` iterate --read "${file}"`)
+    expect(read.kind).toBe('error')
+    expect(read.text).toContain('--read requires a directory scope')
+    expect(read.text).toContain(file)
+    const write = await run(mounted, ` iterate --write "${file}"`)
+    expect(write.kind).toBe('error')
+    expect(write.text).toContain('--write requires a directory scope')
     expect(domainEvents(mounted.session)).toEqual([])
   })
 
@@ -453,7 +533,7 @@ describe('/loop human command', () => {
     const execution = await mounted.ctx.commands.execute(agent, '/loop obj', [], new AbortController().signal)
     expect(execution?.result).toEqual({
       kind: 'error',
-      text: 'The controlling session declares no workspace; /loop start requires one.\nUsage: /loop [<objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear]',
+      text: 'The controlling session declares no workspace; /loop start requires one.\nUsage: /loop [status] | [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear',
     })
     expect(domainEvents(session)).toEqual([])
   })

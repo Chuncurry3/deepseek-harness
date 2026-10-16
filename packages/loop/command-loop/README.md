@@ -33,19 +33,20 @@ Every sub-command runs against the current loop of the invoking agent; a bare `/
 
 | Input | Result |
 |---|---|
-| `/loop` | Shows the objective, durable phase, round count and cap, settled node progress, process-local activation, the newest settled report digest, and valid next commands; a blocked loop also shows its policy code and explanation |
-| `/loop <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` | Starts and arms a loop, or replaces a completed loop with a fresh identity |
+| `/loop` | Shows the objective, durable phase, round count and cap, settled node progress, process-local activation, the newest settled report digest (JSON text capped at 120 characters with a trailing ellipsis), and valid next commands; a blocked loop also shows its policy code and explanation |
+| `/loop status` | Shows the current status exactly like a bare `/loop`; recognized only as the complete input |
+| `/loop [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` | Starts and arms a loop, or replaces a completed loop with a fresh identity; the `start` verb is optional |
 | `/loop pause` | Pauses the current loop and disarms continuation |
 | `/loop resume [--from <node|role>]` | Resumes a stopped loop subject to its remaining round cap |
 | `/loop clear` | Clears the current loop while retaining its durable history |
 
 ### Input grammar
 
-The verbs `pause`, `resume`, and `clear` are recognized only when they fit the whole input; any other non-empty input is a start objective, so `/loop pause now` starts that literal objective. Values may be double-quoted to carry spaces, semicolons, or a leading `--`; quoting strips the quotes and keeps the content verbatim, with no escape sequences. `--read` and `--write` are repeatable and each grants one path; `--chain`, `--max-rounds`, and `--checkpoint` may appear once; a flag without a value, an unknown flag, or input after the flags fails loud as a direct command error.
+The verbs `pause`, `resume`, and `clear` are recognized only when they fit the whole input; `status` fits the same rule and shows the status. The optional `start` verb prefixes the objective — a bare `/loop start` is a direct error, and `/loop start iterate` and `/loop iterate` start the same run. Any other non-empty input is a start objective, so `/loop pause now` starts that literal objective; the objective is required and may not be empty or blank. Values may be double-quoted to carry spaces, semicolons, or a leading `--`; a quote opens a quoted run only at a token start, and quoting strips the quotes and keeps the content verbatim, with no escape sequences. `--read` and `--write` are repeatable and each grants one path; `--chain`, `--max-rounds`, and `--checkpoint` may appear once; a flag without a value, an unknown flag, or input after the flags fails loud as a direct command error.
 
 ### Scopes and the chain
 
-A start resolves its chain from a `--chain` document (relative paths resolve against the controlling session's workspace), then from a `loop.yaml` in that workspace, and otherwise from the default single-worker chain. Every granted and declared path must exist and is realpath-normalized at start; `writeScopes` is the controlling workspace plus the `--write` grants, `readScopes` adds every declared chain node workspace and the `--read` grants, and membership is exact-path — nesting inside a granted directory grants nothing. A chain node whose workspace falls outside the write scopes is refused at start with a direct error.
+A start resolves its chain from a `--chain` document (relative paths resolve against the controlling session's workspace), then from a `loop.yaml` in that workspace, and otherwise from the default single-worker chain. Every granted and declared path must exist and is realpath-normalized at start; a granted scope must name a directory, so granting a file fails loud with a direct error. `writeScopes` is the controlling workspace plus the `--write` grants, `readScopes` adds every declared chain node workspace and the `--read` grants, and membership is exact-path — nesting inside a granted directory grants nothing. A chain node whose workspace falls outside the write scopes is refused at start with a direct error.
 
 ### Compose it
 
@@ -76,8 +77,8 @@ This section explains how the command parses input and renders output; the obser
 
 ### Design
 
-- **Grammar, not free text.** A whitespace tokenizer with double-quoted runs feeds a closed command union: show, start, pause, resume with an optional `--from` target, or clear. Verb tokens are matched case-insensitively and only when the remaining input fits the verb, mirroring the `/goal` control words.
-- **Start resolution is loud.** The chain document, every granted scope, and every declared node workspace are read and realpath-normalized before the domain start; a missing file, an invalid document, or a nonexistent path becomes a direct command error without a domain mutation.
+- **Grammar, not free text.** A whitespace tokenizer with double-quoted runs feeds a closed command union: show, start, pause, resume with an optional `--from` target, clear, and the bare `start` rejection. Verb tokens are matched case-insensitively and only when the remaining input fits the verb, mirroring the `/goal` control words.
+- **Start resolution is loud.** The chain document, every granted scope, and every declared node workspace are read and realpath-normalized before the domain start; a missing file, an invalid document, a nonexistent path, or a grant that is not a directory becomes a direct command error without a domain mutation.
 - **Domain rejections become stable errors.** `LoopError` outcomes convert into direct command errors — scope violations keep the domain's explanatory message, every other outcome uses one fixed message. Unexpected failures rethrow so adapters report a command failure rather than a domain result. Rendered output exposes no branded ids or revisions.
 - **Status is reconstructable from the log.** The render reads only the durable loop snapshot, the folded ledger, and the process-local activation; the settled-node count and newest report digest derive from the ledger the session log already holds.
 
@@ -127,6 +128,7 @@ Command discovery, mutations, and direct output do not affect the cache. Continu
 These limits define when the command is a poor fit or needs special care. They are current package constraints, not a task backlog.
 
 - **No attachments** — the loop grammar has no attachment slot; relay inputs come from the chain's declared sessions, not from composer cards.
+- **Activation is process-local** — the status line's armed or disarmed value reflects this process only; a restarted process renders the activation as disarmed until `/loop resume` re-arms it.
 - **Plain-text interaction only** — the generic command registry has no modal edit form; the start grammar and explicit clear keep destructive intent deterministic across adapters.
 - **`resume --from` parses without a continuation lane** — the parser validates the target against the frozen chain's roles, indexes, and evaluator, and a valid target settles as a direct error naming the current resume behavior.
 - **Web command adapter only in the shipped apps** — headless, ACP automation, and JSON-RPC adapters do not consume `ctx.commands`.

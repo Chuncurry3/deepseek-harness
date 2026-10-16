@@ -5,7 +5,7 @@
  * durable loop state. @module @deepseek-ai/dsh-command-loop
  */
 
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -29,7 +29,7 @@ import type {} from '@deepseek-ai/dsh-session-projection'
 export const name = 'command-loop'
 export const inject = ['commands', 'loops', 'sessionProjections']
 
-const USAGE = 'Usage: /loop [<objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear]'
+const USAGE = 'Usage: /loop [status] | [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node] | pause | resume [--from <node|role>] | clear'
 
 /** Stable text for expected loop state rejections, mirroring the /goal command. */
 const LOOP_COMMAND_INVALID = 'The loop command is not valid for the current state. Run /loop to view available commands.'
@@ -52,8 +52,9 @@ export type LoopCommand =
   | { readonly kind: 'pause' }
   | { readonly kind: 'resume'; readonly from?: string }
   | { readonly kind: 'clear' }
+  | { readonly kind: 'invalid-start' }
 
-/** One whitespace-split token with its double-quoting provenance. */
+/** One whitespace-split token: the token text and the value of its `quoted` field. */
 interface Token {
   readonly text: string
   readonly quoted: boolean
@@ -77,7 +78,7 @@ function renderThrown(value: unknown): string {
  * double-quoted run becoming one token whose content is verbatim (zero
  * escaping). A quote opens a quoted run only at a token start.
  * @param input - trimmed command text after the `/loop` name.
- * @returns the tokens with their quoting provenance.
+ * @returns the tokens, each with its text and `quoted` field value.
  * @throws When a double-quoted run is unterminated.
  */
 function tokenize(input: string): Token[] {
@@ -129,7 +130,7 @@ function flagValue(flag: string, tokens: readonly Token[]): { value: string; res
 /** Try to parse the tail of the `resume` verb: empty, or one `--from` value.
  * @param tokens - the tokens after the verb.
  * @returns the resume command, or undefined when the tail is not resume-shaped.
- * @throws When `--from` appears without a value.
+ * @throws When `--from` appears without a value, with an empty value, or with input after its value.
  */
 function tryParseResumeTail(tokens: readonly Token[]): LoopCommand | undefined {
   const [flag, value, ...after] = tokens
@@ -137,7 +138,7 @@ function tryParseResumeTail(tokens: readonly Token[]): LoopCommand | undefined {
   if (flag.text !== '--from' || !isFlag(flag)) return undefined
   if (value === undefined) throw new Error('flag --from requires a value')
   if (value.text.length === 0) throw new Error('flag --from requires a non-empty value')
-  if (after.length > 0) return undefined
+  if (after.length > 0) throw new Error('resume accepts at most one --from value')
   return { kind: 'resume', from: value.text }
 }
 
@@ -153,7 +154,7 @@ function nextFlag(tokens: readonly Token[]): { flag: Token; rest: readonly Token
 /** Parse the start form: the objective token run, then flags.
  * @param tokens - the whole token stream.
  * @returns the parsed start.
- * @throws When the objective is empty, a flag is repeated, unknown, or valueless, or input follows the flags.
+ * @throws When the objective is missing or blank, a flag is repeated, unknown, or valueless, or input follows the flags.
  */
 function parseStart(tokens: readonly Token[]): LoopCommand {
   const objective: string[] = []
@@ -167,7 +168,8 @@ function parseStart(tokens: readonly Token[]): LoopCommand {
     flags = true
     tail.push(token)
   }
-  if (objective.length === 0) throw new Error('the /loop start objective is required before any flag')
+  const objectiveText = objective.join(' ').trim()
+  if (objectiveText.length === 0) throw new Error('the /loop start objective is required before any flag')
   const reads: string[] = []
   const writes: string[] = []
   let chain: string | undefined
@@ -223,7 +225,7 @@ function parseStart(tokens: readonly Token[]): LoopCommand {
   }
   return {
     kind: 'start',
-    objective: objective.join(' '),
+    objective: objectiveText,
     reads,
     writes,
     ...(chain === undefined ? {} : { chain }),
@@ -235,11 +237,14 @@ function parseStart(tokens: readonly Token[]): LoopCommand {
 /**
  * Parse the grammar owned by `/loop`: a bare invocation shows status, the
  * exact lifecycle verbs control it, and any other non-empty input is a start.
+ * `start` optionally prefixes the start objective — a bare `start` parses as
+ * an incomplete start — and `status` shows status when it is the complete
+ * input.
  *
  * Double-quoted values lose their quotes and keep their content verbatim;
  * a verb is recognized only when the remaining input fits that verb (nothing
- * after `pause`/`clear`, at most one `--from` value after `resume`), so
- * `/loop pause now` starts an objective like the `/goal` command's control
+ * after `pause`/`clear`/`status`, at most one `--from` value after `resume`),
+ * so `/loop pause now` starts an objective like the `/goal` command's control
  * words.
  * @param rawInput - exact text after the command name, including separator whitespace.
  * @returns the parsed command.
@@ -255,6 +260,10 @@ export function parseLoopCommand(rawInput: string): LoopCommand {
     const resume = tryParseResumeTail(rest)
     if (resume !== undefined) return resume
   }
+  if (isVerb(first, 'start')) {
+    return rest.length === 0 ? { kind: 'invalid-start' } : parseStart(rest)
+  }
+  if (isVerb(first, 'status') && rest.length === 0) return { kind: 'show' }
   return parseStart([first, ...rest])
 }
 
@@ -398,6 +407,20 @@ function pushScope(scopes: string[], scope: string): void {
   if (!scopes.includes(scope)) scopes.push(scope)
 }
 
+/** Normalize one granted scope and require it to name an enterable directory.
+ * @param flag - the flag carrying the grant, for error text.
+ * @param grant - the granted path as typed.
+ * @returns the realpath-normalized directory scope.
+ * @throws When the grant does not exist or is not a directory.
+ */
+function normalizeGrant(flag: string, grant: string): string {
+  const scope = normalizeScopePath(grant)
+  if (!statSync(scope).isDirectory()) {
+    throw new Error(`flag ${flag} requires a directory scope, got ${grant}`)
+  }
+  return scope
+}
+
 /** Normalize every declared chain node workspace in place of the raw text.
  * @param chain - the validated chain.
  * @returns the chain with realpath-normalized node workspaces.
@@ -415,24 +438,26 @@ function normalizeChainCwds(chain: LoopChainDef): LoopChainDef {
  * `readScopes` is the controlling workspace, every declared chain node
  * workspace, and the `--read` grants. Every path is realpath-normalized, so
  * the service's exact-string membership check and the driver's spawn-time
- * re-assert compare the same form.
+ * re-assert compare the same form. Every granted scope must name an
+ * enterable directory: a frozen scope that no run workspace can match is a
+ * direct error at start.
  * @param command - the parsed start.
  * @param home - the controlling session's workspace.
  * @returns the validated start request.
- * @throws When a granted or declared path does not exist, or the chain document is invalid.
+ * @throws When a granted path does not exist or is not a directory, a declared path does not exist, or the chain document is invalid.
  */
 function resolveStartRequest(command: Extract<LoopCommand, { kind: 'start' }>, home: string): StartLoopRequest {
   const homeScope = normalizeScopePath(home)
   const writeScopes: string[] = []
   const readScopes: string[] = []
   pushScope(writeScopes, homeScope)
-  for (const grant of command.writes) pushScope(writeScopes, normalizeScopePath(grant))
+  for (const grant of command.writes) pushScope(writeScopes, normalizeGrant('--write', grant))
   const chain = normalizeChainCwds(loadChain(command, home))
   pushScope(readScopes, homeScope)
   for (const node of chain.nodes) {
     if (node.cwd !== undefined) pushScope(readScopes, node.cwd)
   }
-  for (const grant of command.reads) pushScope(readScopes, normalizeScopePath(grant))
+  for (const grant of command.reads) pushScope(readScopes, normalizeGrant('--read', grant))
   return {
     objective: command.objective,
     chain,
@@ -490,6 +515,8 @@ async function executeLoopCommand(ctx: Context, invocation: CommandInvocation): 
         const created = await ctx.loops.start(invocation.agent, request)
         return renderLoop('Loop started', { loop: created.loop, ledger: [], activation: created.activation })
       }
+      case 'invalid-start':
+        return { kind: 'error', text: `Starting a loop requires an objective.\n${USAGE}` }
       case 'pause': {
         if (current === undefined) return missingLoop('pause')
         const paused = await ctx.loops.pause(invocation.agent, loopRef(current.loop))
