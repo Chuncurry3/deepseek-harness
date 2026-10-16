@@ -3686,6 +3686,25 @@ export type CompletionDelivery = 'quiet' | 'wakeup'
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-tool-jobs -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-tool-loop-query -->
+<a id="deepseek-aidsh-tool-loop-query"></a>
+
+## `@deepseek-ai/dsh-tool-loop-query`
+
+- `inject`: `tools` · `sessionQuery` · `subagents`
+- `source`: [`packages/loop/tool-loop-query/src/index.ts:56`](../packages/loop/tool-loop-query/src/index.ts)
+
+```ts config-catalog
+/** Result-count and deadline bounds a deployment selects for the in-run read tools. */
+export interface Config {
+  /** Most matching events one `loop_session_search` call returns. Defaults to 100. */
+  maxSearchResults?: number
+  /** Cooperative deadline for one `loop_session_search` call, in milliseconds. Defaults to 30000. */
+  searchTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-tool-loop-query -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-tool-lsp -->
 <a id="deepseek-aidsh-tool-lsp"></a>
 

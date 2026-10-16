@@ -27,6 +27,7 @@ loop 组为每个控制会话记录一次跨会话中继运行。一条冻结的
 | [`loop`](loop/README.zh.md) | 每个控制会话一个持久中继 loop：带版本的事件、严格回放折叠、生命周期变更、节点台账 | `ctx.loops` |
 | [`loop-chain-driver`](loop-chain-driver/README.zh.md) | 运行链的续行驱动器插件：派生节点子会话、结算报告、检查点、重启后恢复 | —（函数插件） |
 | [`command-loop`](command-loop/README.zh.md) | 人类 `/loop` 斜杠命令：带作用域授权的 start 语法、生命周期动词、状态渲染 | —（命令插件） |
+| [`tool-loop-query`](tool-loop-query/README.zh.md) | 面向模型的运行内读取工具：对运行可读取的会话做谱系与作用域授权 | —（工具插件） |
 
 -----
 

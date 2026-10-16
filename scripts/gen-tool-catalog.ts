@@ -57,6 +57,7 @@ import * as ToolSchedule from '@deepseek-ai/dsh-schedule'
 import Lsp from '@deepseek-ai/dsh-lsp'
 import * as ToolLsp from '@deepseek-ai/dsh-tool-lsp'
 import * as ToolSkill from '@deepseek-ai/dsh-tool-skill'
+import * as ToolLoopQuery from '@deepseek-ai/dsh-tool-loop-query'
 import * as ToolSessionQuery from '@deepseek-ai/dsh-tool-session-query'
 import * as ToolJobs from '@deepseek-ai/dsh-tool-jobs'
 import BrowserUseRegistry from '@deepseek-ai/dsh-browser-use'
@@ -525,6 +526,21 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-loop-query',
+    dir: 'tool-loop-query',
+    source: 'packages/loop/tool-loop-query/src/index.ts',
+    requires: ['ctx.tools', 'ctx.sessionQuery', 'ctx.subagents', 'the loop session projection for run lineage'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(SessionStore)
+      await ctx.plugin(SqliteSessionQueryEngine, { path: ':memory:' })
+      await ctx.plugin(SubagentRuntime)
+      await ctx.plugin(ToolLoopQuery)
+    },
+    note:
+      'Both tools register globally and refuse every call from outside a relay run\'s lineage, so a composed session that never starts a loop carries their schemas without being able to use them. Authority is the run\'s frozen read scopes plus the calling agent\'s own workspace.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-subagent',

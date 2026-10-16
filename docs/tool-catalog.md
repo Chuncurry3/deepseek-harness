@@ -37,6 +37,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-ralph` | `ralph` | `ctx.tools`, `ctx.workflowEngine`, `ctx.subagents`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents every fresh round)` | `tool/call`, `tool/result`, `workflow and child session events during execution` | - | A fixed foreground workflow starts one fresh structured child per round; the model selects only the immutable objective and an optional round cap. |
 | `@deepseek-ai/dsh-tool-skill` | `skill` | `ctx.tools`, `ctx.agents`, `ctx.skills` | `tool/call`, `tool/result`, `user/message replacement catalogs via agent.inject()` | - | - |
 | `@deepseek-ai/dsh-tool-session-query` | `session_event_read`, `session_event_search`, `session_event_trace`, `session_search`, `session_trace` | `ctx.tools`, `ctx.systemPrompt`, `ctx.sessionQuery`, `a calling Agent for workspace authority` | `tool/call`, `tool/result` | - | The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies. |
+| `@deepseek-ai/dsh-tool-loop-query` | `loop_session_read`, `loop_session_search` | `ctx.tools`, `ctx.sessionQuery`, `ctx.subagents`, `the loop session projection for run lineage` | `tool/call`, `tool/result` | - | Both tools register globally and refuse every call from outside a relay run's lineage, so a composed session that never starts a loop carries their schemas without being able to use them. Authority is the run's frozen read scopes plus the calling agent's own workspace. |
 | `@deepseek-ai/dsh-tool-subagent` | `list_subagent_models`, `subagent` | `ctx.tools`, `ctx.subagents`, `ctx.systemPrompt`, `ctx.llm for model discovery and selected-route validation` | `tool/call`, `tool/result`, `child session events through the chosen provider` | `subagent`, `subagent_fork` | The registered delegation name is the load-time `toolName` config (default `subagent`); the default schema above has model selection off, while the discovery schema is shown as the fixed companion available in an enabled Session. Web presets sample the Plugins preference for each new top-level Session and preserve that decision for its child Sessions; `subagent_fork` remains fixed-route. Each instance independently controls whether it reads model-selection settings and its background behavior through `modelSelectionSettings`, `backgroundMode`, and `enableRunInBackground`. |
 | `@deepseek-ai/dsh-tool-subagent-control` | `interrupt_agent`, `list_agents`, `send_message` | `ctx.tools`, `ctx.subagents`, `ctx.agents and ctx.sessionProjections (list_agents only)` | `tool/call`, `tool/result`, `child session events through ctx.subagents` | - | The globally named control tools over continuable background subagents: provider-bound `tool-subagent` instances register distinct delegation tools, while this package registers `send_message` and `interrupt_agent` once, plus `list_agents` from its separately loaded `/list-agents` plugin (whose catalog rows use the sessionProjections and live Agent registries). |
 | `@deepseek-ai/dsh-tool-jobs` | `job_kill`, `job_list`, `job_output` | `ctx.tools`, `ctx.jobs`, `ctx.systemPrompt` | `tool/call`, `tool/result`, `user/message via agent.inject() for background completion notices` | - | The kind-agnostic background-job controller: background bash commands, PTY sends, and subagents are read, listed, and killed through the same three tools. Loading the plugin attaches the controller that arms producers' `ctx.jobs.start()`. |
@@ -2008,6 +2009,89 @@ Read the authorized session lineage around one session, including complete visib
 Source: [`packages/session-query/tool-session-query/src/index.ts`](../packages/session-query/tool-session-query/src/index.ts)
 
 The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.
+
+<a id="deepseek-aidsh-tool-loop-query"></a>
+
+## `@deepseek-ai/dsh-tool-loop-query`
+
+### `loop_session_read`
+
+Usable only inside an active run's lineage, every other call refused. Read one session this run may read: its current model surface, or one exact event with optional neighboring events.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Target session id. Omit for the calling session."
+    },
+    "seq": {
+      "type": "integer",
+      "description": "Target event sequence number. Omit to read the current model surface."
+    },
+    "before": {
+      "type": "integer",
+      "description": "Number of preceding raw events to summarize. Requires seq."
+    },
+    "after": {
+      "type": "integer",
+      "description": "Number of following raw events to summarize. Requires seq."
+    }
+  }
+}
+```
+
+Source: [`packages/loop/tool-loop-query/src/index.ts`](../packages/loop/tool-loop-query/src/index.ts)
+
+### `loop_session_search`
+
+Usable only inside an active run's lineage, every other call refused. Search the sessions this run may read (its frozen read scopes plus your own workspace) for literal text, and return each matching event with its session id and sequence number so loop_session_read can pull it.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Literal text to find in event text; matched case-insensitively."
+    },
+    "session_ids": {
+      "type": "array",
+      "description": "Optional readable session ids to search; an unreadable named id refuses the call.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "event_types": {
+      "type": "array",
+      "description": "Event types to include.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "description": "Event surfaces to include.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "current",
+          "shadowed",
+          "log-only"
+        ]
+      }
+    }
+  },
+  "required": [
+    "query"
+  ]
+}
+```
+
+Source: [`packages/loop/tool-loop-query/src/index.ts`](../packages/loop/tool-loop-query/src/index.ts)
+
+Both tools register globally and refuse every call from outside a relay run's lineage, so a composed session that never starts a loop carries their schemas without being able to use them. Authority is the run's frozen read scopes plus the calling agent's own workspace.
 
 <a id="deepseek-aidsh-tool-subagent"></a>
 

@@ -330,6 +330,7 @@
     { "path": "./packages/loop/loop" },
     { "path": "./packages/loop/loop-chain-driver" },
     { "path": "./packages/loop/command-loop" },
+    { "path": "./packages/loop/tool-loop-query" },
     { "path": "./packages/feedback/command-feedback" },
     { "path": "./packages/schedule/schedule" },
     { "path": "./packages/context/time-context" },
