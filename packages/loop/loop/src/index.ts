@@ -16,7 +16,7 @@ import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-session-projection'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
-import { applyLoopEvent, decodeLoopChange, decodeLoopLedger, loopChangeRef } from './fold.ts'
+import { applyLoopEvent, decodeLoopChange, decodeLoopLedger, loopChangeRef, loopLedgerEntry } from './fold.ts'
 import type { LoopFoldState } from './fold.ts'
 import {
   LOOP_CHANGE_VERSION,
@@ -160,9 +160,10 @@ function parseLoopSnapshot(value: unknown): LoopSnapshot {
 function parseLoopRef(value: unknown): LoopRef {
   const record = requireRecord(value, 'loop projection lastRef')
   requireFields(record, 'loop projection lastRef', ['id', 'revision'])
-  requireNonEmptyString(record['id'], 'loop projection lastRef id')
-  requirePositiveInteger(record['revision'], 'loop projection lastRef revision')
-  return record as unknown as LoopRef
+  return {
+    id: LoopId(requireNonEmptyString(record['id'], 'loop projection lastRef id')),
+    revision: requirePositiveInteger(record['revision'], 'loop projection lastRef revision'),
+  }
 }
 
 /** Session event key that carries each ledger record kind. */
@@ -172,29 +173,31 @@ const LEDGER_EVENT_KEYS = {
   settlement: 'loop/node',
 } as const satisfies Record<LoopLedgerMeta['kind'], LoopLedgerEventKey>
 
-/** Validate one persisted ledger entry through the strict fold decoder. */
-function validateLedgerEntry(loopId: LoopIdType, value: unknown): void {
+/** Validate one persisted ledger entry through the strict fold decoder and project it onto the durable entry shape. */
+function validateLedgerEntry(loopId: LoopIdType, value: unknown): LoopLedgerEntry {
   const record = requireRecord(value, 'loop projection ledger entry')
-  const kind = record['kind'] as string
+  const kind = requireNonEmptyString(record['kind'], 'loop projection ledger entry kind')
   if (!Object.hasOwn(LEDGER_EVENT_KEYS, kind)) throw new Error('loop projection ledger entry has an unknown kind')
-  decodeLoopLedger(LEDGER_EVENT_KEYS[kind as LoopLedgerMeta['kind']], { ...record, version: LOOP_LEDGER_VERSION, loopId })
+  return loopLedgerEntry(decodeLoopLedger(LEDGER_EVENT_KEYS[kind as LoopLedgerMeta['kind']], { ...record, version: LOOP_LEDGER_VERSION, loopId }))
 }
 
-/** Validate the append-only ledger array of one persisted projection. */
-function parseLedger(value: unknown, loopId: LoopIdType | undefined): void {
+/** Validate the append-only ledger array of one persisted projection and return its decoded entries. */
+function parseLedger(value: unknown, loopId: LoopIdType | undefined): readonly LoopLedgerEntry[] {
   if (!Array.isArray(value)) throw new Error('loop projection ledger must be an array')
   if (loopId === undefined) {
     if (value.length > 0) throw new Error('loop projection ledger entry requires a current loop')
-    return
+    return []
   }
+  const entries: LoopLedgerEntry[] = []
   const keys = new Set<string>()
   for (const entry of value) {
-    validateLedgerEntry(loopId, entry)
-    const record = entry as Record<string, unknown>
-    const key = `${loopId}:${String(record['round'])}:${String(record['nodeIndex'])}:${String(record['attempt'])}`
+    const decoded = validateLedgerEntry(loopId, entry)
+    entries.push(decoded)
+    const key = `${loopId}:${String(decoded.round)}:${String(decoded.nodeIndex)}:${String(decoded.attempt)}`
     if (keys.has(key)) throw new Error(`loop projection ledger has duplicate key ${key}`)
     keys.add(key)
   }
+  return entries
 }
 
 /** Validate one persisted current-loop projection (the client wire value). */
@@ -207,17 +210,17 @@ function parseLoopProjection(value: unknown): LoopProjection {
     throw new Error('loop projection must carry loop, createdAt, and updatedAt together')
   }
   requireFields(projection, 'loop projection', hasLoop ? ['ledger', 'loop', 'createdAt', 'updatedAt'] : ['ledger'], ['lastRef'])
+  const lastRef = Object.hasOwn(projection, 'lastRef') ? parseLoopRef(projection['lastRef']) : undefined
   if (hasLoop) {
     const loop = parseLoopSnapshot(projection['loop'])
     const createdAt = requireNonNegativeInteger(projection['createdAt'], 'loop projection createdAt')
     const updatedAt = requireNonNegativeInteger(projection['updatedAt'], 'loop projection updatedAt')
     if (updatedAt < createdAt) throw new Error('loop projection updatedAt cannot precede createdAt')
-    parseLedger(projection['ledger'], loop.id)
-  } else {
-    parseLedger(projection['ledger'], undefined)
+    return lastRef === undefined
+      ? { loop, ledger: parseLedger(projection['ledger'], loop.id), createdAt, updatedAt }
+      : { loop, ledger: parseLedger(projection['ledger'], loop.id), createdAt, updatedAt, lastRef }
   }
-  if (Object.hasOwn(projection, 'lastRef')) parseLoopRef(projection['lastRef'])
-  return projection as unknown as LoopProjection
+  return { ledger: parseLedger(projection['ledger'], undefined) }
 }
 
 /** Validate one persisted projection-state row and return it unchanged. */
@@ -246,12 +249,12 @@ function parseLoopProjectionState(value: unknown): LoopProjectionState {
 /** Hand-rolled state validation duck-typed to the registry's schema slot. */
 const loopProjectionStateSchema = {
   parse: (value: unknown): LoopProjectionState => parseLoopProjectionState(value),
-} as unknown as LoopStateSchema
+} as LoopStateSchema
 
 /** Hand-rolled wire validation sharing the projection's parser. */
 const loopProjectionSchema = {
   parse: (value: unknown): LoopProjection | null => (value === null ? null : parseLoopProjection(value)),
-} as unknown as LoopViewSchema
+} as LoopViewSchema
 
 /** Ledger map key — the fold's `{loopId, round, nodeIndex, attempt}` formula. */
 function ledgerKey(loopId: LoopIdType, entry: { round: number; nodeIndex: number; attempt: number }): string {
@@ -460,6 +463,15 @@ interface CurrentLoop extends LoopProjection {
   readonly loop: LoopSnapshot
   readonly createdAt: number
   readonly updatedAt: number
+}
+
+/**
+ * Whether one projection row carries its current loop: the strict parse and
+ * fold contracts guarantee the snapshot, timestamps, and lastRef travel
+ * together with it.
+ */
+function isCurrentLoop(state: LoopProjection | null): state is CurrentLoop {
+  return state?.loop !== undefined
 }
 
 /** Operations whose mutation is a pure phase swap. */
@@ -734,28 +746,24 @@ export class LoopService extends TypertRemoteService {
   /** Resolve the current-loop projection for a non-CAS ledger append. */
   private expectLoop(agent: Agent): CurrentLoop {
     const state = this.state(agent.session)
-    const current = state?.loop
-    if (current === undefined) {
+    if (!isCurrentLoop(state)) {
       throw new LoopError('no current loop', 'LOOP_NOT_FOUND')
     }
-    // The state parse and fold contracts guarantee a non-null projection carries its snapshot and timestamps.
-    return state as unknown as CurrentLoop
+    return state
   }
 
   /** Reject stale or missing current-state refs. */
   private expectCurrent(state: LoopProjection | null, ref: LoopRef): CurrentLoop {
-    const current = state?.loop
-    if (current === undefined) {
+    if (!isCurrentLoop(state)) {
       throw new LoopError('no current loop', 'LOOP_NOT_FOUND')
     }
-    if (ref.id !== current.id || ref.revision !== current.revision) {
+    if (ref.id !== state.loop.id || ref.revision !== state.loop.revision) {
       throw new LoopError(
-        `stale loop ref "${ref.id}" revision ${ref.revision}; current is "${current.id}" revision ${current.revision}`,
+        `stale loop ref "${ref.id}" revision ${ref.revision}; current is "${state.loop.id}" revision ${state.loop.revision}`,
         'LOOP_STALE_REVISION',
       )
     }
-    // The state parse and fold contracts guarantee a non-null projection carries its snapshot and timestamps.
-    return state as unknown as CurrentLoop
+    return state
   }
 
   /** Enforce exact live-agent identity rather than trusting a matching id. */

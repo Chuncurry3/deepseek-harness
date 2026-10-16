@@ -76,7 +76,10 @@ type CountSchema = ProjectionDefinition<'test/loop-invariant-count', number>['st
 /** Foreign unit counting every event of its session. */
 const countUnit = {
   key: 'test/loop-invariant-count',
-  stateSchema: { parse: (value: unknown) => value } as unknown as CountSchema,
+  stateSchema: { parse: (value: unknown): number => {
+    if (typeof value !== 'number') throw new Error('test count state must be a number')
+    return value
+  } } as CountSchema,
   init: () => 0,
   apply: (state: number) => state + 1,
   stateVersion: 1,

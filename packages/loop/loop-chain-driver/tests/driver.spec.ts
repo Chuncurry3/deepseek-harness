@@ -267,13 +267,15 @@ async function loadYaml(lines: readonly string[]): Promise<Context> {
     ['@deepseek-ai/dsh-user-questions', UserQuestionService],
     ['@deepseek-ai/dsh-loop-chain-driver', LoopDriver],
   ])
+  // The internal slot is consumed duck-typed (version + import); the stub swaps
+  // it the way boot-client swaps its module map, through the loader's never idiom.
   context.loader.internal = {
     version: 'v2',
     async import(specifier: string) {
       if (!modules.has(specifier)) throw new Error(`unexpected Loader import: ${specifier}`)
       return modules.get(specifier)
     },
-  } as unknown as NonNullable<typeof context.loader.internal>
+  } as never
   await context.loader.create({
     name: 'cordis:include',
     config: { path: pathToFileURL(configPath).href },
@@ -369,8 +371,8 @@ async function boot(options: BootOptions = {}): Promise<Booted> {
 function loopOf(ctx: Context, session: Session): { readonly view: LoopView; readonly ledger: readonly LoopLedgerEntry[] } | undefined {
   const current = ctx.sessionProjections.stateOf(session, 'loop')?.current
   if (current === null || current === undefined || current.loop === undefined) return undefined
-  const view = { loop: current.loop, createdAt: current.createdAt ?? 0, updatedAt: current.updatedAt ?? 0, activation: 'armed' }
-  return { view: view as unknown as LoopView, ledger: current.ledger }
+  const view: LoopView = { loop: current.loop, createdAt: current.createdAt ?? 0, updatedAt: current.updatedAt ?? 0, activation: 'armed' }
+  return { view, ledger: current.ledger }
 }
 
 /** The settlements of one round in ledger order. */
@@ -1044,10 +1046,18 @@ describe('restart and recovery', () => {
       .filter(event => event.type !== 'loop/node-started')
       .map((event) => {
         if (event.type !== 'loop/change' || event.data.operation === 'clear') return event
-        const data = structuredClone(event.data)
-        const nodes = data.loop.chain.nodes as unknown as { cwd?: string }[]
-        for (const node of nodes) node.cwd = hostile
-        return { ...event, data }
+        const data = event.data
+        const forged = {
+          ...data,
+          loop: {
+            ...data.loop,
+            chain: {
+              ...data.loop.chain,
+              nodes: data.loop.chain.nodes.map(node => ({ ...node, cwd: hostile })),
+            },
+          },
+        }
+        return { ...event, data: forged }
       })
     await first.retireAgent()
     await first.ctx.fiber.dispose()

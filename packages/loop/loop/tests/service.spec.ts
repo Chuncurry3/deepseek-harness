@@ -137,13 +137,15 @@ async function loadYaml(lines: readonly string[]): Promise<Context> {
     ['@deepseek-ai/dsh-agent', AgentRegistry],
     ['@deepseek-ai/dsh-loop', LoopService],
   ])
+  // The internal slot is consumed duck-typed (version + import); the stub swaps
+  // it the way boot-client swaps its module map, through the loader's never idiom.
   context.loader.internal = {
     version: 'v2',
     async import(specifier: string) {
       if (!modules.has(specifier)) throw new Error(`unexpected Loader import: ${specifier}`)
       return modules.get(specifier)
     },
-  } as unknown as NonNullable<typeof context.loader.internal>
+  } as never
   await context.loader.create({
     name: 'cordis:include',
     config: { path: pathToFileURL(configPath).href },
@@ -989,9 +991,11 @@ describe('LoopService mutations', () => {
     expect(state.current?.loop).toMatchObject({ id: view.loop.id })
 
     await expect(ctx.loops.start(agent, startRequest())).rejects.toThrow(/loop replay failed at session event 1/)
-    // deliberately malformed: an externally corrupted record can never satisfy
-    // the typed payload, so the double cast keeps it on the SessionEvent side
-    const later = { type: 'loop/change', seq: 1, time: 2, data: { kind: 'loop/change', version: 98 } } as unknown as SessionEvent
+    // deliberately corrupted: an externally rewritten change version never
+    // satisfies the fold decoder, and the widened field keeps the forged
+    // payload on the SessionEvent side
+    const created = session.snapshotEvents()[0]!
+    const later = { ...created, data: { ...created.data, version: 98 as number } } as SessionEvent
     expect(applyLoopProjection(state, later)).toBe(state)
     expect(session.snapshotEvents()).toHaveLength(1)
   })
@@ -1094,6 +1098,14 @@ describe('LoopService mutations', () => {
     expect(loopProjectionDefinition.wire?.viewSchema.parse(current)).toEqual(current)
     expect(loopProjectionDefinition.wire?.viewSchema.parse(null)).toBeNull()
     expect(loopProjectionDefinition.wire?.viewSchema.parse({ ledger: [] })).toEqual({ ledger: [] })
+    const lastRefFree = { ...current }
+    delete (lastRefFree as { lastRef?: LoopRef }).lastRef
+    expect(loopProjectionDefinition.wire?.viewSchema.parse(lastRefFree)).toEqual({
+      loop: current.loop,
+      ledger: current.ledger,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+    })
     expect(loopProjectionDefinition.wire?.view(state)).toBe(current)
     expect(loopProjectionDefinition.stateSchema.parse({
       current: null,

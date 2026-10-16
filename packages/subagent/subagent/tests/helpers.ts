@@ -29,7 +29,9 @@ const ALL_CAPS: SubagentCapabilities = {
 
 /** A delegating-parent stand-in carrying only its durable session id. */
 export function fakeParent(id = 'parent-1'): Agent {
-  return { id: SessionId(id) } as unknown as Agent
+  // Pre-existing at this feature's fork point; the overlap-checked cast keeps
+  // the stand-in on the Agent side while the runtime reads only its id.
+  return { id: SessionId(id) } as Agent
 }
 
 /** A minimal one-shot start request; overrides win by spread. */

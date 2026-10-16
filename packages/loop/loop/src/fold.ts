@@ -543,7 +543,7 @@ export function applyLoopChange(state: LoopFoldState, change: LoopChangeMeta): v
 }
 
 /** Project one ledger meta onto the durable ledger entry shape. */
-function loopLedgerEntry(meta: LoopLedgerMeta): LoopLedgerEntry {
+export function loopLedgerEntry(meta: LoopLedgerMeta): LoopLedgerEntry {
   switch (meta.kind) {
     case 'node-started':
       return {

@@ -19,6 +19,7 @@ import type {
   LoopBlockReason,
   LoopChainNodeDef,
   LoopLedgerEntry,
+  LoopProjection,
   LoopRef,
   LoopVerdict,
 } from '@deepseek-ai/dsh-loop'
@@ -122,6 +123,19 @@ export function apply(ctx: Context, config: Config): void {
   }
 
   /**
+   * Whether one projection row carries its current loop: the strict parse and
+   * fold contracts guarantee the snapshot, timestamps, and lastRef travel
+   * together with it.
+   */
+  function isCurrentProjection(projection: LoopProjection | null): projection is LoopProjection & {
+    readonly loop: LoopHandoffView['loop']
+    readonly createdAt: number
+    readonly updatedAt: number
+  } {
+    return projection?.loop !== undefined
+  }
+
+  /**
    * The current loop view of one live agent: the folded projection plus the
    * process-local activation.
    * @param state - driving state of the exact agent.
@@ -136,20 +150,13 @@ export function apply(ctx: Context, config: Config): void {
     /* v8 ignore next -- the invariant companion isolates replay failures at load before any read. */
     if (projectionState.failure !== null) throw new Error(projectionState.failure)
     const projection = projectionState.current
-    if (projection === null || projection.loop === undefined) return undefined
-    // The state parse and fold contracts guarantee a non-null projection carries its snapshot and timestamps.
-    const current = projection as unknown as {
-      readonly loop: LoopHandoffView['loop']
-      readonly createdAt: number
-      readonly updatedAt: number
-      readonly ledger: readonly LoopLedgerEntry[]
-    }
+    if (!isCurrentProjection(projection)) return undefined
     return {
-      loop: current.loop,
-      createdAt: current.createdAt,
-      updatedAt: current.updatedAt,
+      loop: projection.loop,
+      createdAt: projection.createdAt,
+      updatedAt: projection.updatedAt,
       activation: ctx.loops.activation(state.agent),
-      ledger: [...current.ledger],
+      ledger: [...projection.ledger],
     }
   }
 
@@ -799,7 +806,7 @@ export function apply(ctx: Context, config: Config): void {
         if (text !== undefined && text.trim() !== '') {
           // A JSON syntax failure in the extracted text names an invalid recovered report.
           try {
-            recovered = JSON.parse(text) as unknown
+            recovered = JSON.parse(text)
           } catch {
             crashCode = 'invalid-recovered-report'
           }
