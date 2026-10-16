@@ -1973,7 +1973,7 @@ export type Config = Readonly<Record<string, never>>
 ## `@deepseek-ai/dsh-loop`
 
 - `inject`: `agents` · `sessionProjections` · `sessions`
-- `source`: [`packages/loop/loop/src/index.ts:346`](../packages/loop/loop/src/index.ts)
+- `source`: [`packages/loop/loop/src/index.ts:349`](../packages/loop/loop/src/index.ts)
 
 ```ts config-catalog
 /** Deployment defaults for loop runs and node handoffs. */
@@ -1996,7 +1996,7 @@ export interface Config {
 ## `@deepseek-ai/dsh-loop-chain-driver`
 
 - `inject`: `loops` · `subagents` · `sessionProjections` · `agents` · `sessions`
-- `source`: [`packages/loop/loop-chain-driver/src/index.ts:50`](../packages/loop/loop-chain-driver/src/index.ts)
+- `source`: [`packages/loop/loop-chain-driver/src/index.ts:51`](../packages/loop/loop-chain-driver/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -3691,8 +3691,8 @@ export type CompletionDelivery = 'quiet' | 'wakeup'
 
 ## `@deepseek-ai/dsh-tool-loop-query`
 
-- `inject`: `tools` · `sessionQuery` · `subagents`
-- `source`: [`packages/loop/tool-loop-query/src/index.ts:56`](../packages/loop/tool-loop-query/src/index.ts)
+- `inject`: `tools` · `sessionQuery` · `sessionProjections` · `subagents`
+- `source`: [`packages/loop/tool-loop-query/src/index.ts:77`](../packages/loop/tool-loop-query/src/index.ts)
 
 ```ts config-catalog
 /** Result-count and deadline bounds a deployment selects for the in-run read tools. */
