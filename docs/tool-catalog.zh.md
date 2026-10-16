@@ -2036,7 +2036,7 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
     },
     "seq": {
       "type": "integer",
-      "description": "Target event sequence number. Omit to read the current model surface."
+      "description": "Target event sequence number. Omit to read the target session's current model surface; the calling session when session_id is omitted."
     },
     "before": {
       "type": "integer",

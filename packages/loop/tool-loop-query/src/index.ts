@@ -13,8 +13,13 @@ import type { LoopSnapshot } from '@deepseek-ai/dsh-loop'
 import { normalizeScopePath } from '@deepseek-ai/dsh-loop/paths'
 import { SessionId, SessionSeq } from '@deepseek-ai/dsh-session'
 import type { Session, SessionEventType, SessionHeader, SessionId as SessionIdValue } from '@deepseek-ai/dsh-session'
-import { extractSessionEventText } from '@deepseek-ai/dsh-session-query'
+import {
+  extractSessionEventText,
+  SESSION_QUERY_READ_WINDOW_MAX,
+  SessionQueryError,
+} from '@deepseek-ai/dsh-session-query'
 import type {
+  SessionQueryErrorCode,
   SessionEventResultFilter,
   SessionEventSearchDocument,
   SessionEventSurface,
@@ -32,13 +37,13 @@ import type { GenericCallView, ToolRunContext } from '@deepseek-ai/dsh-tools'
 export const name = 'tool-loop-query'
 
 /** Capability services required by the model-facing consumer. */
-export const inject = ['tools', 'sessionQuery', 'subagents']
+export const inject = ['tools', 'sessionQuery', 'sessionProjections', 'subagents']
 
 /** Default cap on the matching events one search call returns. */
-export const DEFAULT_MAX_MATCHES = 100
+export const DEFAULT_MAX_SEARCH_RESULTS = 100
 
 /** Default cooperative deadline for one search call. */
-export const DEFAULT_SEARCH_DEADLINE_MS = 30_000
+export const DEFAULT_SEARCH_TIMEOUT_MS = 30_000
 
 /**
  * Model-facing refusal and input-failure codes. Each refusal names its reason
@@ -52,6 +57,22 @@ export type LoopQueryErrorCode =
   | 'LOOP_QUERY_INVALID_QUERY'
   | 'LOOP_QUERY_INVALID_ARGS'
 
+/** Arguments of the literal-text search lane. */
+interface SearchArgs {
+  readonly query: string
+  readonly session_ids?: string[]
+  readonly event_types?: string[]
+  readonly surfaces?: SessionEventSurface[]
+}
+
+/** Arguments of the exact read lane. */
+interface ReadArgs {
+  readonly session_id?: string
+  readonly seq?: number
+  readonly before?: number
+  readonly after?: number
+}
+
 /** Result-count and deadline bounds a deployment selects for the in-run read tools. */
 export interface Config {
   /** Most matching events one `loop_session_search` call returns. Defaults to 100. */
@@ -60,30 +81,14 @@ export interface Config {
   searchTimeoutMs?: number
 }
 
+/* jscpd:ignore-start -- deliberate mirror of tool-session-query's search bounds: the plan
+   mandates the same field names and defaults so the two tools read alike to a deployment. */
 /** Schemastery config for Loader defaults and generated configuration docs. */
 export const Config: z<Config> = z.object({
-  maxSearchResults: z.number().step(1).min(1).default(DEFAULT_MAX_MATCHES),
-  searchTimeoutMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS).default(DEFAULT_SEARCH_DEADLINE_MS),
+  maxSearchResults: z.number().step(1).min(1).default(DEFAULT_MAX_SEARCH_RESULTS),
+  searchTimeoutMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS).default(DEFAULT_SEARCH_TIMEOUT_MS),
 })
-
-interface SearchLimits {
-  readonly maxSearchResults: number
-  readonly searchTimeoutMs: number
-}
-
-interface SearchArgs {
-  readonly query: string
-  readonly session_ids?: string[]
-  readonly event_types?: string[]
-  readonly surfaces?: SessionEventSurface[]
-}
-
-interface ReadArgs {
-  readonly session_id?: string
-  readonly seq?: number
-  readonly before?: number
-  readonly after?: number
-}
+/* jscpd:ignore-end */
 
 /** Characters of one event's semantic text rendered as a one-line excerpt. */
 const EXCERPT_CHARS = 200
@@ -124,7 +129,10 @@ const searchParameters = {
 
 const readParameters = {
   session_id: { type: 'string', description: 'Target session id. Omit for the calling session.' },
-  seq: { type: 'integer', description: 'Target event sequence number. Omit to read the current model surface.' },
+  seq: {
+    type: 'integer',
+    description: "Target event sequence number. Omit to read the target session's current model surface; the calling session when session_id is omitted.",
+  },
   before: { type: 'integer', description: 'Number of preceding raw events to summarize. Requires seq.' },
   after: { type: 'integer', description: 'Number of following raw events to summarize. Requires seq.' },
 } as const
@@ -138,8 +146,8 @@ export function apply(ctx: Context, config: Config): void {
     description: SEARCH_DESCRIPTION,
     parameters: searchParameters,
     output: TEXT_OUTPUT,
-    timeoutMs: resolved.searchTimeoutMs,
-    execute: (args, exec) => searchSessions(ctx, args, exec, resolved.maxSearchResults),
+    timeoutMs: resolved.deadlineMs,
+    execute: (args, exec) => searchSessions(ctx, args, exec, resolved.resultCap),
     presentCall: presentSearchCall,
   }))
 
@@ -154,18 +162,18 @@ export function apply(ctx: Context, config: Config): void {
   }))
 }
 
-function resolveConfig(config: Config): SearchLimits {
-  const maxSearchResults = config.maxSearchResults ?? DEFAULT_MAX_MATCHES
-  const searchTimeoutMs = config.searchTimeoutMs ?? DEFAULT_SEARCH_DEADLINE_MS
-  if (!Number.isSafeInteger(maxSearchResults) || maxSearchResults < 1) {
+function resolveConfig(config: Config): { readonly resultCap: number; readonly deadlineMs: number } {
+  const resultCap = config.maxSearchResults ?? DEFAULT_MAX_SEARCH_RESULTS
+  const deadlineMs = config.searchTimeoutMs ?? DEFAULT_SEARCH_TIMEOUT_MS
+  if (!Number.isSafeInteger(resultCap) || resultCap < 1) {
     throw new TypeError('tool-loop-query: maxSearchResults must be a positive safe integer')
   }
-  if (!Number.isInteger(searchTimeoutMs) || searchTimeoutMs < 1 || searchTimeoutMs > MAX_TIMER_DELAY_MS) {
+  if (!Number.isInteger(deadlineMs) || deadlineMs < 1 || deadlineMs > MAX_TIMER_DELAY_MS) {
     throw new TypeError(
       `tool-loop-query: searchTimeoutMs must be a positive integer no greater than ${MAX_TIMER_DELAY_MS}`,
     )
   }
-  return { maxSearchResults, searchTimeoutMs }
+  return { resultCap, deadlineMs }
 }
 
 /**
@@ -312,6 +320,24 @@ function requiredCount(name: string, value: number): number {
   return value
 }
 
+/**
+ * Reject a raw-event window the engine would refuse, as a tool argument error.
+ *
+ * The bound is the engine's documented default (`SESSION_QUERY_READ_WINDOW_MAX`
+ * in `@deepseek-ai/dsh-session-query`), so the model gets a loop-owned argument
+ * message instead of the engine's `SESSION_QUERY_INVALID_WINDOW` vocabulary.
+ */
+function requiredWindow(name: string, value: number): number {
+  const count = requiredCount(name, value)
+  if (count > SESSION_QUERY_READ_WINDOW_MAX) {
+    throw invalid(
+      'LOOP_QUERY_INVALID_ARGS',
+      `loop_session_read: ${name} must be no greater than ${SESSION_QUERY_READ_WINDOW_MAX}`,
+    )
+  }
+  return count
+}
+
 function requestedIds(values: readonly string[] | undefined): readonly SessionIdValue[] | undefined {
   if (values === undefined) return undefined
   return requiredList('session_ids', values).map(value => SessionId(value))
@@ -349,7 +375,7 @@ async function searchCandidates(
     return records.filter(record => readable(authority, callerId, record.header.id, record.header.cwd))
   }
   const byId = new Map(records.map(record => [record.header.id, record]))
-  return requested.map((id) => {
+  return [...new Set(requested)].map((id) => {
     const record = byId.get(id)
     if (record === undefined || !readable(authority, callerId, id, record.header.cwd)) {
       throw unreadableTarget(id, authority)
@@ -387,29 +413,60 @@ async function searchSessions(
 async function readSession(ctx: Context, args: ReadArgs, exec: ToolRunContext): Promise<string> {
   const caller = callerSession(exec)
   const authority = await runAuthority(ctx, caller, exec.signal)
-  if (args.seq === undefined && (args.before !== undefined || args.after !== undefined)) {
+  const targetId = args.session_id === undefined ? caller.id : SessionId(args.session_id)
+  const seq = args.seq === undefined ? undefined : SessionSeq(requiredCount('seq', args.seq))
+  const before = args.before === undefined ? undefined : requiredWindow('before', args.before)
+  const after = args.after === undefined ? undefined : requiredWindow('after', args.after)
+  if (seq === undefined && (before !== undefined || after !== undefined)) {
     throw invalid('LOOP_QUERY_INVALID_ARGS', 'loop_session_read: before and after require seq')
   }
-  const targetId = args.session_id === undefined ? caller.id : SessionId(args.session_id)
   if (targetId !== caller.id) {
     const [record] = await ctx.sessionQuery.filterSessions([{ kind: 'id', values: [targetId] }], exec.signal)
     if (record === undefined || !readable(authority, caller.id, targetId, record.header.cwd)) {
       throw unreadableTarget(targetId, authority)
     }
   }
-  if (args.seq === undefined) {
-    const surface = await ctx.sessionQuery.readSurface(targetId)
+  if (seq === undefined) {
+    const surface = await readOrRefuse(() => ctx.sessionQuery.readSurface(targetId), targetId, authority)
     assertObserved(authority, caller.id, targetId, surface.session)
     return renderSurface(surface)
   }
-  const window = await ctx.sessionQuery.readEvent({
+  const window = await readOrRefuse(async () => ctx.sessionQuery.readEvent({
     sessionId: targetId,
-    seq: SessionSeq(requiredCount('seq', args.seq)),
-    ...args.before === undefined ? {} : { before: requiredCount('before', args.before) },
-    ...args.after === undefined ? {} : { after: requiredCount('after', args.after) },
-  }, exec.signal)
+    seq,
+    ...before === undefined ? {} : { before },
+    ...after === undefined ? {} : { after },
+  }, exec.signal), targetId, authority)
   assertObserved(authority, caller.id, targetId, window.session)
   return renderEvent(window)
+}
+
+/** Engine failures that must not tell a caller whether a session or an event exists. */
+const NOT_FOUND_CODES: ReadonlySet<SessionQueryErrorCode> = new Set([
+  'SESSION_QUERY_EVENT_NOT_FOUND',
+  'SESSION_QUERY_SESSION_NOT_FOUND',
+])
+
+/**
+ * Run one engine read, settling its not-found vocabulary as the tool's refusal.
+ *
+ * A target the run may not read and a target with nothing at the requested
+ * position settle identically, so neither engine code nor message reaches the
+ * model.
+ */
+async function readOrRefuse<T>(
+  operation: () => Promise<T>,
+  targetId: SessionIdValue,
+  authority: RunAuthority,
+): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (error instanceof SessionQueryError && NOT_FOUND_CODES.has(error.code)) {
+      throw unreadableTarget(targetId, authority)
+    }
+    throw error
+  }
 }
 
 /** Re-check the observed header so a source swap cannot widen the authorization. */

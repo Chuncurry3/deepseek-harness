@@ -2028,7 +2028,7 @@ Usable only inside an active run's lineage, every other call refused. Read one s
     },
     "seq": {
       "type": "integer",
-      "description": "Target event sequence number. Omit to read the current model surface."
+      "description": "Target event sequence number. Omit to read the target session's current model surface; the calling session when session_id is omitted."
     },
     "before": {
       "type": "integer",

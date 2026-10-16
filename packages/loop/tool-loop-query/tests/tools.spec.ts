@@ -3,7 +3,7 @@
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
@@ -15,7 +15,7 @@ import { normalizeScopePath } from '@deepseek-ai/dsh-loop/paths'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import type { Session, SessionId as SessionIdValue } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SessionQueryEngine from '@deepseek-ai/dsh-session-query'
+import SessionQueryEngine, { SessionQueryError } from '@deepseek-ai/dsh-session-query'
 import type {
   SessionEventSearchPage,
   SessionSearchPage,
@@ -23,6 +23,8 @@ import type {
 } from '@deepseek-ai/dsh-session-query'
 import SubagentRuntime from '@deepseek-ai/dsh-subagent'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import { TimeoutReason } from '@deepseek-ai/dsh-timeout'
+import * as TimeoutPolicy from '@deepseek-ai/dsh-tool-call-timeout-policy'
 import ToolRuntime, { type ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import * as ToolLoopQuery from '@deepseek-ai/dsh-tool-loop-query'
 
@@ -58,6 +60,7 @@ const roots: string[] = []
 let calls = 0
 
 afterEach(async () => {
+  vi.useRealTimers()
   for (const ctx of contexts.splice(0)) await ctx.fiber.dispose()
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
@@ -121,7 +124,7 @@ function openStep(session: Session, text: string): void {
   session.append('step/start', { turn: 1, step: 1 })
 }
 
-async function mount(config: ToolLoopQuery.Config = {}): Promise<Harness> {
+async function mount(config: ToolLoopQuery.Config = {}, enforceDeadline = false): Promise<Harness> {
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin(SessionStore)
@@ -129,6 +132,7 @@ async function mount(config: ToolLoopQuery.Config = {}): Promise<Harness> {
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
+  if (enforceDeadline) await ctx.plugin(TimeoutPolicy)
   await ctx.plugin(HarnessQuery)
   await ctx.plugin(SubagentRuntime)
   await ctx.plugin(LoopService)
@@ -189,7 +193,7 @@ describe('@deepseek-ai/dsh-tool-loop-query registration', () => {
   it('registers both tools with pinned descriptions, generic presenters, and disposes them', async () => {
     const mounted = await mount()
     expect(ToolLoopQuery.name).toBe('tool-loop-query')
-    expect(ToolLoopQuery.inject).toEqual(['tools', 'sessionQuery', 'subagents'])
+    expect(ToolLoopQuery.inject).toEqual(['tools', 'sessionQuery', 'sessionProjections', 'subagents'])
     expect('default' in ToolLoopQuery).toBe(false)
     const loader = Object.create(Loader.prototype) as Loader
     expect(loader.unwrapExports(ToolLoopQuery)).toBe(ToolLoopQuery)
@@ -448,6 +452,37 @@ describe('loop_session_search results', () => {
       .toBe('No matching events in the sessions this run may read.')
   })
 
+  it('scans each named session once when the model repeats an id', async () => {
+    const mounted = await mount({ maxSearchResults: 10 })
+    await startRun(mounted)
+    const repeated = await sessionWith(mounted, 'repeated', mounted.scopes)
+    openStep(repeated.session, 'needle once')
+    openStep(repeated.session, 'needle twice')
+
+    const rendered = text(await call(mounted, 'loop_session_search', {
+      query: 'needle',
+      session_ids: ['repeated', 'repeated'],
+    }))
+    expect(rendered).toContain('Loop session search results (2 matches in 1 sessions):')
+    expect(rendered).toContain('needle once')
+    expect(rendered).toContain('needle twice')
+    expect(rendered).not.toContain('Result cap reached')
+  })
+
+  it('serves a result set exactly at the cap without the notice', async () => {
+    const mounted = await mount({ maxSearchResults: 2 })
+    await startRun(mounted)
+    const exact = await sessionWith(mounted, 'exact', mounted.scopes)
+    openStep(exact.session, 'needle one')
+    openStep(exact.session, 'needle two')
+
+    const rendered = text(await call(mounted, 'loop_session_search', { query: 'needle' }))
+    expect(rendered).toContain('Loop session search results (2 matches in 1 sessions):')
+    expect(rendered).toContain('needle one')
+    expect(rendered).toContain('needle two')
+    expect(rendered).not.toContain('Result cap reached')
+  })
+
   it('groups hits from two sessions and truncates a long snippet', async () => {
     const mounted = await mount()
     await startRun(mounted)
@@ -545,6 +580,61 @@ describe('loop_session_read results', () => {
       .toBe('loop_session_read: after must be a non-negative safe integer')
   })
 
+  it('rejects a raw-event window the engine would refuse and serves the documented bound', async () => {
+    const mounted = await mount()
+    await startRun(mounted)
+    expect(refusal(await call(mounted, 'loop_session_read', { seq: 0, before: 51 }))).toEqual({
+      code: 'LOOP_QUERY_INVALID_ARGS',
+      message: 'loop_session_read: before must be no greater than 50',
+    })
+    expect(refusal(await call(mounted, 'loop_session_read', { seq: 0, after: 51 }))).toEqual({
+      code: 'LOOP_QUERY_INVALID_ARGS',
+      message: 'loop_session_read: after must be no greater than 50',
+    })
+
+    openStep(mounted.caller, 'needle inside the bound')
+    const bounded = await call(mounted, 'loop_session_read', { seq: 1, before: 50, after: 50 })
+    expect(refusal(bounded).code).toBeUndefined()
+    expect(text(bounded)).toContain('Target event seq 1:')
+    expect(text(bounded)).toContain('needle inside the bound')
+  })
+
+  it('settles a missing event and a missing engine session as the scope refusal', async () => {
+    const mounted = await mount()
+    await startRun(mounted)
+    const scopes = [normalizeScopePath(mounted.scopes)]
+    openStep(mounted.caller, 'needle in my own session')
+
+    expect(refusal(await call(mounted, 'loop_session_read', { seq: 999 }))).toEqual({
+      code: 'LOOP_QUERY_SCOPE_REFUSED',
+      message: scopeMessage('caller', scopes),
+    })
+
+    const readableTarget = await sessionWith(mounted, 'readable', mounted.scopes)
+    openStep(readableTarget.session, 'readable needle')
+    expect(refusal(await call(mounted, 'loop_session_read', { session_id: 'readable', seq: 999 }))).toEqual({
+      code: 'LOOP_QUERY_SCOPE_REFUSED',
+      message: scopeMessage('readable', scopes),
+    })
+
+    await sessionWith(mounted, 'incomplete', mounted.scopes)
+    vi.spyOn(mounted.ctx.sessionQuery, 'readSurface').mockRejectedValueOnce(
+      new SessionQueryError('session "incomplete" not found', 'SESSION_QUERY_SESSION_NOT_FOUND'),
+    )
+    expect(refusal(await call(mounted, 'loop_session_read', { session_id: 'incomplete' }))).toEqual({
+      code: 'LOOP_QUERY_SCOPE_REFUSED',
+      message: scopeMessage('incomplete', scopes),
+    })
+
+    vi.spyOn(mounted.ctx.sessionQuery, 'readEvent').mockRejectedValueOnce(
+      new SessionQueryError('persisted log is unreadable', 'SESSION_QUERY_CORRUPT_SESSION'),
+    )
+    expect(refusal(await call(mounted, 'loop_session_read', { session_id: 'readable', seq: 0 }))).toEqual({
+      code: 'SESSION_QUERY_CORRUPT_SESSION',
+      message: 'persisted log is unreadable',
+    })
+  })
+
   it('renders a surface line without text for a contentless event and a workspace-less caller', async () => {
     const mounted = await mount()
     await startRun(mounted)
@@ -580,6 +670,70 @@ describe('loop query runs that are not current', () => {
     expect(refusal(await call(mounted, 'loop_session_read', {}, child.agent))).toEqual({
       code: 'LOOP_QUERY_LINEAGE_REFUSED',
       message: 'loop session tools are refused: session "after-clear" is not inside an active run\'s lineage',
+    })
+  })
+  it('keeps serving a run a lifecycle verb paused', async () => {
+    const mounted = await mount()
+    await startRun(mounted)
+    const child = await sessionWith(mounted, 'paused-child', mounted.root, mounted.caller.id)
+    catalog(mounted.caller, child.session)
+    openStep(child.session, 'needle while paused')
+
+    const ref = mounted.ctx.sessionProjections.stateOf(mounted.caller, 'loop')?.current?.loop
+    if (ref === undefined) throw new Error('no current loop')
+    await mounted.ctx.loops.pause(mounted.callerAgent, { id: ref.id, revision: ref.revision })
+
+    expect(text(await call(mounted, 'loop_session_search', { query: 'needle' }, child.agent)))
+      .toContain('needle while paused')
+    expect(text(await call(mounted, 'loop_session_read', { session_id: 'paused-child', seq: 1 }, child.agent)))
+      .toContain('needle while paused')
+  })
+})
+
+describe('loop query tool deadline', () => {
+  it('times out a stalled search through the shared tool deadline policy', async () => {
+    const timeoutMs = 1_234
+    const mounted = await mount({ searchTimeoutMs: timeoutMs }, true)
+    await startRun(mounted)
+    vi.useFakeTimers()
+
+    const started = Promise.withResolvers<undefined>()
+    const abortObserved = Promise.withResolvers<undefined>()
+    const cleanup = Promise.withResolvers<undefined>()
+    let deadlineSignal: AbortSignal | undefined
+    vi.spyOn(mounted.ctx.sessionQuery, 'observeSession').mockImplementation(async (_id, options) => {
+      const signal = options?.signal
+      if (signal === undefined) throw new Error('expected a deadline signal')
+      deadlineSignal = signal
+      const aborted = new Promise<void>((resolve) => {
+        signal.addEventListener('abort', () => { resolve() }, { once: true })
+      })
+      started.resolve(undefined)
+      await aborted
+      abortObserved.resolve(undefined)
+      await cleanup.promise
+      signal.throwIfAborted()
+      throw new Error('unreachable after the deadline')
+    })
+
+    const pending = call(mounted, 'loop_session_search', { query: 'needle' })
+    let settled = false
+    void pending.then(
+      () => { settled = true },
+      () => { settled = true },
+    )
+    await started.promise
+    await vi.advanceTimersByTimeAsync(timeoutMs)
+    await abortObserved.promise
+
+    expect(settled).toBe(false)
+    expect(deadlineSignal?.reason).toBeInstanceOf(TimeoutReason)
+    expect(deadlineSignal?.reason).toMatchObject({ code: 'TOOL_TIMEOUT', timeoutMs })
+
+    cleanup.resolve(undefined)
+    expect(refusal(await pending)).toEqual({
+      code: 'TOOL_TIMEOUT',
+      message: `tool call timed out after ${timeoutMs}ms`,
     })
   })
 })
