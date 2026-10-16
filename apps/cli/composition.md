@@ -126,6 +126,14 @@ flowchart LR
   cfg --> plugin_dsh_base_goal_round_driver
   plugin_dsh_base_command_goal["command-goal<br/>@deepseek-ai/dsh-command-goal"]
   cfg --> plugin_dsh_base_command_goal
+  plugin_dsh_base_loop["loop<br/>@deepseek-ai/dsh-loop"]
+  cfg --> plugin_dsh_base_loop
+  plugin_dsh_base_loop_chain_driver["loop-chain-driver<br/>@deepseek-ai/dsh-loop-chain-driver"]
+  cfg --> plugin_dsh_base_loop_chain_driver
+  plugin_dsh_base_command_loop["command-loop<br/>@deepseek-ai/dsh-command-loop"]
+  cfg --> plugin_dsh_base_command_loop
+  plugin_dsh_base_tool_loop_query["tool-loop-query<br/>@deepseek-ai/dsh-tool-loop-query"]
+  cfg --> plugin_dsh_base_tool_loop_query
   plugin_dsh_base_plan_mode["plan-mode<br/>@deepseek-ai/dsh-plan-mode"]
   cfg --> plugin_dsh_base_plan_mode
   plugin_dsh_base_token_meter["token-meter<br/>@deepseek-ai/dsh-token-meter"]
@@ -259,6 +267,10 @@ flowchart LR
 | `goal` | `@deepseek-ai/dsh-goal` |
 | `goal-round-driver` | `@deepseek-ai/dsh-goal-round-driver` |
 | `command-goal` | `@deepseek-ai/dsh-command-goal` |
+| `loop` | `@deepseek-ai/dsh-loop` |
+| `loop-chain-driver` | `@deepseek-ai/dsh-loop-chain-driver` |
+| `command-loop` | `@deepseek-ai/dsh-command-loop` |
+| `tool-loop-query` | `@deepseek-ai/dsh-tool-loop-query` |
 | `plan-mode` | `@deepseek-ai/dsh-plan-mode` |
 | `token-meter` | `@deepseek-ai/dsh-token-meter` |
 | `compaction-basic` | `@deepseek-ai/dsh-compaction-basic` |

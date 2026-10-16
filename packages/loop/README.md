@@ -29,6 +29,8 @@ The loop group records one cross-session relay run per controlling session. A fr
 | [`command-loop`](command-loop/README.md) | The human `/loop` slash command: start grammar with scope grants, lifecycle verbs, status rendering | — (command plugin) |
 | [`tool-loop-query`](tool-loop-query/README.md) | The model-facing in-run read tools: lineage and scope authorization over the sessions a run may read | — (tool plugin) |
 
+All four mount in the shipped [`dsh-base`](../bundle/base/README.md) composition, so every base-backed profile exposes `/loop` and the two in-run read tools; the driver's row names the base's in-process `spawn` provider.
+
 -----
 
 <a id="related-documentation"></a>

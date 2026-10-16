@@ -29,6 +29,8 @@ loop 组为每个控制会话记录一次跨会话中继运行。一条冻结的
 | [`command-loop`](command-loop/README.zh.md) | 人类 `/loop` 斜杠命令：带作用域授权的 start 语法、生命周期动词、状态渲染 | —（命令插件） |
 | [`tool-loop-query`](tool-loop-query/README.zh.md) | 面向模型的运行内读取工具：对运行可读取的会话做谱系与作用域授权 | —（工具插件） |
 
+四个包都装入随发行版的 [`dsh-base`](../bundle/base/README.zh.md) 组合，因此每个基于 base 的 profile 都提供 `/loop` 与两个运行内读取工具；驱动器那一行的 provider 取该组合进程内的 `spawn` 提供方。
+
 -----
 
 <a id="related-documentation"></a>

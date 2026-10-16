@@ -173,7 +173,7 @@ const fallback = defaultChain('Ship the migration')
 
 这些限制说明什么时候不该找本包。它们是当前包约束，不是任务积压。
 
-- **尚无查询面**——`/loop` 命令语法位于 `dsh-command-loop` 中；`loop_session_search` / `loop_session_read` 查询工具在本特性稍后交付；今天驱动器仅由配置组合。
+- **装入随发行版的基础组合**——循环组件族（`@deepseek-ai/dsh-loop`、`@deepseek-ai/dsh-loop-chain-driver`、`@deepseek-ai/dsh-command-loop`、`@deepseek-ai/dsh-tool-loop-query`）装入 `dsh-base` 组合，驱动器的 `provider` 设为该组合进程内 spawn 提供方。
 - **所有节点共用一个 provider**——`provider` 具名单个 subagent provider；按节点指定 provider 需要先在 loop 服务落地链语言扩展。
 - **工作区存在性是派生的栅栏，作用域会被复核**——服务在 loop 启动时检查声明 `cwd` 是否属于写作用域，驱动器在派生时以同样的精确字符串比较复核该成员关系（恢复后声明工作区越出冻结作用域的链以不可重试的 `node-failed` 阻断）。目录存在性仍是 subagent 派生的栅栏：不存在的目录在派生时失败，以 `node-failed` 阻断且不记录 attempt。
 - **文档语言是子集**——解析器接受的恰好是 `@deepseek-ai/dsh-loop` 中持久折叠能回放的内容；链语言扩展必须先落在 loop 服务。

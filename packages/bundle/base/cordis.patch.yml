@@ -319,6 +319,21 @@
     - id: command-goal
       name: '@deepseek-ai/dsh-command-goal'
 
+    - id: loop
+      name: '@deepseek-ai/dsh-loop'
+
+    # Every relay node child spawns through the base's in-process provider.
+    - id: loop-chain-driver
+      name: '@deepseek-ai/dsh-loop-chain-driver'
+      config:
+        provider: spawn
+
+    - id: command-loop
+      name: '@deepseek-ai/dsh-command-loop'
+
+    - id: tool-loop-query
+      name: '@deepseek-ai/dsh-tool-loop-query'
+
     - id: plan-mode
       name: '@deepseek-ai/dsh-plan-mode'
       config:

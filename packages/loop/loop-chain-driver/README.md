@@ -173,7 +173,7 @@ The checkpoint ask never enters model-visible input, so no KV-cache prefix chang
 
 These limits define when this package is the wrong place to look. They are current package constraints, not a task backlog.
 
-- **No query surface yet** — the `/loop` command grammar lives in `dsh-command-loop`; the `loop_session_search` / `loop_session_read` query tools ship later in this feature; the driver is composed by config today.
+- **Mounted in the shipped base** — the loop family (`@deepseek-ai/dsh-loop`, `@deepseek-ai/dsh-loop-chain-driver`, `@deepseek-ai/dsh-command-loop`, `@deepseek-ai/dsh-tool-loop-query`) mounts in the `dsh-base` composition with the driver's `provider` set to the base's in-process spawn provider.
 - **One provider for every node** — `provider` names a single subagent provider; per-node providers would need a chain-language extension in the loop service first.
 - **Workspace existence is the spawn's fence; scope is re-asserted** — the service checks a declared `cwd` against the write scopes at loop start, and the driver re-asserts that membership at spawn with the same exact-string comparison (a resumed chain whose declared workspace falls outside the frozen scopes blocks `node-failed` non-retryably). Directory existence stays the subagent spawn's fence: a nonexistent directory fails at spawn, blocking `node-failed` without recording an attempt.
 - **The document language is a subset** — the parser accepts exactly what the durable fold in `@deepseek-ai/dsh-loop` replays; a chain-language extension must land in the loop service first.
