@@ -921,6 +921,12 @@ git add packages/loop/tool-loop-query tsconfig.host.json
 git commit -m "feat(loop): lineage- and scope-enforced loop session query tools"
 ```
 
+### Task D2 — review outcome (2026-10-10)
+
+Spec review: **APPROVED** (0 blockers; 9 MINOR + 8 NOTE), then the combined fix round `f1f54a1342` + `16e4a3699a` landed every code/test/doc item (dedupe, the engine window bound + not-found vocabulary mapping, sessionProjections injected, symmetric constants, the seq ownership sentence + catalog regen, the three README corrections + the projection-view sentence, six new tests including the deadline-policy timeout and paused-run service). Adjudications: the description pinning chose the note's L140 letter over the plan's paraphrase (right — the plan's own authority rule); listDescendants over hand-rolled recursion (the seam's documented traversal — accepted); phase-not-gated is correct (every normative clause says "the run's lineage" without a phase condition; only the pinned description says "active"); no-FTS is deliberate and test-pinned; the boot-manifest entry is gate-forced (the catalog's package glob + the mirror's prior art); the companion omission is gate-preferred (the gate itself rejects empty installers). Also retired in this window: the family's unknown-cast debt (`88c8fca689` — 14 sites narrowed honestly, the inherited subagent helper fixed as a courtesy, the baseline SHRANK by one; verify-no-unknown-casts is now a battery member, green at 1444).
+
+Carry-forwards: **E3** — the lockfile importer sweep must cover the ROOT devDependency for tool-loop-query (the catalog manifest import grew the root package.json) as well as the four packages. **E2** — note wordings: L181's four-companion phrasing (two adapters omit with recorded reasons), "must fall inside" → the membership reading, the "active run" description wording vs phase-not-gated behavior. The zh tool catalog is hand-maintained: any later EN description change must be mirrored and re-recorded. Battery at D2 closure: family 252/252, tool-loop-query 26 tests, scoped 100% coverage, host tsc = the 2 environmental TS2307, oxlint 0/0, duplication 0, no-unknown-casts green, invariants 40, pairing 1167, all catalogs green.
+
 ### Task D3: mount in the shipped base composition
 
 **Files:**
