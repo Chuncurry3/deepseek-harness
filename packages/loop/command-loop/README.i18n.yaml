@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/loop/command-loop/README.md
+/:
+  en: ac03c5feb6991828
+  zh: 53422b6b0b67cedb
+/deepseek-ai-dsh-command-loop:
+  en: 7249c050cdbb8af3
+  zh: efd5b00fd5c028c9
+/deepseek-ai-dsh-command-loop/summary:
+  en: a7f90ba3c691e97a
+  zh: 7a2c7b7d200205a3
+/deepseek-ai-dsh-command-loop/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/deepseek-ai-dsh-command-loop/use-this-package:
+  en: 34c26340b6e9883d
+  zh: 6696d13114ccb45c
+/deepseek-ai-dsh-command-loop/use-this-package/command-reference:
+  en: 37d81cb174b195be
+  zh: 2315d2ea04ac1295
+/deepseek-ai-dsh-command-loop/use-this-package/input-grammar:
+  en: aab7754281aa2053
+  zh: ac317f8a75166691
+/deepseek-ai-dsh-command-loop/use-this-package/scopes-and-the-chain:
+  en: 07e58acd4fcbd993
+  zh: c427325f5a3f0c58
+/deepseek-ai-dsh-command-loop/use-this-package/compose-it:
+  en: 58b0e76fb1e2b2f4
+  zh: 3788b3ebaea8a675
+/deepseek-ai-dsh-command-loop/understand-the-implementation:
+  en: 7fba8a13f8452dc1
+  zh: 7c5e03ffe48517f8
+/deepseek-ai-dsh-command-loop/understand-the-implementation/design:
+  en: 362c017bddf0f2bf
+  zh: a009ac9a80ec082d
+/deepseek-ai-dsh-command-loop/understand-the-implementation/source-map:
+  en: a1c2795a86532da2
+  zh: 461df7fb613bf4fb
+/deepseek-ai-dsh-command-loop/further-exploration:
+  en: 18fa48a2582e681e
+  zh: c3f008b43277a0b1
+/deepseek-ai-dsh-command-loop/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-command-loop/model-experience/human-loop-control:
+  en: d82c65be90aa9368
+  zh: 9039397ffb4953d9
+/deepseek-ai-dsh-command-loop/model-experience/human-loop-control/what-the-model-sees:
+  en: 4c5d8b8799d404e8
+  zh: 213ca685310759eb
+/deepseek-ai-dsh-command-loop/model-experience/human-loop-control/token-effect:
+  en: 67260aa517c0a3b5
+  zh: e03a0aa5bac0c7fe
+/deepseek-ai-dsh-command-loop/model-experience/human-loop-control/kv-cache-effect:
+  en: 680118aaa9466579
+  zh: 3076a3d6fa52de3d
+/deepseek-ai-dsh-command-loop/known-limitations-and-deferred-work:
+  en: 5db5b95ad611e4b4
+  zh: 0fe3c9921e63ccb0
+/deepseek-ai-dsh-command-loop/known-limitations-and-deferred-work/dev-note:
+  en: 493b8ed4126bdca4
+  zh: 6b8e676637e17136

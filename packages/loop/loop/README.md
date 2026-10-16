@@ -119,6 +119,7 @@ This section explains how the service realizes the behavior above; the observabl
 | [`src/domain.ts`](src/domain.ts) | Durable change and ledger payloads, scoped `loop/changed` event, error codes |
 | [`src/types.ts`](src/types.ts) | Pure client-safe types: `LoopView`, `LoopSnapshot`, chain and ledger types, projection-key declaration |
 | [`src/fold.ts`](src/fold.ts) | Strict replay fold and hand-rolled decoders for the durable loop events |
+| [`src/paths.ts`](src/paths.ts) | Scope-path normalization: realpath resolution, forward-slash separators, win32 case folding |
 | [`src/runtime.ts`](src/runtime.ts) | `LoopId` brand, `LoopError`, change and ledger version constants |
 | [`src/invariant.ts`](src/invariant.ts) | Invariant companion: independent incremental fold over every attached session |
 | [`src/client.ts`](src/client.ts) | Client-namespace re-export of the types outlet |

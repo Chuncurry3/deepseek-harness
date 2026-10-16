@@ -26,6 +26,7 @@ The loop group records one cross-session relay run per controlling session. A fr
 |---|---|---|
 | [`loop`](loop/README.md) | One durable relay loop per controlling session: versioned events, strict replay fold, lifecycle mutations, node ledger | `ctx.loops` |
 | [`loop-chain-driver`](loop-chain-driver/README.md) | The continuation driver plugin that runs the chain: spawns node children, settles reports, checkpoints, recovers after restart | — (function plugin) |
+| [`command-loop`](command-loop/README.md) | The human `/loop` slash command: start grammar with scope grants, lifecycle verbs, status rendering | — (command plugin) |
 
 -----
 

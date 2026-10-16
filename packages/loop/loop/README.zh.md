@@ -119,6 +119,7 @@ view.lastRef                          // { id, revision } the next mutation must
 | [`src/domain.ts`](src/domain.ts) | 持久变更与台账载荷、作用域限定的 `loop/changed` 事件、错误代码 |
 | [`src/types.ts`](src/types.ts) | 纯客户端安全类型：`LoopView`、`LoopSnapshot`、链与台账类型、投影键声明 |
 | [`src/fold.ts`](src/fold.ts) | 持久 loop 事件的严格回放折叠与手写解码器 |
+| [`src/paths.ts`](src/paths.ts) | 作用域路径归一化：realpath 解析、正斜杠分隔符、win32 大小写折叠 |
 | [`src/runtime.ts`](src/runtime.ts) | `LoopId` 品牌、`LoopError`、变更与台账版本常量 |
 | [`src/invariant.ts`](src/invariant.ts) | 不变式配套模块：对每个已挂接会话的独立增量折叠 |
 | [`src/client.ts`](src/client.ts) | 客户端命名空间对类型出口的再导出 |
