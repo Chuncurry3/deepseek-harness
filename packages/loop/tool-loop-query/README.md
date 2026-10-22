@@ -42,7 +42,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-a
 
 ### Compose it
 
-The tools inject the tool registry, the session query engine, and the subagent runtime; a custom app mounts their owners plus this plugin:
+The tools inject the tool registry, the session query engine, the subagent runtime, and the session projection registry; a custom app mounts their owners plus this plugin:
 
 ```yaml
 - id: tools
@@ -53,11 +53,13 @@ The tools inject the tool registry, the session query engine, and the subagent r
   name: '@deepseek-ai/dsh-subagent'
 - id: loop
   name: '@deepseek-ai/dsh-loop'
+- id: projections
+  name: '@deepseek-ai/dsh-session-projection'
 - id: tool-loop-query
   name: '@deepseek-ai/dsh-tool-loop-query'
 ```
 
-The loop domain owns the run and its scope grants; the subagent runtime owns the catalog that proves lineage; this package only reads both.
+The loop domain owns the run and its scope grants; the subagent runtime owns the catalog that proves lineage; the session projection registry publishes the loop state the run walk reads; this package only reads them.
 
 ### What the model can do
 
@@ -164,6 +166,7 @@ These limits define when this package is a poor fit or needs special operational
 - **Literal scans, not full-text ranking** — search matches literal event text in readable sessions and returns them in session order, so a large readable corpus costs a full scan and the hits carry no relevance score.
 - **Search caps without continuation** — search returns at most the deployment cap and asks the model to narrow its query when more matches exist; there is no continuation token.
 - **Exact-path scope membership** — a target nested inside a granted scope directory is not granted; only the granted path itself and the caller's own workspace are readable.
+- **The read window bound is the engine's default** — `before` and `after` above 50 are refused as tool argument errors, so a deployment that raises the engine's own read window bound still has these tools refuse a window in between; the refusal fails closed instead of reaching that engine.
 - **No write or lifecycle access** — the tools read only; nothing here starts, advances, or clears a run.
 
 <a id="dev-note"></a>

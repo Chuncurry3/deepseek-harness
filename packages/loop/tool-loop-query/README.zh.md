@@ -42,7 +42,7 @@ kind: "package-reference"
 
 ### 组合方式
 
-两个工具注入工具注册表、会话查询引擎与 subagent 运行时；自定义应用挂载它们的所有者与此插件：
+两个工具注入工具注册表、会话查询引擎、subagent 运行时与会话投影注册表；自定义应用挂载它们的所有者与此插件：
 
 ```yaml
 - id: tools
@@ -53,11 +53,13 @@ kind: "package-reference"
   name: '@deepseek-ai/dsh-subagent'
 - id: loop
   name: '@deepseek-ai/dsh-loop'
+- id: projections
+  name: '@deepseek-ai/dsh-session-projection'
 - id: tool-loop-query
   name: '@deepseek-ai/dsh-tool-loop-query'
 ```
 
-loop 领域拥有运行及其作用域授权；subagent 运行时拥有证明谱系的目录；本包只读取这两者。
+loop 领域拥有运行及其作用域授权；subagent 运行时拥有证明谱系的目录；会话投影注册表发布运行遍历所读取的 loop 状态；本包只读取这三者。
 
 ### 模型能做什么
 
@@ -164,6 +166,7 @@ loop 领域拥有运行及其作用域授权；subagent 运行时拥有证明谱
 - **字面扫描而非全文排序**——搜索在可读会话中匹配字面事件文本并按会话顺序返回，因此可读语料很大时成本是一次完整扫描，且命中不带相关性分数。
 - **搜索有上限且无续行**——搜索至多返回部署上限数量的命中，并在还有更多匹配时提示模型收窄查询；没有续行 token。
 - **作用域成员判定为精确路径**——嵌套在被授权作用域目录之内的目标不构成授权；只有被授权路径本身与调用方自身 workspace 可读。
+- **读取窗口上限即引擎默认值**——`before` 与 `after` 超过 50 会以工具参数错误被拒绝，因此即使部署提高了引擎自身的读取窗口上限，这些工具仍会拒绝落在两者之间的窗口；该拒绝是失败关闭，而不会转交给引擎。
 - **无写入与生命周期访问**——这些工具只读；这里不会启动、推进或清除任何运行。
 
 <a id="dev-note"></a>

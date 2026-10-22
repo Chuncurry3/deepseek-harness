@@ -326,6 +326,9 @@ function requiredCount(name: string, value: number): number {
  * The bound is the engine's documented default (`SESSION_QUERY_READ_WINDOW_MAX`
  * in `@deepseek-ai/dsh-session-query`), so the model gets a loop-owned argument
  * message instead of the engine's `SESSION_QUERY_INVALID_WINDOW` vocabulary.
+ * A deployment that raises the engine's own read window bound still gets this
+ * refusal: a window between the two bounds fails closed here rather than
+ * reaching the engine that would accept it.
  */
 function requiredWindow(name: string, value: number): number {
   const count = requiredCount(name, value)
