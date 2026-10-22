@@ -407,14 +407,24 @@ function pushScope(scopes: string[], scope: string): void {
   if (!scopes.includes(scope)) scopes.push(scope)
 }
 
+/** Resolve one typed path against the controlling workspace, like a relative `--chain` document.
+ * @param raw - the path as typed; an absolute path stays untouched.
+ * @param home - the controlling session's workspace, the base for relative paths.
+ * @returns the absolute path.
+ */
+function resolveAgainstHome(raw: string, home: string): string {
+  return isAbsolute(raw) ? raw : join(home, raw)
+}
+
 /** Normalize one granted scope and require it to name an enterable directory.
  * @param flag - the flag carrying the grant, for error text.
- * @param grant - the granted path as typed.
+ * @param grant - the granted path as typed; relative paths resolve against the controlling workspace.
+ * @param home - the controlling session's workspace, the base for relative grants.
  * @returns the realpath-normalized directory scope.
  * @throws When the grant does not exist or is not a directory.
  */
-function normalizeGrant(flag: string, grant: string): string {
-  const scope = normalizeScopePath(grant)
+function normalizeGrant(flag: string, grant: string, home: string): string {
+  const scope = normalizeScopePath(resolveAgainstHome(grant, home))
   if (!statSync(scope).isDirectory()) {
     throw new Error(`flag ${flag} requires a directory scope, got ${grant}`)
   }
@@ -423,12 +433,13 @@ function normalizeGrant(flag: string, grant: string): string {
 
 /** Normalize every declared chain node workspace in place of the raw text.
  * @param chain - the validated chain.
+ * @param home - the controlling session's workspace, the base for relative node workspaces.
  * @returns the chain with realpath-normalized node workspaces.
  * @throws When a declared workspace does not exist.
  */
-function normalizeChainCwds(chain: LoopChainDef): LoopChainDef {
+function normalizeChainCwds(chain: LoopChainDef, home: string): LoopChainDef {
   const nodes = chain.nodes.map((node): LoopChainNodeDef =>
-    node.cwd === undefined ? node : { ...node, cwd: normalizeScopePath(node.cwd) })
+    node.cwd === undefined ? node : { ...node, cwd: normalizeScopePath(resolveAgainstHome(node.cwd, home)) })
   return { ...chain, nodes }
 }
 
@@ -436,11 +447,14 @@ function normalizeChainCwds(chain: LoopChainDef): LoopChainDef {
  *
  * `writeScopes` is the controlling workspace plus the `--write` grants;
  * `readScopes` is the controlling workspace, every declared chain node
- * workspace, and the `--read` grants. Every path is realpath-normalized, so
- * the service's exact-string membership check and the driver's spawn-time
- * re-assert compare the same form. Every granted scope must name an
- * enterable directory: a frozen scope that no run workspace can match is a
- * direct error at start.
+ * workspace, and the `--read` grants. Relative grants and declared node
+ * workspaces resolve against the controlling workspace — the same base as a
+ * relative `--chain` document — so no path-typed input resolves against the
+ * process's own working directory; absolute paths stay untouched. Every
+ * path is realpath-normalized, so the service's exact-string membership
+ * check and the driver's spawn-time re-assert compare the same form. Every
+ * granted scope must name an enterable directory: a frozen scope that no
+ * run workspace can match is a direct error at start.
  * @param command - the parsed start.
  * @param home - the controlling session's workspace.
  * @returns the validated start request.
@@ -451,13 +465,13 @@ function resolveStartRequest(command: Extract<LoopCommand, { kind: 'start' }>, h
   const writeScopes: string[] = []
   const readScopes: string[] = []
   pushScope(writeScopes, homeScope)
-  for (const grant of command.writes) pushScope(writeScopes, normalizeGrant('--write', grant))
-  const chain = normalizeChainCwds(loadChain(command, home))
+  for (const grant of command.writes) pushScope(writeScopes, normalizeGrant('--write', grant, home))
+  const chain = normalizeChainCwds(loadChain(command, home), home)
   pushScope(readScopes, homeScope)
   for (const node of chain.nodes) {
     if (node.cwd !== undefined) pushScope(readScopes, node.cwd)
   }
-  for (const grant of command.reads) pushScope(readScopes, normalizeGrant('--read', grant))
+  for (const grant of command.reads) pushScope(readScopes, normalizeGrant('--read', grant, home))
   return {
     objective: command.objective,
     chain,

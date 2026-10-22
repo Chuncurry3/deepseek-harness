@@ -37,7 +37,7 @@ Every sub-command runs against the current loop of the invoking agent; a bare `/
 | `/loop status` | Shows the current status exactly like a bare `/loop`; recognized only as the complete input |
 | `/loop [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` | Starts and arms a loop, or replaces a completed loop with a fresh identity; the `start` verb is optional |
 | `/loop pause` | Pauses the current loop and disarms continuation |
-| `/loop resume [--from <node|role>]` | Resumes a stopped loop subject to its remaining round cap |
+| `/loop resume [--from <node|role>]` | Resumes a stopped loop subject to its remaining round cap; `--from` parses and validates only, the replay continuation is not implemented |
 | `/loop clear` | Clears the current loop while retaining its durable history |
 
 ### Input grammar
@@ -46,7 +46,7 @@ The verbs `pause`, `resume`, and `clear` are recognized only when they fit the w
 
 ### Scopes and the chain
 
-A start resolves its chain from a `--chain` document (relative paths resolve against the controlling session's workspace), then from a `loop.yaml` in that workspace, and otherwise from the default single-worker chain. Every granted and declared path must exist and is realpath-normalized at start; a granted scope must name a directory, so granting a file fails loud with a direct error. `writeScopes` is the controlling workspace plus the `--write` grants, `readScopes` adds every declared chain node workspace and the `--read` grants, and membership is exact-path — nesting inside a granted directory grants nothing. A chain node whose workspace falls outside the write scopes is refused at start with a direct error.
+A start resolves its chain from a `--chain` document (relative paths resolve against the controlling session's workspace), then from a `loop.yaml` in that workspace, and otherwise from the default single-worker chain. Relative `--read`/`--write` grants and declared chain node workspaces resolve against the same controlling workspace: every path-typed input shares one base, and nothing resolves against the process's own working directory. Absolute paths stay untouched. Every granted and declared path must exist and is realpath-normalized at start; a granted scope must name a directory, so granting a file fails loud with a direct error. `writeScopes` is the controlling workspace plus the `--write` grants, `readScopes` adds every declared chain node workspace and the `--read` grants, and membership is exact-path — nesting inside a granted directory grants nothing. A chain node whose workspace falls outside the write scopes is refused at start with a direct error.
 
 ### Compose it
 

@@ -37,7 +37,7 @@ kind: "package-reference"
 | `/loop status` | 与裸 `/loop` 完全相同地显示当前状态；仅在恰好构成完整输入时被识别 |
 | `/loop [start] <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` | 启动并启用一条 loop，或用全新身份替换已完成的 loop；`start` 动词可省略 |
 | `/loop pause` | 暂停当前 loop 并停用续行 |
-| `/loop resume [--from <node|role>]` | 恢复已停止的 loop；仍受剩余 Round 上限约束 |
+| `/loop resume [--from <node|role>]` | 恢复已停止的 loop；仍受剩余 Round 上限约束；`--from` 仅解析与校验，重放续行尚未实现 |
 | `/loop clear` | 清除当前 loop，同时保留其持久历史 |
 
 ### 输入语法
@@ -46,7 +46,7 @@ kind: "package-reference"
 
 ### 作用域与链
 
-start 依次从 `--chain` 文档（相对路径以控制会话的 workspace 为基准）、该 workspace 下的 `loop.yaml` 解析链，否则使用默认单 worker 链。每条授权与声明的路径都必须存在，并在启动时做 realpath 归一化；授权作用域必须是一个目录，授权一个文件会以直接错误响亮失败。`writeScopes` 是控制 workspace 加 `--write` 授权，`readScopes` 额外并入每条声明链节点的 workspace 与 `--read` 授权，成员判定按精确路径——嵌套在被授权目录之内不构成授权。workspace 落在写作用域之外的链节点会在启动时以直接错误拒绝。
+start 依次从 `--chain` 文档（相对路径以控制会话的 workspace 为基准）、该 workspace 下的 `loop.yaml` 解析链，否则使用默认单 worker 链。相对的 `--read`/`--write` 授权与声明的链节点 workspace 同样以控制会话的 workspace 为基准：所有路径型输入共享同一基准，不会解析到进程自身的工作目录；绝对路径原样保留。每条授权与声明的路径都必须存在，并在启动时做 realpath 归一化；授权作用域必须是一个目录，授权一个文件会以直接错误响亮失败。`writeScopes` 是控制 workspace 加 `--write` 授权，`readScopes` 额外并入每条声明链节点的 workspace 与 `--read` 授权，成员判定按精确路径——嵌套在被授权目录之内不构成授权。workspace 落在写作用域之外的链节点会在启动时以直接错误拒绝。
 
 ### 组合方式
 

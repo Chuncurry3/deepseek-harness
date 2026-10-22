@@ -377,6 +377,34 @@ describe('/loop human command', () => {
     }
   })
 
+  it('resolves relative grants and declared node workspaces against the controlling workspace', async () => {
+    const mounted = await test()
+    mkdirSync(join(mounted.root, 'sub-workspace'))
+    // A relative grant resolves against the session workspace, never the process's
+    // own working directory; no sub-workspace exists next to the process cwd.
+    const created = await run(mounted, ' iterate --read sub-workspace --write sub-workspace')
+    expect(created.kind).toBe('success')
+    const scope = normalized(join(mounted.root, 'sub-workspace'))
+    const loop = projection(mounted).loop
+    expect(loop?.readScopes).toContain(scope)
+    expect(loop?.writeScopes).toContain(scope)
+
+    const relativeMounted = await test()
+    mkdirSync(join(relativeMounted.root, 'node-workspace'))
+    writeFileSync(
+      join(relativeMounted.root, 'loop.yaml'),
+      'objective: relay it\ncheckpoint: none\nnodes:\n  - role: worker\n    prompt: Work.\n    cwd: node-workspace\n',
+    )
+    const withCwd = await run(relativeMounted, ' iterate --write node-workspace')
+    expect(withCwd.kind).toBe('success')
+    const relativeLoop = projection(relativeMounted).loop
+    expect(relativeLoop?.chain.nodes[0]?.cwd).toBe(normalized(join(relativeMounted.root, 'node-workspace')))
+    expect(relativeLoop?.writeScopes).toEqual([
+      normalized(relativeMounted.root),
+      normalized(join(relativeMounted.root, 'node-workspace')),
+    ])
+  })
+
   it('resolves a symlinked grant to its real target', async () => {
     const mounted = await test()
     const target = mkdtempSync(join(tmpdir(), 'dsh-command-loop-target-'))
