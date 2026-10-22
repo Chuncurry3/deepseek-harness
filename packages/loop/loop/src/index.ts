@@ -18,6 +18,7 @@ import type {} from '@deepseek-ai/dsh-session-projection'
 import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
 import { applyLoopEvent, decodeLoopChange, decodeLoopLedger, loopChangeRef, loopLedgerEntry } from './fold.ts'
 import type { LoopFoldState } from './fold.ts'
+import { normalizeScopePath } from './paths.ts'
 import {
   LOOP_CHANGE_VERSION,
   LOOP_LEDGER_VERSION,
@@ -458,6 +459,28 @@ function assertChainWithinWriteScopes(spec: ResolvedStartLoop): void {
   }
 }
 
+/**
+ * Reject declared input sessions whose live workspace falls outside the run's
+ * read scopes. A session the store cannot resolve — or whose header carries
+ * no workspace — stays legal at start: the loop-scoped query tools own the
+ * executor-level refusal for every later pull. A workspace that no longer
+ * resolves fails loud through `normalizeScopePath`'s ENOENT.
+ */
+function assertInputSessionsWithinReadScopes(spec: ResolvedStartLoop, ctx: Context): void {
+  for (const node of spec.chain.nodes) {
+    if (node.inputs === undefined) continue
+    for (const input of node.inputs) {
+      const cwd = ctx.sessions.get(input.session)?.header.cwd
+      if (cwd === undefined) continue
+      if (spec.readScopes.includes(normalizeScopePath(cwd))) continue
+      throw new LoopError(
+        `chain node "${node.role}" input session "${input.session}" (cwd ${JSON.stringify(cwd)}) falls outside the run's read scopes`,
+        'LOOP_SCOPE_VIOLATION',
+      )
+    }
+  }
+}
+
 /** A current-loop projection with its snapshot and timestamps guaranteed present. */
 interface CurrentLoop extends LoopProjection {
   readonly loop: LoopSnapshot
@@ -534,6 +557,7 @@ export class LoopService extends TypertRemoteService {
       throw new LoopError(`loop "${current.id}" already exists with phase "${current.phase}"`, 'LOOP_ALREADY_EXISTS')
     }
     assertChainWithinWriteScopes(spec)
+    assertInputSessionsWithinReadScopes(spec, this.ctx)
     const now = Date.now()
     const loop: LoopSnapshot = {
       id: LoopId(`loop-${randomUUID()}`),

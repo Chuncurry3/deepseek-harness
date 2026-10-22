@@ -29,6 +29,7 @@ import type {
   LoopView,
   StartLoopRequest,
 } from '@deepseek-ai/dsh-loop'
+import { normalizeScopePath } from '@deepseek-ai/dsh-loop/paths'
 import { createInboxStub } from '@deepseek-ai/dsh-agent-loop-testkit'
 
 interface StubAgent {
@@ -396,6 +397,34 @@ describe('LoopService mutations', () => {
       chain: { ...CHAIN, nodes: [{ role: 'writer', prompt: 'Draft the report.' }] },
     }))
     expect(view.loop.phase).toBe('active')
+  })
+
+  it('rejects start when a declared input session lives outside the read scopes', async () => {
+    const { ctx, agent, session } = await harness()
+    const inside = await mkdtemp(join(tmpdir(), 'dsh-loop-input-inside-'))
+    const outside = await mkdtemp(join(tmpdir(), 'dsh-loop-input-outside-'))
+    try {
+      const input = ctx.sessions.create(SessionId('sess-input'), { meta: { cwd: outside } })
+      const chain = {
+        ...CHAIN,
+        nodes: [
+          { role: 'writer', prompt: 'Draft the report.', cwd: 'E:/work/alpha', inputs: [{ session: input.id }] },
+          { role: 'reviewer', prompt: 'Review the draft.', carryOver: ['writer'], cwd: 'E:/work/alpha' },
+        ],
+      }
+      const refused = startRequest({ chain })
+      await expect(ctx.loops.start(agent, refused)).rejects.toThrow(
+        expect.objectContaining({ code: 'LOOP_SCOPE_VIOLATION' }),
+      )
+      await expect(ctx.loops.start(agent, refused)).rejects.toThrow(/sess-input.*falls outside the run's read scopes/u)
+      expect(session.snapshotEvents()).toEqual([])
+
+      const view = await ctx.loops.start(agent, startRequest({ chain, readScopes: [normalizeScopePath(outside)] }))
+      expect(view.loop.phase).toBe('active')
+    } finally {
+      await rm(inside, { recursive: true, force: true })
+      await rm(outside, { recursive: true, force: true })
+    }
   })
 
   it('rejects start when the chain fails fold validation', async () => {
