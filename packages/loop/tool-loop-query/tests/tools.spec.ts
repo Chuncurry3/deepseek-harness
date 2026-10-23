@@ -268,7 +268,7 @@ describe('loop query lineage authorization', () => {
     for (const [name, args] of [['loop_session_search', { query: 'needle' }], ['loop_session_read', {}]] as const) {
       expect(refusal(await call(mounted, name, args, plain.agent))).toEqual({
         code: 'LOOP_QUERY_LINEAGE_REFUSED',
-        message: 'loop session tools are refused: session "plain" is not inside an active run\'s lineage',
+        message: 'loop session tools are refused: session "plain" is not inside a current run\'s lineage',
       })
     }
   })
@@ -289,7 +289,7 @@ describe('loop query lineage authorization', () => {
     await sessionWith(mounted, 'cycle-b', mounted.root, first.session.id)
     expect(refusal(await call(mounted, 'loop_session_read', {}, first.agent))).toEqual({
       code: 'LOOP_QUERY_LINEAGE_REFUSED',
-      message: 'loop session tools are refused: session "cycle-a" is not inside an active run\'s lineage',
+      message: 'loop session tools are refused: session "cycle-a" is not inside a current run\'s lineage',
     })
   })
 
@@ -669,7 +669,7 @@ describe('loop query runs that are not current', () => {
     await mounted.ctx.loops.clear(mounted.callerAgent, { id: ref.id, revision: ref.revision })
     expect(refusal(await call(mounted, 'loop_session_read', {}, child.agent))).toEqual({
       code: 'LOOP_QUERY_LINEAGE_REFUSED',
-      message: 'loop session tools are refused: session "after-clear" is not inside an active run\'s lineage',
+      message: 'loop session tools are refused: session "after-clear" is not inside a current run\'s lineage',
     })
   })
   it('keeps serving a run a lifecycle verb paused', async () => {

@@ -226,7 +226,10 @@ function callerSession(exec: ToolRunContext): Session {
 }
 
 /**
- * Authorize the caller as a member of one active run's lineage.
+ * Authorize the caller as a member of one current run's lineage.
+ *
+ * A current run is one whose loop projection is still present, so a cleared
+ * loop leaves none.
  *
  * The parent chain from the current-loop projection finds the candidate
  * controlling session; the subagent catalog then proves membership, so a
@@ -281,7 +284,7 @@ function readable(
 function lineageRefused(callerId: SessionIdValue, controllingId?: SessionIdValue): HarnessError {
   return new HarnessError(
     controllingId === undefined
-      ? `loop session tools are refused: session "${callerId}" is not inside an active run's lineage`
+      ? `loop session tools are refused: session "${callerId}" is not inside a current run's lineage`
       : `loop session tools are refused: session "${callerId}" is not a descendant child of the controlling session "${controllingId}"`,
     'LOOP_QUERY_LINEAGE_REFUSED',
   )
