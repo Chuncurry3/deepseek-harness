@@ -182,6 +182,19 @@ describe('parseLoopCommand grammar', () => {
     })
   })
 
+  it('treats quoted control words as their verbs and quoted flags as data', () => {
+    // Quote stripping happens before verb matching, so a quoted control word acts as its verb.
+    expect(parseLoopCommand('"pause"')).toEqual({ kind: 'pause' })
+    expect(parseLoopCommand('"status"')).toEqual({ kind: 'show' })
+    // A quoted flag-looking token in the objective position is data, not a flag.
+    expect(parseLoopCommand('"--read" direct')).toEqual({
+      kind: 'start',
+      objective: '--read direct',
+      reads: [],
+      writes: [],
+    })
+  })
+
   it('recognizes the exact lifecycle verbs, case-insensitively, and nothing more', () => {
     expect(parseLoopCommand('pause')).toEqual({ kind: 'pause' })
     expect(parseLoopCommand('PAUSE')).toEqual({ kind: 'pause' })
