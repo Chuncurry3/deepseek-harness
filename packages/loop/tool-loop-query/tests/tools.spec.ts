@@ -386,6 +386,31 @@ describe('loop query scope authorization', () => {
       .toBe('No matching events in the sessions this run may read.')
   })
 
+  it('refuses a target nested inside a granted scope, since membership is exact', async () => {
+    const mounted = await mount()
+    await startRun(mounted)
+    const nested = join(mounted.scopes, 'sub')
+    mkdirSync(nested)
+    const target = await sessionWith(mounted, 'nested', nested)
+    openStep(target.session, 'a needle beneath the granted scope')
+    const grantedScope = normalizeScopePath(mounted.scopes)
+    const scopes = [grantedScope]
+    // The nested workspace resolves as a descendant of the granted scope, so a
+    // containment check would read it and only exact membership refuses.
+    expect(normalizeScopePath(nested).startsWith(grantedScope)).toBe(true)
+
+    expect(refusal(await call(mounted, 'loop_session_read', { session_id: 'nested' }))).toEqual({
+      code: 'LOOP_QUERY_SCOPE_REFUSED',
+      message: scopeMessage('nested', scopes),
+    })
+    expect(refusal(await call(mounted, 'loop_session_search', { query: 'needle', session_ids: ['nested'] }))).toEqual({
+      code: 'LOOP_QUERY_SCOPE_REFUSED',
+      message: scopeMessage('nested', scopes),
+    })
+    expect(text(await call(mounted, 'loop_session_search', { query: 'needle' })))
+      .toBe('No matching events in the sessions this run may read.')
+  })
+
   it('serves a realpath-equivalent target inside a granted scope and the caller workspace lane', async () => {
     const mounted = await mount()
     const real = join(mounted.root, 'real-scope')
@@ -672,6 +697,7 @@ describe('loop query runs that are not current', () => {
       message: 'loop session tools are refused: session "after-clear" is not inside a current run\'s lineage',
     })
   })
+
   it('keeps serving a run a lifecycle verb paused', async () => {
     const mounted = await mount()
     await startRun(mounted)
