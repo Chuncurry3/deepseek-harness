@@ -1971,7 +1971,7 @@ export type Config = Readonly<Record<string, never>>
 ## `@deepseek-ai/dsh-loop`
 
 - `inject`: `agents` · `sessionProjections` · `sessions`
-- `source`: [`packages/loop/loop/src/index.ts:349`](../packages/loop/loop/src/index.ts)
+- `source`: [`packages/loop/loop/src/index.ts:350`](../packages/loop/loop/src/index.ts)
 
 ```ts config-catalog
 /** Deployment defaults for loop runs and node handoffs. */

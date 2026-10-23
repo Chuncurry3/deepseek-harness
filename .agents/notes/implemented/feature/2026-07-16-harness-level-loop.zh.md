@@ -19,7 +19,7 @@ Status: implemented
 1. **同会话目标**在当前会话中保留一个持久目标，并且只在实时激活态已激活时接纳带目标归属的续行轮次。
 2. **全新 agent Ralph 运行**执行一个固定前台工作流，其中每个 Round 都生成一个不带对话种子的全新结构化子 agent。
 
-系统中没有 `packages/loop/` 包族、`LoopDriver`、`LoopId`、通用 `StopCondition` 或面向模型的通用 `loop` 工具。两项策略共享本仓库普通的 agent、会话、工具、工作流、subagent 与 UI 扩展点，但不会假装一种生命周期可以同时适配两者。
+否决 `packages/loop/` 包族、`LoopDriver`、`LoopId` 存在的条款已被部分取代——包族如今随一个具体消费方存在：[跨会话接力循环](../../proposed/feature/2026-09-24-cross-session-relay-loop.zh.md)，其人类命令接力链经由校验过的结构化交接把全新对话连接起来。被否决的抽象保持否决：没有投机式通用 loop 服务、没有面向模型的通用 `loop` 工具、没有通用 `StopCondition`、没有时间驱动触发——会话内提醒归 schedule 族。两项策略共享本仓库普通的 agent、会话、工具、工作流、subagent 与 UI 扩展点，但不会假装一种生命周期可以同时适配两者。
 
 ### 词汇与策略边界
 

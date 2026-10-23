@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for 2026-09-24-cross-session-relay-loop.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-09-24-cross-session-relay-loop.md
+/agent-note-cross-session-relay-loop:
+  en: 9c086e3939cc3c34
+  zh: 70f03c655b250cdc
+/agent-note-cross-session-relay-loop/problem:
+  en: 51911d9f21f15f82
+  zh: bdeb9410f964dcb7
+/agent-note-cross-session-relay-loop/proposal:
+  en: 360bab9399370ab4
+  zh: 701b4176f4948169
+/agent-note-cross-session-relay-loop/durable-record:
+  en: 66b361ba0ed3ab6f
+  zh: ee238f3ae1108f62
+/agent-note-cross-session-relay-loop/state-machine:
+  en: 17941e9f8c2856c9
+  zh: eec7bfc075598ce1
+/agent-note-cross-session-relay-loop/chain-definition:
+  en: f1d742e0ad2c056b
+  zh: 061ed742cd785b58
+/agent-note-cross-session-relay-loop/node-execution:
+  en: fdee1176449db0cf
+  zh: 9789c82140d3f9ec
+/agent-note-cross-session-relay-loop/handoff-lean-push-lossless-pull:
+  en: b063a1302bdba53b
+  zh: dfc33884eaa830ed
+/agent-note-cross-session-relay-loop/cross-session-reads:
+  en: 0eb9ff6faf38bf51
+  zh: 7dd2009f87115d3c
+/agent-note-cross-session-relay-loop/human-checkpoint:
+  en: 4f48ffa97996d14c
+  zh: db8a61c08fe1a464
+/agent-note-cross-session-relay-loop/recovery:
+  en: a5f43b756a052ce6
+  zh: 5ee21e93ac1adca7
+/agent-note-cross-session-relay-loop/scope-boundary:
+  en: 80af34716903d600
+  zh: 5ac9d3cf0b13ed55
+/agent-note-cross-session-relay-loop/alternatives-considered:
+  en: 2844d5ebde850269
+  zh: 27b47efb9e1618a0
+/agent-note-cross-session-relay-loop/acceptance-criteria:
+  en: f401a579fc9fb6b1
+  zh: ec82facce1a0983e
+/agent-note-cross-session-relay-loop/risks:
+  en: eb6b2e6b8b1fbde6
+  zh: 14f9156900464d7f
