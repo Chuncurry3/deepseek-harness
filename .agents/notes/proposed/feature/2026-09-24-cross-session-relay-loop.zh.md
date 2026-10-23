@@ -43,7 +43,7 @@ Status: proposed
 
 - `loop/change`——完整变更后快照，整值 last-wins 折叠：`loopId`、`revision`、objective、冻结链定义、`maxRounds`、checkpoint 模式、`readScopes`、`writeScopes`、相位 `active | awaiting-human | paused | blocked | complete`、blocked 原因、`roundsStarted`、创建/更新时间戳。clear 追加一条带 revision 的墓碑。当前 loop 是最新一条未被墓碑终结的 create；替换性 create 铸造全局全新的 `loopId`，被清除的历史与活跃运行绝不共用同一身份。
 - `loop/node-started`——append-only 派生记录：`loopId`、轮次、节点索引、角色、1 起始的 attempt、`childSessionId`、`cwd`、派生时的 `atRevision`。它在 `start()` 兑现后、等待结果前追加，因此崩溃后在飞子代理总是可定位。
-- `loop/attempt`——一次尝试的 append-only 失败记录：`loopId`、轮次、节点索引、attempt、`failure: { code, message }`、`atRevision`。尝试计数与失败原因因此跨重启存续；重试预算不会意外归零。
+- `loop/attempt`——一次尝试的 append-only 失败记录：`loopId`、轮次、节点索引、attempt、`childSessionId`、`failure: { code, message }`、`atRevision`。尝试计数与失败原因因此跨重启存续；重试预算不会意外归零。
 - `loop/node`——append-only 结算：`loopId`、轮次、节点索引、角色、attempt、`childSessionId`、`cwd`、已校验报告。结算只记录成功；失败记录在 `loop/attempt`，预算耗尽是 `loop/change` 的 block。
 
 `revision` 只在 `loop/change` 事件上递增；节点账本从不推进它。compare-and-set 使用 change revision。每条账本事件携带 `atRevision`——事件发生时生效的 change revision——作为排序与按纪元预算的逻辑时钟；墙钟时间戳只是元数据，绝不变体。账本以 `{loopId, round, nodeIndex, attempt}` 为键；重放拒绝重复键、无对应 `node-started` 的 attempt、无对应 `node-started` 的结算。其余重放校验镜像 goal 域：revision 连续性、生命周期迁移合法性、schema 合规，在首个损坏事件处响亮失败。

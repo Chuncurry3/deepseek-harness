@@ -5760,7 +5760,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LoopAttemptMeta',
-    declaration: 'export interface LoopAttemptMeta {\n    readonly kind: \'attempt\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly attempt: number;\n    readonly failure: {\n        readonly code: string;\n        readonly message: string;\n    };\n    readonly atRevision: number;\n}',
+    declaration: 'export interface LoopAttemptMeta {\n    readonly kind: \'attempt\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly attempt: number;\n    readonly childSessionId: SessionId;\n    readonly failure: {\n        readonly code: string;\n        readonly message: string;\n    };\n    readonly atRevision: number;\n}',
   },
   {
     name: 'LoopBlockReason',

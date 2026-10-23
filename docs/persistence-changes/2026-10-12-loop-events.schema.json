@@ -1,12 +1,12 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "roots": [
     {
       "key": "event:loop/attempt",
       "kind": "event",
       "event": "loop/attempt",
       "surface": false,
-      "digest": "6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a",
+      "digest": "a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec",
       "schema": {
         "root": 0,
         "nodes": [
@@ -55,8 +55,13 @@
                 "optional": false
               },
               {
-                "name": "failure",
+                "name": "childSessionId",
                 "type": 3,
+                "optional": false
+              },
+              {
+                "name": "failure",
+                "type": 4,
                 "optional": false
               },
               {
@@ -66,7 +71,7 @@
               },
               {
                 "name": "loopId",
-                "type": 4,
+                "type": 3,
                 "optional": false
               },
               {
@@ -92,24 +97,24 @@
             "type": "number"
           },
           {
+            "kind": "primitive",
+            "type": "string"
+          },
+          {
             "kind": "object",
             "properties": [
               {
                 "name": "code",
-                "type": 4,
+                "type": 3,
                 "optional": false
               },
               {
                 "name": "message",
-                "type": 4,
+                "type": 3,
                 "optional": false
               }
             ],
             "indices": []
-          },
-          {
-            "kind": "primitive",
-            "type": "string"
           },
           {
             "kind": "literal",

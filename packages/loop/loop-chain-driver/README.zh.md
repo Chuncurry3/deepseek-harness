@@ -98,7 +98,7 @@ const fallback = defaultChain('Ship the migration')
 
 ### 设计
 
-- **每个 agent 一条串行 pass。** 触发合并到 agent 本地的单条驱动 pass；loop 变更事件只请求下一条 pass。pass 在每个 await 之后重读栅栏视图（确切存活 agent、fiber active、loop active 且 armed、同一 loop id），镜像 goal-round-driver 的栅栏。
+- **每个 agent 一条串行 pass。** 触发合并到 agent 本地的单条驱动 pass；loop 变更事件只请求下一条 pass。pass 在每个 await 之后重读栅栏视图（确切存活 agent、fiber active、loop active 且 armed、同一 loop id），镜像 goal-round-driver 的栅栏。控制 agent 的错误与该镜像分道：`agent/error` 中止打开的 pass 并请求一次全新驱动——经台账恢复通道重试被打断的节点——而 goal-round-driver 在 agent 错误时解除武装并等待显式 resume。
 - **替换台账语义。** loop 折叠用同一 {round、nodeIndex、attempt} 键把打开的 `node-started` 记录替换为其收尾的 `attempt` 或 `settlement`，因此 attempt 编号扫描全部账目类别，剩余的 `node-started` 条目依构造为打开状态。
 - **epoch 下限。** epoch 是最近一次 create 或 resume 变更的修订号；低于它的 attempt 是重启前历史，从不计入新的 `maxNodeRetries` 预算。
 - **故障关闭收容。** `LoopError` 变更失败警告后安静停止 pass；`InvariantError` 以 `node-failed` 阻断；其余失败以 `durability-failed` 阻断。teardown 中止在途子会话、不记录、解除武装，并在 initiator 排空前等待 pass 静默。

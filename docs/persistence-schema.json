@@ -10612,7 +10612,7 @@
       "kind": "event",
       "event": "loop/attempt",
       "surface": false,
-      "digest": "6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a",
+      "digest": "a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec",
       "schema": {
         "root": 0,
         "nodes": [
@@ -10661,8 +10661,13 @@
                 "optional": false
               },
               {
-                "name": "failure",
+                "name": "childSessionId",
                 "type": 3,
+                "optional": false
+              },
+              {
+                "name": "failure",
+                "type": 4,
                 "optional": false
               },
               {
@@ -10672,7 +10677,7 @@
               },
               {
                 "name": "loopId",
-                "type": 4,
+                "type": 3,
                 "optional": false
               },
               {
@@ -10698,24 +10703,24 @@
             "type": "number"
           },
           {
+            "kind": "primitive",
+            "type": "string"
+          },
+          {
             "kind": "object",
             "properties": [
               {
                 "name": "code",
-                "type": 4,
+                "type": 3,
                 "optional": false
               },
               {
                 "name": "message",
-                "type": 4,
+                "type": 3,
                 "optional": false
               }
             ],
             "indices": []
-          },
-          {
-            "kind": "primitive",
-            "type": "string"
           },
           {
             "kind": "literal",
@@ -24051,6 +24056,15 @@
       ]
     },
     {
+      "digest": "4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621",
+      "names": [
+        "packages/loop/loop/src/domain.ts#LoopAttemptMeta"
+      ],
+      "sources": [
+        "packages/loop/loop/src/domain.ts:65"
+      ]
+    },
+    {
       "digest": "4cd48f3e5108bd6ebedf7301c3638839b8b2b9db8dbd493974177fbdeb91a01b",
       "names": [
         "packages/api/session-controller/src/types.ts#SessionRequestId",
@@ -24495,11 +24509,6 @@
       "sources": []
     },
     {
-      "digest": "6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a",
-      "names": [],
-      "sources": []
-    },
-    {
       "digest": "66ba70f6f068da443f969a0b947a013c3addd776b9b60a0a393759c19825e9a2",
       "names": [
         "packages/llm/llm/src/types.ts#ToolSchema"
@@ -24771,7 +24780,7 @@
         "packages/loop/loop/src/domain.ts#LoopNodeSettledMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:78"
+        "packages/loop/loop/src/domain.ts:79"
       ]
     },
     {
@@ -25000,7 +25009,7 @@
       ],
       "sources": [
         "packages/goal/goal/src/types.ts:52",
-        "packages/loop/loop/src/domain.ts:73"
+        "packages/loop/loop/src/domain.ts:74"
       ]
     },
     {
@@ -25230,15 +25239,6 @@
       "sources": []
     },
     {
-      "digest": "948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f",
-      "names": [
-        "packages/loop/loop/src/domain.ts#LoopAttemptMeta"
-      ],
-      "sources": [
-        "packages/loop/loop/src/domain.ts:65"
-      ]
-    },
-    {
       "digest": "94c56aeb1564ad735eb773d88636b40761d063efa1610f1308004d32923f5378",
       "names": [],
       "sources": []
@@ -25428,6 +25428,11 @@
     },
     {
       "digest": "a16e567c8cd2c55cf1e911aed3c200c4e1f6febb1459ff2a9e7adf159afb68cb",
+      "names": [],
+      "sources": []
+    },
+    {
+      "digest": "a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec",
       "names": [],
       "sources": []
     },

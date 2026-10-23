@@ -98,7 +98,7 @@ This section explains how the driver realizes the behavior above; the accepted f
 
 ### Design
 
-- **One serialized pass per agent.** Triggers coalesce onto one agent-local driver pass; a loop mutation event only requests the next pass. The pass re-reads the fenced view (exact live agent, fiber active, loop active and armed, same loop id) after every await, mirroring the goal-round-driver fences.
+- **One serialized pass per agent.** Triggers coalesce onto one agent-local driver pass; a loop mutation event only requests the next pass. The pass re-reads the fenced view (exact live agent, fiber active, loop active and armed, same loop id) after every await, mirroring the goal-round-driver fences. A controlling-agent error diverges from that mirror: `agent/error` aborts the open pass and requests a fresh drive — retrying the interrupted node through the ledger's recovery lane — where the goal-round-driver disarms on an agent error and waits for an explicit resume.
 - **Replacement ledger semantics.** The loop fold replaces an open `node-started` record with its closing `attempt` or `settlement` under the same {round, nodeIndex, attempt} key, so attempt numbering scans all ledger kinds and the remaining `node-started` entry is open by construction.
 - **Epoch floor.** The epoch is the revision of the latest create-or-resume change; attempts recorded below it are pre-restart history that never counts against the fresh `maxNodeRetries` budget.
 - **Fail-closed containment.** A `LoopError` mutation failure warns and stops the pass quietly; an `InvariantError` blocks `node-failed`; any other failure blocks `durability-failed`. Teardown aborts the in-flight child, records nothing, disarms, and awaits pass quiescence before the initiator drain.

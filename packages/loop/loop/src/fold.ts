@@ -360,7 +360,7 @@ export function decodeLoopLedger(key: LoopLedgerEventKey, value: unknown): LoopL
       } satisfies LoopNodeStartedMeta
     }
     case 'attempt': {
-      fields(value, 'loop/attempt payload', ['attempt', 'atRevision', 'failure', 'kind', 'loopId', 'nodeIndex', 'round', 'version'])
+      fields(value, 'loop/attempt payload', ['attempt', 'atRevision', 'childSessionId', 'failure', 'kind', 'loopId', 'nodeIndex', 'round', 'version'])
       if (!isRecord(value['failure'])) throw new Error('loop/attempt failure must be a record')
       fields(value['failure'], 'loop/attempt failure', ['code', 'message'])
       return {
@@ -370,6 +370,7 @@ export function decodeLoopLedger(key: LoopLedgerEventKey, value: unknown): LoopL
         round: positiveInteger(value['round'], 'loop/attempt round'),
         nodeIndex: nonNegativeInteger(value['nodeIndex'], 'loop/attempt nodeIndex'),
         attempt: positiveInteger(value['attempt'], 'loop/attempt attempt'),
+        childSessionId: SessionId(nonEmptyString(value['childSessionId'], 'loop/attempt childSessionId')),
         failure: {
           code: nonEmptyString(value['failure']['code'], 'loop/attempt failure code'),
           message: nonEmptyString(value['failure']['message'], 'loop/attempt failure message'),
@@ -566,6 +567,7 @@ export function loopLedgerEntry(meta: LoopLedgerMeta): LoopLedgerEntry {
         round: meta.round,
         nodeIndex: meta.nodeIndex,
         attempt: meta.attempt,
+        childSessionId: meta.childSessionId,
         failure: meta.failure,
         atRevision: meta.atRevision,
       }

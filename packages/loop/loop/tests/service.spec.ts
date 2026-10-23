@@ -758,11 +758,12 @@ describe('LoopService mutations', () => {
       round: 1,
       nodeIndex: 0,
       attempt: 1,
+      childSessionId: SessionId('sess-writer-1'),
       failure: { code: 'child-failed', message: 'writer crashed' },
     }, 1)
     state = ctx.sessionProjections.stateOf(session, 'loop')
     expect(state?.current?.ledger).toHaveLength(1)
-    expect(state?.current?.ledger[0]).toMatchObject({ kind: 'attempt', failure: { code: 'child-failed' } })
+    expect(state?.current?.ledger[0]).toMatchObject({ kind: 'attempt', childSessionId: 'sess-writer-1', failure: { code: 'child-failed' } })
 
     await expect(ctx.loops.appendSettlement(agent, {
       kind: 'settlement',
@@ -844,6 +845,7 @@ describe('LoopService mutations', () => {
       round: 1,
       nodeIndex: 1,
       attempt: 1,
+      childSessionId: SessionId('sess-reviewer-1'),
       failure: { code: 'child-failed', message: 'no node started' },
     }, 1)).rejects.toThrow(expect.objectContaining({ code: 'LOOP_INVALID_TRANSITION' }))
 

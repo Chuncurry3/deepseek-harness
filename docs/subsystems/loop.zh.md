@@ -158,6 +158,7 @@ interface LoopAttemptMeta {
   readonly nodeIndex: number
   /** Positive 1-based attempt number the failure ends. */
   readonly attempt: number
+  readonly childSessionId: SessionId
   readonly failure: { readonly code: string; readonly message: string }
   readonly atRevision: number
 }

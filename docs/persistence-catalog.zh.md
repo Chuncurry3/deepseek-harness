@@ -46,7 +46,7 @@
 | `event:image/offload` | event | `b222069eea2d768065161c1147b1f2c78c1b54328c84b3586ae5c8f91b8ed35e` | [`{ type: "image/offload" }`](#persistence-type-sha256-b222069eea2d768065161c1147b1f2c78c1b54328c84b3586ae5c8f91b8ed35e) |
 | `event:llm/retry` | event | `525254db03b1d1e6b74cf55aced52817568331ac1f96c0818728910b6692e336` | [`{ type: "llm/retry" }`](#persistence-type-sha256-525254db03b1d1e6b74cf55aced52817568331ac1f96c0818728910b6692e336) |
 | `event:llm/retry-started` | event | `48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3` | [`{ type: "llm/retry-started" }`](#persistence-type-sha256-48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3) |
-| `event:loop/attempt` | event | `6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a` | [`{ type: "loop/attempt" }`](#persistence-type-sha256-6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a) |
+| `event:loop/attempt` | event | `a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec` | [`{ type: "loop/attempt" }`](#persistence-type-sha256-a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec) |
 | `event:loop/change` | event | `54efc414d58e7d53681fc43a7a40b7b253701f1f02b8bb06d730da0b23facf26` | [`{ type: "loop/change" }`](#persistence-type-sha256-54efc414d58e7d53681fc43a7a40b7b253701f1f02b8bb06d730da0b23facf26) |
 | `event:loop/node` | event | `6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047` | [`{ type: "loop/node" }`](#persistence-type-sha256-6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047) |
 | `event:loop/node-started` | event | `36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c` | [`{ type: "loop/node-started" }`](#persistence-type-sha256-36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c) |
@@ -665,7 +665,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'loop/attempt': LoopAttemptMeta
 ```
 
-来源：[`packages/loop/loop/src/domain.ts:106`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/loop/loop/src/domain.ts:107`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopchange--log-only"></a>
 
@@ -676,7 +676,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'loop/change': LoopChangeMeta
 ```
 
-来源：[`packages/loop/loop/src/domain.ts:102`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/loop/loop/src/domain.ts:103`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopnode--log-only"></a>
 
@@ -687,7 +687,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'loop/node': LoopNodeSettledMeta
 ```
 
-来源：[`packages/loop/loop/src/domain.ts:108`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/loop/loop/src/domain.ts:109`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopnode-started--log-only"></a>
 
@@ -698,7 +698,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'loop/node-started': LoopNodeStartedMeta
 ```
 
-来源：[`packages/loop/loop/src/domain.ts:104`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/loop/loop/src/domain.ts:105`](../packages/loop/loop/src/domain.ts)
 
 ### `model/*`
 
@@ -3627,7 +3627,7 @@ SHA-256: `5808e36c95355f0e745201b5db1b6bcec4ebf5adb75d3e82d7d59cc89635ab80`
 
 SHA-256: `84ac8c1a66ffc697262e181f42e851259eae14038c113ca329fb4700ccdb1f7c`
 
-来源：[`packages/goal/goal/src/types.ts:52`](../packages/goal/goal/src/types.ts) · [`packages/loop/loop/src/domain.ts:73`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/goal/goal/src/types.ts:52`](../packages/goal/goal/src/types.ts) · [`packages/loop/loop/src/domain.ts:74`](../packages/loop/loop/src/domain.ts)
 
 | 属性 | 存在性 | 类型 |
 |---|---|---|
@@ -4184,7 +4184,7 @@ SHA-256: `6f72ece8f317cd080c4f20a93f1bf709965f5b81ac4669528f5a023191cfcf20`
 | `step` | 必需 | `number` |
 | `turn` | 必需 | `number` |
 
-<a id="persistence-type-sha256-948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f"></a>
+<a id="persistence-type-sha256-4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621"></a>
 
 <a id="persistence-type-loopattemptmeta"></a>
 
@@ -4192,7 +4192,7 @@ SHA-256: `6f72ece8f317cd080c4f20a93f1bf709965f5b81ac4669528f5a023191cfcf20`
 
 ### `LoopAttemptMeta`
 
-SHA-256: `948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f`
+SHA-256: `4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621`
 
 来源：[`packages/loop/loop/src/domain.ts:65`](../packages/loop/loop/src/domain.ts)
 
@@ -4200,6 +4200,7 @@ SHA-256: `948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f`
 |---|---|---|
 | `atRevision` | 必需 | `number` |
 | `attempt` | 必需 | `number` |
+| `childSessionId` | 必需 | `string` |
 | `failure` | 必需 | [`GoalBlockReason`](#persistence-type-sha256-84ac8c1a66ffc697262e181f42e851259eae14038c113ca329fb4700ccdb1f7c) |
 | `kind` | 必需 | `"attempt"` |
 | `loopId` | 必需 | `string` |
@@ -4344,7 +4345,7 @@ SHA-256: `a69a9e3f8f16f08c1544b6583b3d1c6b6f1fd054190cc1f15bf2892cc71ba885`
 
 SHA-256: `7919ec7c1669b1fa6cafa03344f5c51c2ce0339d258780f8d4a08f2351101634`
 
-来源：[`packages/loop/loop/src/domain.ts:78`](../packages/loop/loop/src/domain.ts)
+来源：[`packages/loop/loop/src/domain.ts:79`](../packages/loop/loop/src/domain.ts)
 
 | 属性 | 存在性 | 类型 |
 |---|---|---|
@@ -8755,17 +8756,17 @@ SHA-256: `48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3`
 | `time` | 必需 | `number` |
 | `type` | 必需 | `"llm/retry-started"` |
 
-<a id="persistence-type-sha256-6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a"></a>
+<a id="persistence-type-sha256-a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec"></a>
 
 <a id="persistence-type-eventloopattempt"></a>
 
 ### `{ type: "loop/attempt" }`
 
-SHA-256: `6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a`
+SHA-256: `a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec`
 
 | 属性 | 存在性 | 类型 |
 |---|---|---|
-| `data` | 必需 | [`LoopAttemptMeta`](#persistence-type-sha256-948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f) |
+| `data` | 必需 | [`LoopAttemptMeta`](#persistence-type-sha256-4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621) |
 | `ignorable` | 可选 | `true` |
 | `seq` | 必需 | `number` |
 | `time` | 必需 | `number` |

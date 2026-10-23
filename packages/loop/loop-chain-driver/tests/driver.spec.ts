@@ -508,8 +508,8 @@ describe('node retries and failure classification', () => {
     const state = loopOf(booted.ctx, booted.session)!
     const attempts = attemptsOf(state.ledger)
     expect(attempts).toHaveLength(2)
-    expect(attempts[0]).toMatchObject({ kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1, failure: { code: 'error', message: 'model fault' } })
-    expect(attempts[1]).toMatchObject({ attempt: 2, failure: { code: 'error' } })
+    expect(attempts[0]).toMatchObject({ kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1, childSessionId: booted.spawns[0]!.sessionId, failure: { code: 'error', message: 'model fault' } })
+    expect(attempts[1]).toMatchObject({ attempt: 2, childSessionId: booted.spawns[1]!.sessionId, failure: { code: 'error' } })
     // The retried spawn carries the recorded failure forward.
     expect(booted.spawns[1]!.prompt).toContain('Previous attempt failed and was not accepted: error: model fault')
     expect(booted.spawns).toHaveLength(2)
@@ -549,7 +549,7 @@ describe('node retries and failure classification', () => {
     const state = loopOf(booted.ctx, booted.session)!
     const attempts = attemptsOf(state.ledger)
     expect(attempts).toHaveLength(1)
-    expect(attempts[0]).toMatchObject({ kind: 'attempt', attempt: 1, failure: { code: 'invalid-report' } })
+    expect(attempts[0]).toMatchObject({ kind: 'attempt', attempt: 1, childSessionId: booted.spawns[0]!.sessionId, failure: { code: 'invalid-report' } })
     expect(booted.spawns[1]!.prompt).toContain('Previous attempt failed and was not accepted: invalid-report')
     expect(booted.spawns).toHaveLength(3)
   })
@@ -569,7 +569,7 @@ describe('node retries and failure classification', () => {
     })
     const attempts = attemptsOf(loopOf(booted.ctx, booted.session)!.ledger)
     expect(attempts).toHaveLength(1)
-    expect(attempts[0]).toMatchObject({ failure: { code: 'missing-structured' } })
+    expect(attempts[0]).toMatchObject({ childSessionId: booted.spawns[0]!.sessionId, failure: { code: 'missing-structured' } })
     expect(booted.spawns).toHaveLength(3)
   })
 
@@ -1111,7 +1111,7 @@ describe('restart and recovery', () => {
     const state = loopOf(second.ctx, second.session)!
     const attempts = attemptsOf(state.ledger)
     expect(attempts).toHaveLength(1)
-    expect(attempts[0]).toMatchObject({ kind: 'attempt', nodeIndex: 0, attempt: 1, failure: { code: 'interrupted-by-shutdown' } })
+    expect(attempts[0]).toMatchObject({ kind: 'attempt', nodeIndex: 0, attempt: 1, childSessionId: first.spawns[0]!.sessionId, failure: { code: 'interrupted-by-shutdown' } })
     // The respawned writer settled on a fresh child session.
     const settled = settlementsOf(state.ledger, 1).find(entry => entry.kind === 'settlement' && entry.nodeIndex === 0)
     expect(settled).toMatchObject({ attempt: 2, report: WORKER_REPORT })
@@ -1145,7 +1145,7 @@ describe('restart and recovery', () => {
       expect(loopOf(second.ctx, second.session)?.view.loop.phase).toBe('complete')
     })
     const attempts = attemptsOf(loopOf(second.ctx, second.session)!.ledger)
-    expect(attempts[0]).toMatchObject({ failure: { code: 'invalid-recovered-report' } })
+    expect(attempts[0]).toMatchObject({ childSessionId: first.spawns[0]!.sessionId, failure: { code: 'invalid-recovered-report' } })
     await second.retire()
   })
 
@@ -1176,7 +1176,7 @@ describe('restart and recovery', () => {
       expect(loopOf(second.ctx, second.session)?.view.loop.phase).toBe('complete')
     })
     const attempts = attemptsOf(loopOf(second.ctx, second.session)!.ledger)
-    expect(attempts[0]).toMatchObject({ failure: { code: 'invalid-recovered-report' } })
+    expect(attempts[0]).toMatchObject({ childSessionId: first.spawns[0]!.sessionId, failure: { code: 'invalid-recovered-report' } })
     expect(attempts[0]!.kind === 'attempt' && attempts[0]!.failure.message).toContain('summary')
     await second.retire()
   })
@@ -1204,6 +1204,34 @@ describe('lifecycle fences and containment', () => {
     const unledgeredWarns = warn.mock.calls.filter(call => String(call[0]).includes('without loop ledger entries'))
     expect(unledgeredWarns).toEqual([])
     expect(booted.spawns).toHaveLength(6)
+  })
+
+  it('never warns about a failed attempt\'s child after the ledger replaces its spawn record', async () => {
+    const alpha = await workspace()
+    const booted = await boot({ script: [
+      { stopReason: 'error', diagnostic: 'model fault' },
+      { structured: WORKER_REPORT },
+      { structured: { ...WORKER_REPORT, summary: 'the review is done' } },
+      { structured: VERDICT_CONTINUE },
+      { structured: { ...WORKER_REPORT, summary: 'round two draft' } },
+      { structured: { ...WORKER_REPORT, summary: 'round two review' } },
+      { structured: VERDICT_COMPLETE },
+    ] })
+    const warn = vi.spyOn(booted.ctx.logger, 'warn')
+    await booted.ctx.loops.start(booted.agent, startRequest(chain('none', alpha), [alpha]))
+
+    await waitUntil(() => {
+      expect(loopOf(booted.ctx, booted.session)?.view.loop.phase).toBe('complete')
+    })
+    const state = loopOf(booted.ctx, booted.session)!
+    // Round 2's enumeration must match the failed first-attempt child through
+    // its replacing attempt record: the retried-then-failed child is ledgered
+    // from its first attempt, so no false crashed-attempt warn survives.
+    const unledgeredWarns = warn.mock.calls.filter(call => String(call[0]).includes('without loop ledger entries'))
+    expect(unledgeredWarns).toEqual([])
+    expect(attemptsOf(state.ledger)).toHaveLength(1)
+    expect(attemptsOf(state.ledger)[0]).toMatchObject({ attempt: 1, childSessionId: booted.spawns[0]!.sessionId })
+    expect(booted.spawns).toHaveLength(7)
   })
 
   it('aborts the in-flight child, records nothing, and disarms at driver teardown', async () => {
@@ -1390,7 +1418,8 @@ describe('lifecycle fences and containment', () => {
     // The note's pause rule: the interrupted attempt records code 'paused' at pause time.
     expect(attemptsOf(state.ledger)).toHaveLength(1)
     expect(attemptsOf(state.ledger)[0]).toMatchObject({
-      kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1, failure: { code: 'paused' },
+      kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1,
+      childSessionId: booted.spawns[0]!.sessionId, failure: { code: 'paused' },
     })
     expect(booted.spawns).toHaveLength(1)
 

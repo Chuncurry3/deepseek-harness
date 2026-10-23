@@ -320,6 +320,7 @@ export function apply(ctx: Context, config: Config): void {
         round,
         nodeIndex,
         attempt,
+        childSessionId,
         failure: {
           code: 'paused',
           message: `in-flight child ${childSessionId} of node "${node.role}" (round ${round}) was interrupted by a pause`,
@@ -570,6 +571,7 @@ export function apply(ctx: Context, config: Config): void {
         round,
         nodeIndex,
         attempt,
+        childSessionId: run.id,
         failure,
       }, view.loop.revision)
       return 'retry'
@@ -582,6 +584,7 @@ export function apply(ctx: Context, config: Config): void {
         round,
         nodeIndex,
         attempt,
+        childSessionId: run.id,
         failure: { code: 'invalid-report', message: violations.join('; ') },
       }, view.loop.revision)
       return 'retry'
@@ -835,6 +838,7 @@ export function apply(ctx: Context, config: Config): void {
         round,
         nodeIndex,
         attempt: inflight.attempt,
+        childSessionId: inflight.childSessionId,
         failure: { code: 'invalid-recovered-report', message: violations.join('; ') },
       }, view.loop.revision)
       return 'retry'
@@ -845,6 +849,7 @@ export function apply(ctx: Context, config: Config): void {
       round,
       nodeIndex,
       attempt: inflight.attempt,
+      childSessionId: inflight.childSessionId,
       failure: {
         code: crashCode,
         message: `in-flight child ${inflight.childSessionId} of node "${node.role}" (round ${round}) crashed before settlement and left no valid report`,
@@ -872,17 +877,13 @@ export function apply(ctx: Context, config: Config): void {
       ctx.logger.warn(`loop-chain-driver: unledgered-child enumeration failed for agent "${state.agent.id}": ${renderThrown(error)}`)
       return
     }
-    // The match set spans every ledger entry carrying a childSessionId: an open
-    // node-started OR its replacing settlement — the fold closes each ledger key
-    // under {round, nodeIndex, attempt}, so a settled child disappears from the
-    // open set while staying covered. LoopAttemptMeta carries no childSessionId,
-    // so a failed attempt's child stays unmatchable here — the known residual
-    // carried to Phase E with the meta extension.
-    const ledgerChildren = new Set(
-      view.ledger
-        .filter(entry => entry.kind === 'node-started' || entry.kind === 'settlement')
-        .map(entry => entry.childSessionId),
-    )
+    // The match set spans every ledger entry: the fold closes each ledger key
+    // under {round, nodeIndex, attempt} by replacing the open node-started with
+    // its attempt failure or settlement, and all three records carry the
+    // childSessionId, so a spawned child stays covered through whichever record
+    // closed it. Only a crash between publication and the node-started append
+    // leaves a child unledgered.
+    const ledgerChildren = new Set(view.ledger.map(entry => entry.childSessionId))
     const unledgered = children.filter(child => !ledgerChildren.has(child.id))
     if (unledgered.length > 0) {
       ctx.logger.warn(

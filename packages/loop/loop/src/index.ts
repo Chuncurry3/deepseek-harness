@@ -344,7 +344,7 @@ export const loopProjectionDefinition = {
   }),
   apply: applyLoopProjection,
   wire: { viewSchema: loopProjectionSchema, view: (state: LoopProjectionState): LoopProjection | null => state.current },
-  stateVersion: 2,
+  stateVersion: 3,
 } satisfies ProjectionDefinition<'loop', LoopProjectionState>
 /** Deployment defaults for loop runs and node handoffs. */
 export interface Config {

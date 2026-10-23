@@ -86,6 +86,7 @@ describe('loop-chain-driver stream invariants', () => {
     // Ledger records of other kinds and settlements of other loops fold without checks.
     session.append('loop/attempt', {
       kind: 'attempt', version: 1, loopId: LOOP_ID, round: 2, nodeIndex: 0, attempt: 1,
+      childSessionId: SessionId('driver-invariant-child'),
       failure: { code: 'error', message: 'model fault' }, atRevision: 2,
     })
     session.append('loop/node', { ...settlement(0, 'writer', WORKER_REPORT), loopId: LoopId('another-loop') })

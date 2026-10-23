@@ -44,7 +44,7 @@ The [format references](persistence-changes/historical-formats/README.md) cover 
 | `event:image/offload` | event | `b222069eea2d768065161c1147b1f2c78c1b54328c84b3586ae5c8f91b8ed35e` | [`{ type: "image/offload" }`](#persistence-type-sha256-b222069eea2d768065161c1147b1f2c78c1b54328c84b3586ae5c8f91b8ed35e) |
 | `event:llm/retry` | event | `525254db03b1d1e6b74cf55aced52817568331ac1f96c0818728910b6692e336` | [`{ type: "llm/retry" }`](#persistence-type-sha256-525254db03b1d1e6b74cf55aced52817568331ac1f96c0818728910b6692e336) |
 | `event:llm/retry-started` | event | `48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3` | [`{ type: "llm/retry-started" }`](#persistence-type-sha256-48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3) |
-| `event:loop/attempt` | event | `6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a` | [`{ type: "loop/attempt" }`](#persistence-type-sha256-6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a) |
+| `event:loop/attempt` | event | `a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec` | [`{ type: "loop/attempt" }`](#persistence-type-sha256-a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec) |
 | `event:loop/change` | event | `54efc414d58e7d53681fc43a7a40b7b253701f1f02b8bb06d730da0b23facf26` | [`{ type: "loop/change" }`](#persistence-type-sha256-54efc414d58e7d53681fc43a7a40b7b253701f1f02b8bb06d730da0b23facf26) |
 | `event:loop/node` | event | `6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047` | [`{ type: "loop/node" }`](#persistence-type-sha256-6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047) |
 | `event:loop/node-started` | event | `36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c` | [`{ type: "loop/node-started" }`](#persistence-type-sha256-36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c) |
@@ -663,7 +663,7 @@ Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src
 'loop/attempt': LoopAttemptMeta
 ```
 
-Source: [`packages/loop/loop/src/domain.ts:106`](../packages/loop/loop/src/domain.ts)
+Source: [`packages/loop/loop/src/domain.ts:107`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopchange--log-only"></a>
 
@@ -674,7 +674,7 @@ Source: [`packages/loop/loop/src/domain.ts:106`](../packages/loop/loop/src/domai
 'loop/change': LoopChangeMeta
 ```
 
-Source: [`packages/loop/loop/src/domain.ts:102`](../packages/loop/loop/src/domain.ts)
+Source: [`packages/loop/loop/src/domain.ts:103`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopnode--log-only"></a>
 
@@ -685,7 +685,7 @@ Source: [`packages/loop/loop/src/domain.ts:102`](../packages/loop/loop/src/domai
 'loop/node': LoopNodeSettledMeta
 ```
 
-Source: [`packages/loop/loop/src/domain.ts:108`](../packages/loop/loop/src/domain.ts)
+Source: [`packages/loop/loop/src/domain.ts:109`](../packages/loop/loop/src/domain.ts)
 
 <a id="loopnode-started--log-only"></a>
 
@@ -696,7 +696,7 @@ Source: [`packages/loop/loop/src/domain.ts:108`](../packages/loop/loop/src/domai
 'loop/node-started': LoopNodeStartedMeta
 ```
 
-Source: [`packages/loop/loop/src/domain.ts:104`](../packages/loop/loop/src/domain.ts)
+Source: [`packages/loop/loop/src/domain.ts:105`](../packages/loop/loop/src/domain.ts)
 
 ### `model/*`
 
@@ -3625,7 +3625,7 @@ Sources: [`packages/llm/llm/src/types.ts:165`](../packages/llm/llm/src/types.ts)
 
 SHA-256: `84ac8c1a66ffc697262e181f42e851259eae14038c113ca329fb4700ccdb1f7c`
 
-Sources: [`packages/goal/goal/src/types.ts:52`](../packages/goal/goal/src/types.ts) · [`packages/loop/loop/src/domain.ts:73`](../packages/loop/loop/src/domain.ts)
+Sources: [`packages/goal/goal/src/types.ts:52`](../packages/goal/goal/src/types.ts) · [`packages/loop/loop/src/domain.ts:74`](../packages/loop/loop/src/domain.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -4182,7 +4182,7 @@ Sources: [`packages/llm/llm-retry/src/types.ts:43`](../packages/llm/llm-retry/sr
 | `step` | required | `number` |
 | `turn` | required | `number` |
 
-<a id="persistence-type-sha256-948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f"></a>
+<a id="persistence-type-sha256-4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621"></a>
 
 <a id="persistence-type-loopattemptmeta"></a>
 
@@ -4190,7 +4190,7 @@ Sources: [`packages/llm/llm-retry/src/types.ts:43`](../packages/llm/llm-retry/sr
 
 ### `LoopAttemptMeta`
 
-SHA-256: `948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f`
+SHA-256: `4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621`
 
 Sources: [`packages/loop/loop/src/domain.ts:65`](../packages/loop/loop/src/domain.ts)
 
@@ -4198,6 +4198,7 @@ Sources: [`packages/loop/loop/src/domain.ts:65`](../packages/loop/loop/src/domai
 |---|---|---|
 | `atRevision` | required | `number` |
 | `attempt` | required | `number` |
+| `childSessionId` | required | `string` |
 | `failure` | required | [`GoalBlockReason`](#persistence-type-sha256-84ac8c1a66ffc697262e181f42e851259eae14038c113ca329fb4700ccdb1f7c) |
 | `kind` | required | `"attempt"` |
 | `loopId` | required | `string` |
@@ -4342,7 +4343,7 @@ Array of [`LoopInputRef`](#persistence-type-sha256-435e42d7a9c77f15f5484c958525a
 
 SHA-256: `7919ec7c1669b1fa6cafa03344f5c51c2ce0339d258780f8d4a08f2351101634`
 
-Sources: [`packages/loop/loop/src/domain.ts:78`](../packages/loop/loop/src/domain.ts)
+Sources: [`packages/loop/loop/src/domain.ts:79`](../packages/loop/loop/src/domain.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -8753,17 +8754,17 @@ SHA-256: `48e5c9861f16ac07e78cb7b5ae9dabdf7bb85c58baed5a51b4ad275050ea58e3`
 | `time` | required | `number` |
 | `type` | required | `"llm/retry-started"` |
 
-<a id="persistence-type-sha256-6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a"></a>
+<a id="persistence-type-sha256-a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec"></a>
 
 <a id="persistence-type-eventloopattempt"></a>
 
 ### `{ type: "loop/attempt" }`
 
-SHA-256: `6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a`
+SHA-256: `a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec`
 
 | Property | Presence | Type |
 |---|---|---|
-| `data` | required | [`LoopAttemptMeta`](#persistence-type-sha256-948b2e6450eba806c6470c6b034dc23f984c86c35ad9649d56e958b28125275f) |
+| `data` | required | [`LoopAttemptMeta`](#persistence-type-sha256-4c0eba1d0a94db3c15b11e7dbc2215adb673fcb3a341b385b0fd337ba1cee621) |
 | `ignorable` | optional | `true` |
 | `seq` | required | `number` |
 | `time` | required | `number` |

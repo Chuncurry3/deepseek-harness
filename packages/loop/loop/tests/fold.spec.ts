@@ -44,6 +44,7 @@ const attemptFailure = {
   round: 1,
   nodeIndex: 0,
   attempt: 1,
+  childSessionId: 's1',
   failure: { code: 'node-failed', message: 'child failed' },
   atRevision: 1,
 }
@@ -158,9 +159,14 @@ describe('loop ledger fold', () => {
     applyLoopEvent(state, event(1, 'loop/change', create))
     applyLoopEvent(state, event(2, 'loop/node-started', started))
     applyLoopEvent(state, event(3, 'loop/attempt', attemptFailure))
-    applyLoopEvent(state, event(4, 'loop/node-started', { ...started, attempt: 2 }))
-    applyLoopEvent(state, event(5, 'loop/node', { ...settlement, attempt: 2 }))
-    expect([...state.ledger.values()].map(entry => entry.kind)).toEqual(['attempt', 'settlement'])
+    applyLoopEvent(state, event(4, 'loop/node-started', { ...started, attempt: 2, childSessionId: 's2' }))
+    applyLoopEvent(state, event(5, 'loop/node', { ...settlement, attempt: 2, childSessionId: 's2' }))
+    // The replacing attempt entry keeps the failed child's session id, so both
+    // the failed and the retried child stay matchable from the folded ledger.
+    expect([...state.ledger.values()]).toEqual([
+      { kind: 'attempt', round: 1, nodeIndex: 0, attempt: 1, childSessionId: 's1', failure: { code: 'node-failed', message: 'child failed' }, atRevision: 1 },
+      { kind: 'settlement', round: 1, nodeIndex: 0, role: 'r', attempt: 2, childSessionId: 's2', cwd: '/w', report: { summary: 'ok' }, atRevision: 1 },
+    ])
   })
 
   it('ignores ledger events that belong to another loop or precede the first create', () => {
@@ -475,12 +481,19 @@ describe('loop ledger decoder', () => {
     expect(() => decodeLoopLedger('loop/attempt', { ...attemptFailure, role: 'r' })).toThrow('cannot carry field role')
   })
 
+  it('requires the failed attempt\'s child session id', () => {
+    const { childSessionId: _childSessionId, ...withoutChild } = attemptFailure
+    expect(() => decodeLoopLedger('loop/attempt', withoutChild)).toThrow('must carry field childSessionId')
+    expect(() => decodeLoopLedger('loop/attempt', { ...attemptFailure, childSessionId: '' })).toThrow('childSessionId must be a non-empty string')
+    expect(() => decodeLoopLedger('loop/attempt', { ...attemptFailure, childSessionId: 5 })).toThrow('childSessionId must be a non-empty string')
+  })
+
   it('validates settlement payloads', () => {
     const { report: _report, ...withoutReport } = settlement
     expect(() => decodeLoopLedger('loop/node', withoutReport)).toThrow('must carry field report')
     expect(decodeLoopLedger('loop/node', settlement)).toMatchObject({ kind: 'settlement', report: { summary: 'ok' } })
     expect(decodeLoopLedger('loop/node-started', started)).toMatchObject({ kind: 'node-started', loopId: 'L1', childSessionId: 's1' })
-    expect(decodeLoopLedger('loop/attempt', attemptFailure)).toMatchObject({ kind: 'attempt', failure: { code: 'node-failed' } })
+    expect(decodeLoopLedger('loop/attempt', attemptFailure)).toMatchObject({ kind: 'attempt', childSessionId: 's1', failure: { code: 'node-failed' } })
   })
 })
 

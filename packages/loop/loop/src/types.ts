@@ -139,5 +139,5 @@ export interface LoopProjectionState {
 /** One ledger entry: a spawn, a failure, or a settlement. */
 export type LoopLedgerEntry =
   | { readonly kind: 'node-started'; readonly round: number; readonly nodeIndex: number; readonly role: string; readonly attempt: number; readonly childSessionId: SessionId; readonly cwd: string; readonly atRevision: number }
-  | { readonly kind: 'attempt'; readonly round: number; readonly nodeIndex: number; readonly attempt: number; readonly failure: { readonly code: string; readonly message: string }; readonly atRevision: number }
+  | { readonly kind: 'attempt'; readonly round: number; readonly nodeIndex: number; readonly attempt: number; readonly childSessionId: SessionId; readonly failure: { readonly code: string; readonly message: string }; readonly atRevision: number }
   | { readonly kind: 'settlement'; readonly round: number; readonly nodeIndex: number; readonly role: string; readonly attempt: number; readonly childSessionId: SessionId; readonly cwd: string; readonly report: unknown; readonly atRevision: number }

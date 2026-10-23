@@ -26,21 +26,21 @@ schemaVersion: 1
 id: 2026-10-12-loop-events
 baseline: false
 changes:
+  - root: "event:loop/attempt"
+    previous: null
+    after: "a1e630029ff4ee18a6ce394c6b2f5ea8e6b8f2c888cad523ccf46e35d430dcec"
+    decision: same-version
   - root: "event:loop/change"
     previous: null
     after: "54efc414d58e7d53681fc43a7a40b7b253701f1f02b8bb06d730da0b23facf26"
     decision: same-version
-  - root: "event:loop/node-started"
-    previous: null
-    after: "36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c"
-    decision: same-version
-  - root: "event:loop/attempt"
-    previous: null
-    after: "6671e24b5694b8f2684b8df740584ade4ce8d01b4a3df63ca75063091374027a"
-    decision: same-version
   - root: "event:loop/node"
     previous: null
     after: "6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047"
+    decision: same-version
+  - root: "event:loop/node-started"
+    previous: null
+    after: "36e6ba24f5674c210e7a513ae39849889e977d2d626b7b474c3ddd06b827842c"
     decision: same-version
 ```
 
@@ -52,7 +52,7 @@ changes:
 <a id="verification"></a>
 ## 验证
 
-pnpm vitest run packages/loop/loop：96 个测试通过。严格折叠、投影与不变式配套模块从会话日志回放这些新事件；gen-persistence-catalog 重新生成了 schema、known-event-types 与持久化目录，四个根在此确认。
+pnpm vitest run packages/loop：256 个测试通过。严格折叠、投影与不变式配套模块从会话日志回放这些新事件；`loop/attempt` 记录携带失败尝试的 `childSessionId`，使驱动器的未入账子会话枚举保持精确；gen-persistence-catalog 重新生成了 schema、known-event-types 与持久化目录，四个根在此确认。
 
 <a id="dev-note"></a>
 ## 开发备注
