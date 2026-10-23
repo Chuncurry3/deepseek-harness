@@ -203,12 +203,12 @@ describe('@deepseek-ai/dsh-tool-loop-query registration', () => {
     const search = mounted.ctx.tools.get('loop_session_search')
     const read = mounted.ctx.tools.get('loop_session_read')
     expect(search?.description).toBe(
-      "Usable only inside an active run's lineage, every other call refused. "
+      "Usable only inside a current run's lineage, every other call refused. "
       + 'Search the sessions this run may read (its frozen read scopes plus your own workspace) for literal text, '
       + 'and return each matching event with its session id and sequence number so loop_session_read can pull it.',
     )
     expect(read?.description).toBe(
-      "Usable only inside an active run's lineage, every other call refused. "
+      "Usable only inside a current run's lineage, every other call refused. "
       + 'Read one session this run may read: its current model surface, or one exact event with optional neighboring events.',
     )
     expect(search?.timeoutMs).toBe(30_000)

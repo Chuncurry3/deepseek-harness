@@ -132,7 +132,7 @@ Read these pages when the package-level contract is not enough. They move from t
 
 #### What the model sees
 
-The model sees the generated [`loop_session_search` and `loop_session_read` schemas](../../../docs/tool-catalog.md#deepseek-aidsh-tool-loop-query). Each description opens by stating that the tool is usable only inside an active run's lineage and that every other call is refused; the rest of each description names what the tool returns and which schema fields are deliberately absent (no cursor, no page size, no model-controlled limit, and no workspace path).
+The model sees the generated [`loop_session_search` and `loop_session_read` schemas](../../../docs/tool-catalog.md#deepseek-aidsh-tool-loop-query). Each description opens by stating that the tool is usable only inside a current run's lineage and that every other call is refused; the rest of each description names what the tool returns and which schema fields are deliberately absent (no cursor, no page size, no model-controlled limit, and no workspace path).
 
 #### Token effect
 

@@ -2016,7 +2016,7 @@ The five read-only tools hide provider cursors and authorize every result from t
 
 ### `loop_session_read`
 
-Usable only inside an active run's lineage, every other call refused. Read one session this run may read: its current model surface, or one exact event with optional neighboring events.
+Usable only inside a current run's lineage, every other call refused. Read one session this run may read: its current model surface, or one exact event with optional neighboring events.
 
 ```json
 {
@@ -2046,7 +2046,7 @@ Source: [`packages/loop/tool-loop-query/src/index.ts`](../packages/loop/tool-loo
 
 ### `loop_session_search`
 
-Usable only inside an active run's lineage, every other call refused. Search the sessions this run may read (its frozen read scopes plus your own workspace) for literal text, and return each matching event with its session id and sequence number so loop_session_read can pull it.
+Usable only inside a current run's lineage, every other call refused. Search the sessions this run may read (its frozen read scopes plus your own workspace) for literal text, and return each matching event with its session id and sequence number so loop_session_read can pull it.
 
 ```json
 {

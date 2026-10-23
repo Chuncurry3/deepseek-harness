@@ -104,12 +104,12 @@ const TEXT_OUTPUT = {
  * alone that the call will be refused.
  */
 const SEARCH_DESCRIPTION =
-  "Usable only inside an active run's lineage, every other call refused. "
+  "Usable only inside a current run's lineage, every other call refused. "
   + 'Search the sessions this run may read (its frozen read scopes plus your own workspace) for literal text, '
   + 'and return each matching event with its session id and sequence number so loop_session_read can pull it.'
 
 const READ_DESCRIPTION =
-  "Usable only inside an active run's lineage, every other call refused. "
+  "Usable only inside a current run's lineage, every other call refused. "
   + 'Read one session this run may read: its current model surface, or one exact event with optional neighboring events.'
 
 const searchParameters = {

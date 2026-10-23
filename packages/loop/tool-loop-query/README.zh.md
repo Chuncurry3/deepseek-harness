@@ -132,7 +132,7 @@ loop 领域拥有运行及其作用域授权；subagent 运行时拥有证明谱
 
 #### 模型看到什么
 
-模型看到生成的 [`loop_session_search` 与 `loop_session_read` schema](../../../docs/tool-catalog.zh.md#deepseek-aidsh-tool-loop-query)。两段描述都以"仅在活跃运行的谱系之内可用、其他任何调用都会被拒绝"开头；描述其余部分说明工具返回什么，以及哪些 schema 字段被刻意省略（没有 cursor、没有分页大小、没有模型可控的上限、也没有 workspace 路径）。
+模型看到生成的 [`loop_session_search` 与 `loop_session_read` schema](../../../docs/tool-catalog.zh.md#deepseek-aidsh-tool-loop-query)。两段描述都以"仅在当前运行的谱系之内可用、其他任何调用都会被拒绝"开头；描述其余部分说明工具返回什么，以及哪些 schema 字段被刻意省略（没有 cursor、没有分页大小、没有模型可控的上限、也没有 workspace 路径）。
 
 #### Token 影响
 
