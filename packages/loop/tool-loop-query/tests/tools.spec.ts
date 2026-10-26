@@ -714,6 +714,33 @@ describe('loop query runs that are not current', () => {
     expect(text(await call(mounted, 'loop_session_read', { session_id: 'paused-child', seq: 1 }, child.agent)))
       .toContain('needle while paused')
   })
+
+  it('keeps serving a run its block and its completion ended', async () => {
+    const mounted = await mount()
+    await startRun(mounted)
+    const child = await sessionWith(mounted, 'ended-child', mounted.root, mounted.caller.id)
+    catalog(mounted.caller, child.session)
+    openStep(child.session, 'needle after the run ended')
+
+    const ref = mounted.ctx.sessionProjections.stateOf(mounted.caller, 'loop')?.current?.loop
+    if (ref === undefined) throw new Error('no current loop')
+    const blocked = await mounted.ctx.loops.block(mounted.callerAgent, { id: ref.id, revision: ref.revision }, {
+      code: 'node-failed',
+      message: 'the worker never settled',
+    })
+    expect(blocked.loop.phase).toBe('blocked')
+    expect(text(await call(mounted, 'loop_session_search', { query: 'needle' }, child.agent)))
+      .toContain('needle after the run ended')
+
+    // complete transitions only from active, so the blocked run resumes first;
+    // the blocked-phase serving is already pinned above.
+    const resumed = await mounted.ctx.loops.resume(mounted.callerAgent, { id: ref.id, revision: blocked.loop.revision })
+    const completed = await mounted.ctx.loops.complete(mounted.callerAgent, { id: ref.id, revision: resumed.loop.revision })
+    expect(completed.loop.phase).toBe('complete')
+    const read = await call(mounted, 'loop_session_read', { session_id: 'ended-child', seq: 1 }, child.agent)
+    expect(refusal(read).code).toBeUndefined()
+    expect(text(read)).toContain('needle after the run ended')
+  })
 })
 
 describe('loop query tool deadline', () => {

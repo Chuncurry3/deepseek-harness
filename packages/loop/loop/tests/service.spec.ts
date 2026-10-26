@@ -399,6 +399,23 @@ describe('LoopService mutations', () => {
     expect(view.loop.phase).toBe('active')
   })
 
+  it('rejects start when a chain node workspace is nested inside a write scope, since membership is exact', async () => {
+    const { ctx, agent, session } = await harness()
+    const nested = 'E:/work/alpha/sub'
+    // The nested workspace is a strict path descendant of the granted scope, so
+    // a containment check would pass it and only exact membership rejects.
+    expect(nested.startsWith('E:/work/alpha/')).toBe(true)
+    const chain = {
+      ...CHAIN,
+      nodes: [{ role: 'writer', prompt: 'Draft the report.', cwd: nested }],
+    }
+    await expect(ctx.loops.start(agent, startRequest({ chain }))).rejects.toThrow(
+      expect.objectContaining({ code: 'LOOP_SCOPE_VIOLATION' }),
+    )
+    await expect(ctx.loops.start(agent, startRequest({ chain }))).rejects.toThrow(/falls outside the run's write scopes/u)
+    expect(session.snapshotEvents()).toEqual([])
+  })
+
   it('rejects start when a declared input session lives outside the read scopes', async () => {
     const { ctx, agent, session } = await harness()
     const inside = await mkdtemp(join(tmpdir(), 'dsh-loop-input-inside-'))

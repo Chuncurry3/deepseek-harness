@@ -508,6 +508,9 @@ describe('/loop human command', () => {
     )
     // The write grant is exact-string: the node workspace must be granted,
     // not merely nested inside the controlling workspace.
+    const ungranted = await run(mounted, ' relay it ')
+    expect(ungranted.kind).toBe('error')
+    expect(ungranted.text).toContain("falls outside the run's write scopes")
     const created = await run(mounted, ` relay it --write ${JSON.stringify(nodeWorkspace)}`)
     expect(created.kind).toBe('success')
     const loop = projection(mounted).loop
