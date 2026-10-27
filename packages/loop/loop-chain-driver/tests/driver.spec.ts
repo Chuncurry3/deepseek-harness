@@ -533,6 +533,28 @@ describe('node retries and failure classification', () => {
     expect(booted.spawns).toHaveLength(0)
   })
 
+  it('retries a completed child whose structured report is not a lossless JSON value', async () => {
+    const alpha = await workspace()
+    const notJson = new Date(0)
+    const booted = await boot({ script: [
+      { structured: notJson },
+      { structured: WORKER_REPORT },
+      { structured: VERDICT_COMPLETE },
+    ] })
+    const single = { objective: 'relay', checkpoint: 'none', nodes: [{ role: 'writer', prompt: 'Draft.', cwd: alpha }] } as const
+    await booted.ctx.loops.start(booted.agent, startRequest(single, [alpha]))
+
+    await waitUntil(() => {
+      expect(loopOf(booted.ctx, booted.session)?.view.loop.phase).toBe('complete')
+    })
+    const state = loopOf(booted.ctx, booted.session)!
+    const attempts = attemptsOf(state.ledger)
+    expect(attempts).toHaveLength(1)
+    expect(attempts[0]).toMatchObject({ kind: 'attempt', attempt: 1, childSessionId: booted.spawns[0]!.sessionId, failure: { code: 'invalid-report', message: 'the structured report is not a lossless JSON value' } })
+    expect(booted.spawns[1]!.prompt).toContain('Previous attempt failed and was not accepted: invalid-report')
+    expect(booted.spawns).toHaveLength(3)
+  })
+
   it('retries a completed child whose structured report violates the handoff schema', async () => {
     const alpha = await workspace()
     const booted = await boot({ script: [

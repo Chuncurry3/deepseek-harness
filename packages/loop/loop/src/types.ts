@@ -9,6 +9,7 @@ import type { SessionId, SessionLogOffset } from '@deepseek-ai/dsh-session/types
 // Type-only: the projection map this module merges the `loop` key into.
 import type {} from '@deepseek-ai/dsh-session-projection/types'
 import type { ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 
 /** Identifies one relay loop across its durable revisions. */
 export type LoopId = Branded<'LoopId'>
@@ -97,7 +98,7 @@ export interface LoopNodeReport {
   readonly nodeIndex: number
   readonly role: string
   readonly attempt: number
-  readonly report: unknown
+  readonly report: JsonValue
 }
 
 declare module '@deepseek-ai/dsh-session-projection/types' {
@@ -140,4 +141,4 @@ export interface LoopProjectionState {
 export type LoopLedgerEntry =
   | { readonly kind: 'node-started'; readonly round: number; readonly nodeIndex: number; readonly role: string; readonly attempt: number; readonly childSessionId: SessionId; readonly cwd: string; readonly atRevision: number }
   | { readonly kind: 'attempt'; readonly round: number; readonly nodeIndex: number; readonly attempt: number; readonly childSessionId: SessionId; readonly failure: { readonly code: string; readonly message: string }; readonly atRevision: number }
-  | { readonly kind: 'settlement'; readonly round: number; readonly nodeIndex: number; readonly role: string; readonly attempt: number; readonly childSessionId: SessionId; readonly cwd: string; readonly report: unknown; readonly atRevision: number }
+  | { readonly kind: 'settlement'; readonly round: number; readonly nodeIndex: number; readonly role: string; readonly attempt: number; readonly childSessionId: SessionId; readonly cwd: string; readonly report: JsonValue; readonly atRevision: number }

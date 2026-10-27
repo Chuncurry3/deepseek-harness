@@ -491,6 +491,7 @@ describe('loop ledger decoder', () => {
   it('validates settlement payloads', () => {
     const { report: _report, ...withoutReport } = settlement
     expect(() => decodeLoopLedger('loop/node', withoutReport)).toThrow('must carry field report')
+    expect(() => decodeLoopLedger('loop/node', { ...settlement, report: () => 'not json' })).toThrow('loop/node report must be a lossless JSON value')
     expect(decodeLoopLedger('loop/node', settlement)).toMatchObject({ kind: 'settlement', report: { summary: 'ok' } })
     expect(decodeLoopLedger('loop/node-started', started)).toMatchObject({ kind: 'node-started', loopId: 'L1', childSessionId: 's1' })
     expect(decodeLoopLedger('loop/attempt', attemptFailure)).toMatchObject({ kind: 'attempt', childSessionId: 's1', failure: { code: 'node-failed' } })

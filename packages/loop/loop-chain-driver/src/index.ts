@@ -30,6 +30,7 @@ import { finalAssistantOutput } from '@deepseek-ai/dsh-subagent'
 import type { SubagentResult, SubagentRun } from '@deepseek-ai/dsh-subagent'
 import { UserQuestionError } from '@deepseek-ai/dsh-user-questions'
 import type { AskUserQuestionAnswer } from '@deepseek-ai/dsh-user-questions'
+import { isJsonValue, type JsonValue } from '@deepseek-ai/dsh-util-values'
 import {
   assembleNodePrompt,
   evaluatorInputBudget,
@@ -58,6 +59,11 @@ export const Config: z<Config> = z.object({ provider: z.string() })
 
 /** One spawned node-attempt record of the folded ledger. */
 type NodeStarted = Extract<LoopLedgerEntry, { kind: 'node-started' }>
+
+/** Whether a child's structured report survives a lossless JSON round trip. */
+function isLosslessReport(value: unknown): value is JsonValue {
+  return isJsonValue(value)
+}
 
 /** Terminal outcome of driving one node for one round. */
 type NodeOutcome = 'settled' | 'retry' | 'stop'
@@ -576,6 +582,21 @@ export function apply(ctx: Context, config: Config): void {
       }, view.loop.revision)
       return 'retry'
     }
+    if (!isLosslessReport(result.structured)) {
+      await ctx.loops.appendAttempt(agent, {
+        kind: 'attempt',
+        loopId: loop.id,
+        round,
+        nodeIndex,
+        attempt,
+        childSessionId: run.id,
+        failure: {
+          code: 'invalid-report',
+          message: 'the structured report is not a lossless JSON value',
+        },
+      }, view.loop.revision)
+      return 'retry'
+    }
     const violations = validateReport(node, result.structured, maxHandoffChars)
     if (violations.length > 0) {
       await ctx.loops.appendAttempt(agent, {
@@ -816,7 +837,7 @@ export function apply(ctx: Context, config: Config): void {
         }
       }
     }
-    if (recovered !== undefined) {
+    if (recovered !== undefined && isLosslessReport(recovered)) {
       const violations = reportViolations(node, recovered)
       if (violations.length === 0) {
         await ctx.loops.appendSettlement(agent, {

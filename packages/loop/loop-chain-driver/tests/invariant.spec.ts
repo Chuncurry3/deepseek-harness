@@ -7,6 +7,7 @@ import SessionStore, { SessionId, SessionLogOffset } from '@deepseek-ai/dsh-sess
 import { LoopId } from '@deepseek-ai/dsh-loop'
 import * as DriverInvariant from '@deepseek-ai/dsh-loop-chain-driver/invariant'
 import type { LoopNodeSettledMeta, LoopSnapshotChangeMeta } from '@deepseek-ai/dsh-loop'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 
 const LOOP_ID = LoopId('driver-invariant')
 
@@ -46,7 +47,7 @@ const advanced: LoopSnapshotChangeMeta = {
   loop: { ...change.loop, revision: 2, roundsStarted: 1 },
 }
 
-function settlement(nodeIndex: number, role: string, report: unknown): LoopNodeSettledMeta {
+function settlement(nodeIndex: number, role: string, report: JsonValue): LoopNodeSettledMeta {
   return {
     kind: 'settlement',
     version: 1,

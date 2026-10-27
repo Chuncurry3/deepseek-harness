@@ -10,6 +10,7 @@
 
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import type { LoopId, LoopRef, LoopSnapshot } from './types.ts'
 
 /** Loop state-changing verbs recorded in the durable source change. */
@@ -87,7 +88,7 @@ export interface LoopNodeSettledMeta {
   readonly attempt: number
   readonly childSessionId: SessionId
   readonly cwd: string
-  readonly report: unknown
+  readonly report: JsonValue
   readonly atRevision: number
 }
 

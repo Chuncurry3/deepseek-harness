@@ -54,6 +54,7 @@
     }
   },
   "dependencies": {
+    "@deepseek-ai/dsh-util-values": "workspace:*",
     "@deepseek-ai/schemastery": "workspace:~",
     "yaml": "^2.8.1",
     "zod": "^4.4.3"

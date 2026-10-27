@@ -382,7 +382,7 @@ describe('assembleNodePrompt', () => {
     expect(() => assembleNodePrompt(viewMidRound, 2.5, 0)).toThrow(/round/)
   })
 
-  it('a settlement whose report is not a lossless JSON value fails the carry validation', () => {
+  it('a settlement whose report is not a lossless JSON value fails the durable decode before the carry validation', () => {
     const events: readonly SessionEvent[] = [
       event(1, 'loop/change', {
         kind: 'loop/change',
@@ -406,7 +406,7 @@ describe('assembleNodePrompt', () => {
       started(2, 1, 0, 'a', 1, 'bad-a', 1, 'loop-bad'),
       settled(3, 1, 0, 'a', 1, 'bad-a', () => 'not json', 1, 'loop-bad'),
     ]
-    expect(() => assembleNodePrompt(handoffView(events), 1, 1)).toThrow(/reports\.0\.report/)
+    expect(() => assembleNodePrompt(handoffView(events), 1, 1)).toThrow(/loop\/node report must be a lossless JSON value/)
   })
 })
 

@@ -8,6 +8,7 @@
 import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { SessionId } from '@deepseek-ai/dsh-session/types'
 import { assertObjectJsonSchema, type ObjectJsonSchema } from '@deepseek-ai/dsh-tools'
+import { isJsonValue, type JsonValue } from '@deepseek-ai/dsh-util-values'
 import { LOOP_CHANGE_VERSION, LOOP_LEDGER_VERSION, LoopId } from './runtime.ts'
 import type {
   LoopAttemptMeta,
@@ -126,6 +127,17 @@ function trimmedString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0 || value !== value.trim()) {
     throw new Error(`${field} must be non-empty and normalized`)
   }
+  return value
+}
+
+/** Whether a value survives a lossless JSON round trip. */
+function isLosslessJson(value: unknown): value is JsonValue {
+  return isJsonValue(value)
+}
+
+/** Require one lossless-JSON report value for the durable ledger. */
+function jsonValue(value: unknown, field: string): JsonValue {
+  if (!isLosslessJson(value)) throw new Error(`${field} must be a lossless JSON value`)
   return value
 }
 
@@ -390,7 +402,7 @@ export function decodeLoopLedger(key: LoopLedgerEventKey, value: unknown): LoopL
         attempt: positiveInteger(value['attempt'], 'loop/node attempt'),
         childSessionId: SessionId(nonEmptyString(value['childSessionId'], 'loop/node childSessionId')),
         cwd: nonEmptyString(value['cwd'], 'loop/node cwd'),
-        report: value['report'],
+        report: jsonValue(value['report'], 'loop/node report'),
         atRevision: positiveInteger(value['atRevision'], 'loop/node atRevision'),
       } satisfies LoopNodeSettledMeta
     }
