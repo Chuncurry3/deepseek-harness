@@ -177,12 +177,12 @@ interface LoopNodeSettledMeta {
   readonly attempt: number
   readonly childSessionId: SessionId
   readonly cwd: string
-  readonly report: unknown
+  readonly report: JsonValue
   readonly atRevision: number
 }
 ```
 
-结算后的报告在台账中保持 `unknown`：严格折叠只检查信封，不检查载荷 schema。评估器节点以固定 schema 的裁决结算，该裁决指名下一轮的流转。
+结算后的报告在台账中保持无损 JSON 值：严格折叠验证信封并拒绝任何非无损 JSON 的报告载荷。评估器节点以固定 schema 的裁决结算，该裁决指名下一轮的流转。
 
 ```ts type-equiv
 /** One evaluator verdict, fixed schema, settled through `loop/node`. */

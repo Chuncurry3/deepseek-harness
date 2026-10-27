@@ -9,7 +9,7 @@ kind: persistence-change
 
 ## 概述
 
-新增四个持久 loop 事件——`loop/change`、`loop/node-started`、`loop/attempt` 与 `loop/node`——存储单个中继 loop 的快照变更与只追加节点台账。
+新增四个持久 loop 事件——loop/change、loop/node-started、loop/attempt 与 loop/node——保存单个中继 loop 的快照变更与只增节点台账，结算报告约束为无损 JSON 值。
 
 ## 目录
 
@@ -36,7 +36,7 @@ changes:
     decision: same-version
   - root: "event:loop/node"
     previous: null
-    after: "6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047"
+    after: "983b6ca452ef9a45444ca7f34a5143636906feb053bcaf02219a315cc53882b8"
     decision: same-version
   - root: "event:loop/node-started"
     previous: null
@@ -47,12 +47,12 @@ changes:
 <a id="compatibility"></a>
 ## 兼容性
 
-同一 Session 格式版本内的新增根。既有日志不含这些事件并保持有效；早于它们的读取方会拒绝携带此类事件的日志，这与所有默认 required-on-read 事件一致。每个载荷都携带 `version: 1`，后续结构变更将在这些根内递增载荷版本。
+同一 Session 格式版本内的新根。既有日志不含这些事件，仍然有效；早于它们的读取方拒绝携带此类事件的日志，这是每个 required-on-read 事件的默认行为。每个载荷携带 version: 1，后续结构性变更在这些根内递增载荷版本。结算报告为无损 JSON 值；持久解码拒绝任何非无损 JSON 的报告。
 
 <a id="verification"></a>
 ## 验证
 
-pnpm vitest run packages/loop：256 个测试通过。严格折叠、投影与不变式配套模块从会话日志回放这些新事件；`loop/attempt` 记录携带失败尝试的 `childSessionId`，使驱动器的未入账子会话枚举保持精确；gen-persistence-catalog 重新生成了 schema、known-event-types 与持久化目录，四个根在此确认。
+pnpm exec vitest run packages/loop：261 个测试通过。严格折叠、投影与不变量伴生从会话日志回放新事件；loop/attempt 记录携带失败尝试的 childSessionId，折叠在持久解码处将结算报告钉为无损 JSON 值。gen-persistence-catalog 以此处确认的四个根再生成 schema、known-event-types 与持久化目录。
 
 <a id="dev-note"></a>
 ## 开发备注

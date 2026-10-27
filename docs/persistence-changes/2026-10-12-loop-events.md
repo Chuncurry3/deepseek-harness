@@ -9,7 +9,7 @@ English | [中文](2026-10-12-loop-events.zh.md)
 
 ## Summary
 
-Adds the four durable loop events — `loop/change`, `loop/node-started`, `loop/attempt`, and `loop/node` — that store one relay loop's snapshot mutations and append-only node ledger.
+Adds the four durable loop events — loop/change, loop/node-started, loop/attempt, and loop/node — that store one relay loop's snapshot mutations and append-only node ledger, with the settlement report constrained to a lossless JSON value.
 
 ## Table of Contents
 
@@ -36,7 +36,7 @@ changes:
     decision: same-version
   - root: "event:loop/node"
     previous: null
-    after: "6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047"
+    after: "983b6ca452ef9a45444ca7f34a5143636906feb053bcaf02219a315cc53882b8"
     decision: same-version
   - root: "event:loop/node-started"
     previous: null
@@ -47,12 +47,12 @@ changes:
 <a id="compatibility"></a>
 ## Compatibility
 
-New roots in the same Session format version. Existing logs contain no such events and stay valid; readers that predate them refuse a log carrying one, as every required-on-read event does by default. Each payload carries `version: 1`, so a later structural change bumps the payload version inside these roots.
+New roots in the same Session format version. Existing logs contain no such events and stay valid; readers that predate them refuse a log carrying one, as every required-on-read event does by default. Each payload carries version: 1, so a later structural change bumps the payload version inside these roots. The settlement report is a lossless JSON value; the durable decode rejects any report that is not one.
 
 <a id="verification"></a>
 ## Verification
 
-pnpm vitest run packages/loop: 256 tests passed. The strict fold, projection, and invariant companions replay the new events from the session log; the `loop/attempt` record carries the failed attempt's `childSessionId`, keeping the driver's unledgered-child enumeration exact; gen-persistence-catalog regenerated the schema, known-event-types, and persistence catalog with the four roots acknowledged here.
+pnpm exec vitest run packages/loop: 261 tests passed. The strict fold, projection, and invariant companions replay the new events from the session log; the loop/attempt record carries the failed attempt's childSessionId, and the fold pins the settlement report to a lossless JSON value at the durable decode. gen-persistence-catalog regenerated the schema, known-event-types, and persistence catalog with the four roots acknowledged here.
 
 <a id="dev-note"></a>
 ## Dev Note

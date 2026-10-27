@@ -177,7 +177,7 @@ interface LoopNodeSettledMeta {
   readonly attempt: number
   readonly childSessionId: SessionId
   readonly cwd: string
-  readonly report: unknown
+  readonly report: JsonValue
   readonly atRevision: number
 }
 ```

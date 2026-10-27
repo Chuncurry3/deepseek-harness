@@ -1996,7 +1996,7 @@ export interface Config {
 ## `@deepseek-ai/dsh-loop-chain-driver`
 
 - `inject`: `loops` · `subagents` · `sessionProjections` · `agents` · `sessions`
-- `source`: [`packages/loop/loop-chain-driver/src/index.ts:51`](../packages/loop/loop-chain-driver/src/index.ts)
+- `source`: [`packages/loop/loop-chain-driver/src/index.ts:52`](../packages/loop/loop-chain-driver/src/index.ts)
 
 ```ts config-catalog
 /**

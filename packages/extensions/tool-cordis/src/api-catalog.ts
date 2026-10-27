@@ -5788,7 +5788,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LoopNodeSettledMeta',
-    declaration: 'export interface LoopNodeSettledMeta {\n    readonly kind: \'settlement\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly role: string;\n    readonly attempt: number;\n    readonly childSessionId: SessionId;\n    readonly cwd: string;\n    readonly report: unknown;\n    readonly atRevision: number;\n}',
+    declaration: 'export interface LoopNodeSettledMeta {\n    readonly kind: \'settlement\';\n    readonly version: 1;\n    readonly loopId: LoopId;\n    readonly round: number;\n    readonly nodeIndex: number;\n    readonly role: string;\n    readonly attempt: number;\n    readonly childSessionId: SessionId;\n    readonly cwd: string;\n    readonly report: JsonValue;\n    readonly atRevision: number;\n}',
   },
   {
     name: 'LoopNodeStartedMeta',

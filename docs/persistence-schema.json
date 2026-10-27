@@ -11423,7 +11423,7 @@
       "kind": "event",
       "event": "loop/node",
       "surface": false,
-      "digest": "6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047",
+      "digest": "983b6ca452ef9a45444ca7f34a5143636906feb053bcaf02219a315cc53882b8",
       "schema": {
         "root": 0,
         "nodes": [
@@ -11437,7 +11437,7 @@
               },
               {
                 "name": "ignorable",
-                "type": 7,
+                "type": 11,
                 "optional": true
               },
               {
@@ -11452,7 +11452,7 @@
               },
               {
                 "name": "type",
-                "type": 8,
+                "type": 12,
                 "optional": false
               }
             ],
@@ -11513,7 +11513,7 @@
               },
               {
                 "name": "version",
-                "type": 6,
+                "type": 10,
                 "optional": false
               }
             ],
@@ -11532,8 +11532,37 @@
             "value": "settlement"
           },
           {
-            "kind": "opaque",
-            "reason": "unknown"
+            "kind": "union",
+            "types": [
+              2,
+              3,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "kind": "array",
+            "element": 5
+          },
+          {
+            "kind": "object",
+            "properties": [],
+            "indices": [
+              {
+                "key": 3,
+                "value": 5
+              }
+            ]
+          },
+          {
+            "kind": "primitive",
+            "type": "boolean"
+          },
+          {
+            "kind": "primitive",
+            "type": "null"
           },
           {
             "kind": "literal",
@@ -22871,6 +22900,15 @@
       "sources": []
     },
     {
+      "digest": "0125acddcb2759c207597462cf7b4a869aa7e43000e8a1e41a77fe4467a00528",
+      "names": [
+        "packages/loop/loop/src/domain.ts#LoopNodeSettledMeta"
+      ],
+      "sources": [
+        "packages/loop/loop/src/domain.ts:80"
+      ]
+    },
+    {
       "digest": "0203243b72fc867afc81aff5f4cf2167e564ed342534eb612fc92f295cf07789",
       "names": [],
       "sources": []
@@ -22996,7 +23034,7 @@
       ],
       "sources": [
         "packages/goal/goal/src/types.ts:20",
-        "packages/loop/loop/src/types.ts:17"
+        "packages/loop/loop/src/types.ts:18"
       ]
     },
     {
@@ -23694,7 +23732,7 @@
         "packages/loop/loop/src/types.ts#LoopBlockReason"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:27"
+        "packages/loop/loop/src/types.ts:28"
       ]
     },
     {
@@ -23924,7 +23962,7 @@
         "packages/loop/loop/src/types.ts#LoopInputRef"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:33"
+        "packages/loop/loop/src/types.ts:34"
       ]
     },
     {
@@ -24061,7 +24099,7 @@
         "packages/loop/loop/src/domain.ts#LoopAttemptMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:65"
+        "packages/loop/loop/src/domain.ts:66"
       ]
     },
     {
@@ -24109,7 +24147,7 @@
         "packages/llm/llm/src/brand.ts:31",
         "packages/llm/llm/src/brand.ts:43",
         "packages/llm/llm/src/brand.ts:67",
-        "packages/loop/loop/src/types.ts:14",
+        "packages/loop/loop/src/types.ts:15",
         "packages/schedule/schedule/src/types.ts:14",
         "packages/session/session-title/src/index.ts:42",
         "packages/session/session-title/src/types.ts:17",
@@ -24573,11 +24611,6 @@
       "sources": []
     },
     {
-      "digest": "6a2990f833cdeb559346de4f71627f6aec9a096b0b4ef9f4d89f7eda41585047",
-      "names": [],
-      "sources": []
-    },
-    {
       "digest": "6a4f72e2e179e17b922f2a9392c0e1c8f8c707f32494372454850a3eb184a6e7",
       "names": [],
       "sources": [
@@ -24645,7 +24678,7 @@
         "packages/loop/loop/src/types.ts#LoopChainDef"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:50"
+        "packages/loop/loop/src/types.ts:51"
       ]
     },
     {
@@ -24773,15 +24806,6 @@
       "digest": "78a9be340090b735a39980e7222ce730c972fbcf1de7c9e0aef2125884b7caee",
       "names": [],
       "sources": []
-    },
-    {
-      "digest": "7919ec7c1669b1fa6cafa03344f5c51c2ce0339d258780f8d4a08f2351101634",
-      "names": [
-        "packages/loop/loop/src/domain.ts#LoopNodeSettledMeta"
-      ],
-      "sources": [
-        "packages/loop/loop/src/domain.ts:79"
-      ]
     },
     {
       "digest": "79650cfa10aa3c52440328d85e8a25f0ffadc8d7efd784e3c0819d8bb74a1985",
@@ -24962,7 +24986,7 @@
         "packages/loop/loop/src/types.ts#LoopPhase"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:24"
+        "packages/loop/loop/src/types.ts:25"
       ]
     },
     {
@@ -25009,7 +25033,7 @@
       ],
       "sources": [
         "packages/goal/goal/src/types.ts:52",
-        "packages/loop/loop/src/domain.ts:74"
+        "packages/loop/loop/src/domain.ts:75"
       ]
     },
     {
@@ -25079,7 +25103,7 @@
         "packages/loop/loop/src/domain.ts#LoopSnapshotChangeMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:28"
+        "packages/loop/loop/src/domain.ts:29"
       ]
     },
     {
@@ -25273,6 +25297,11 @@
       "sources": [
         "packages/core/agent/src/types.ts:39"
       ]
+    },
+    {
+      "digest": "983b6ca452ef9a45444ca7f34a5143636906feb053bcaf02219a315cc53882b8",
+      "names": [],
+      "sources": []
     },
     {
       "digest": "9890113e97dd3541787bfe6704f2b223d3a890b5325ca0acae2b0398909b413e",
@@ -25869,7 +25898,7 @@
         "packages/loop/loop/src/domain.ts#LoopClearChangeMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:38"
+        "packages/loop/loop/src/domain.ts:39"
       ]
     },
     {
@@ -26249,7 +26278,7 @@
         "packages/loop/loop/src/types.ts#LoopSnapshot"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:59"
+        "packages/loop/loop/src/types.ts:60"
       ]
     },
     {
@@ -26349,7 +26378,7 @@
         "packages/loop/loop/src/types.ts#LoopChainNodeDef"
       ],
       "sources": [
-        "packages/loop/loop/src/types.ts:36"
+        "packages/loop/loop/src/types.ts:37"
       ]
     },
     {
@@ -26485,7 +26514,7 @@
         "packages/loop/loop/src/domain.ts#LoopNodeStartedMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:50"
+        "packages/loop/loop/src/domain.ts:51"
       ]
     },
     {
@@ -26583,7 +26612,7 @@
         "packages/loop/loop/src/domain.ts#LoopChangeMeta"
       ],
       "sources": [
-        "packages/loop/loop/src/domain.ts:47"
+        "packages/loop/loop/src/domain.ts:48"
       ]
     },
     {

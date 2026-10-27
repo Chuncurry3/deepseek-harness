@@ -55,7 +55,7 @@ loop 旋钮（`defaultMaxRounds`、`maxNodeRetries`、`maxHandoffChars`、`maxEv
 ```ts
 import { parseChainDocument, defaultChain } from '@deepseek-ai/dsh-loop-chain-driver/chain'
 
-const chain = parseChainDocument(documentText)   // one aggregate Error on any invalid document
+const chain = parseChainDocument('objective: Ship the migration')   // one aggregate Error on any invalid document
 const fallback = defaultChain('Ship the migration')
 ```
 
