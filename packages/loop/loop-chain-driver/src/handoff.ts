@@ -20,8 +20,8 @@ type Settlement = Extract<LoopLedgerEntry, { kind: 'settlement' }>
  * `evaluatorPrompt`. A document's `evaluator.prompt` override replaces it.
  */
 export const DEFAULT_EVALUATOR_INSTRUCTION
-  = 'Judge whether this round\'s carried reports meet the exit criteria 鈥?or the objective when no '
-    + 'exit criteria are declared 鈥?and return a verdict: decision "continue" when another round is '
+  = 'Judge whether this round\'s carried reports meet the exit criteria — or the objective when no '
+    + 'exit criteria are declared — and return a verdict: decision "continue" when another round is '
     + 'needed, "complete" when the objective is met, or "blocked" when the run cannot proceed. '
     + 'Include feedback for the next round when you continue, and a reason when you block.'
 
@@ -103,8 +103,8 @@ export interface CarriedReport {
 
 /**
  * The typed carry contract: exactly the content one node prompt renders. The
- * reports are the settlements the chain's visibility rule names 鈥?same-round
- * predecessors plus `carryOver` prior-round reports 鈥?and the feedback is
+ * reports are the settlements the chain's visibility rule names — same-round
+ * predecessors plus `carryOver` prior-round reports — and the feedback is
  * the prior round's `continue` verdict feedback. Raw transcripts never
  * enter: the receiving node pulls input and prior child sessions on demand
  * through the read scopes.
@@ -304,7 +304,7 @@ function renderNodePrompt(carry: NodeHandoffCarry): string {
   if (carry.reports.length === 0) {
     sections.push('Carried reports: none.')
   } else {
-    const lines = ['Carried reports (validated settlements only; raw transcripts are never pushed 鈥?recover detail on demand through loop_session_search / loop_session_read):']
+    const lines = ['Carried reports (validated settlements only; raw transcripts are never pushed — recover detail on demand through loop_session_search / loop_session_read):']
     for (const entry of carry.reports) {
       lines.push(`- round ${entry.round}, node ${entry.nodeIndex + 1} of ${carry.nodeCount} "${entry.role}" (child session ${entry.childSessionId}): ${JSON.stringify(entry.report)}`)
     }
@@ -333,7 +333,7 @@ function renderNodePrompt(carry: NodeHandoffCarry): string {
 /**
  * The schema one node's reports settle against: the node's `output`
  * override or the default handoff schema, with the driver-owned `inherited`
- * property injected 鈥?required, one string entry per declared input 鈥?when
+ * property injected — required, one string entry per declared input — when
  * the node declares `inputs`. The injected property replaces any
  * author-declared `inherited` declaration.
  * @param node - the frozen chain node.
@@ -380,7 +380,7 @@ export function reportSchemaViolations(node: LoopChainNodeDef, report: unknown):
  * @param node - the frozen chain node whose report is settling.
  * @param report - the candidate structured report value.
  * @param maxHandoffChars - resolved per-character handoff cap, in UTF-16 code units on the serialized report.
- * @returns Violations 鈥?schema conformance, the `inherited` entry count, the serialized budget; empty means the report may settle.
+ * @returns Violations — schema conformance, the `inherited` entry count, the serialized budget; empty means the report may settle.
  * @throws When the effective schema falls outside `assertObjectJsonSchema`'s enforced subset.
  */
 export function validateReport(node: LoopChainNodeDef, report: unknown, maxHandoffChars: number): readonly string[] {
