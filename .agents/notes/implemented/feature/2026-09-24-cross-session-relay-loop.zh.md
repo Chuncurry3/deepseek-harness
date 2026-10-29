@@ -1,6 +1,6 @@
 # Agent Note: 跨会话接力循环
 
-Status: proposed
+Status: implemented
 
 [English](2026-09-24-cross-session-relay-loop.md) | 中文
 
@@ -16,11 +16,11 @@ Status: proposed
 
 不间断执行需要显式分层：宿主进程存活时自动推进、进程死亡后以持久状态存续、且没有显式人类授权绝不重启。
 
-## 提案
+## 决策
 
-以插件族 `packages/loop/` 新增第三种执行策略，由人类 `/loop` 命令启动，全部由既有缝组装。词汇表扩展[Harness 级执行层级](../../implemented/feature/2026-07-16-harness-level-loop.zh.md)：Loop Run → Round → Node → Turn → Step。一轮是对冻结角色节点链的一次完整遍历；一个节点是一次全新的子对话。
+`packages/loop/` 插件族是第三种执行策略，由人类 `/loop` 命令启动，全部由既有缝组装。词汇表扩展[Harness 级执行层级](../../implemented/feature/2026-07-16-harness-level-loop.zh.md)：Loop Run → Round → Node → Turn → Step。一轮是对冻结角色节点链的一次完整遍历；一个节点是一次全新的子对话。
 
-本提案部分取代该 note 中「不存在 `packages/loop/` 族、`LoopDriver`、`LoopId`」的条款——那一条否决的是没有具体消费方的投机式通用 loop 服务。如今消费方是具体的：人类命令发起的接力链，其各轮通过校验过的结构化交接把全新对话连接起来，并在显式授予的项目工作区上执行与读取。被否决的抽象保持否决——没有模型侧的 loop 创建工具、没有通用 `StopCondition`、没有时间驱动触发（[schedule 族](../../../../packages/schedule/schedule/README.zh.md)拥有会话内提醒）——同会话 goal 与 Ralph 两个策略不变。
+本 note 取代该 note 中「不存在 `packages/loop/` 族、`LoopDriver`、`LoopId`」的条款——那一条否决的是没有具体消费方的投机式通用 loop 服务。如今消费方是具体的：人类命令发起的接力链，其各轮通过校验过的结构化交接把全新对话连接起来，并在显式授予的项目工作区上执行与读取。被否决的抽象保持否决——没有模型侧的 loop 创建工具、没有通用 `StopCondition`、没有时间驱动触发（[schedule 族](../../../../packages/schedule/schedule/README.zh.md)拥有会话内提醒）——同会话 goal 与 Ralph 两个策略不变。
 
 | 包 | 角色 |
 |---|---|
@@ -31,7 +31,7 @@ Status: proposed
 
 四个包全部挂入随产品发布的 `dsh` base 组合。命令文法沿用 [`command-goal`](../../../../packages/goal/command-goal/README.zh.md)：裸 `/loop` 或整输入的 `status` 别名渲染状态；`/loop start <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` 创建并 arm 一个运行，`start` 是可选前缀——其余任何非空输入本身就是 objective；`/loop pause`、`/loop resume [--from <node|role>]`、`/loop clear` 拥有生命周期。控制词按大小写不敏感识别，且只在恰好构成完整输入时被识别——`resume` 还允许携带单个 `--from` flag——因此 `/loop pause now` 以该字面文本作为 objective 启动；引号在匹配前剥除为内容，因此加引号的控制词仍是动词。无法解析出 objective 的 start 是解析期拒绝（文法的 invalid-start 成员）。`--read` 与 `--write` 是可重复的单路径 flag，值可加双引号以携带空格、分号或前导 `--`；引号只在 token 起始处开启引用段，内容原样保留且零转义，加引号的 token 绝不成为 flag；不设列表分隔符，因此不存在会写错的转义规则。每个授予路径在启动时经 `realpath` 规范化，必须存在且可进入；否则命令直接报错。`readScopes` = 控制会话自身工作区 ∪ 全部链节点工作区 ∪ `--read` 授予；`writeScopes` = 控制会话自身工作区 + `--write` 授予——隐式授予仅覆盖这一个工作区，任何跨项目写入都必须显式 `--write`。链项的 `cwd` 不是 `writeScopes` 的成员则启动失败（精确成员资格，而非子树包含），驱动器在派生时再次断言。
 
-每节点工作区需要一处 subagent 缝扩展：`SubagentStartRequest` 增加可选 `cwd`（绝对路径，沿用现有 `assertUsableCwd` 校验纪律），以 provider 能力形式声明。in-process provider 用它设置子会话头的 cwd；不带该能力的 provider 对设置了它的请求直接拒绝，行为绝不静默退回父工作区。该扩展在实现时以独立的 subagent 族 note 落地，且顺序固定：缝 note 先行（含能力校验与 in-process provider 支持），loop 四包在其之上构建——没有它无法启动。
+每节点工作区搭载一处 subagent 缝扩展：`SubagentStartRequest` 携带可选 `cwd`（绝对路径，沿用现有 `assertUsableCwd` 校验纪律），以 provider 能力形式声明。in-process provider 用它设置子会话头的 cwd；不带该能力的 provider 对设置了它的请求直接拒绝，行为绝不静默退回父工作区。该扩展有自己的 subagent 族 note（[2026-09-29-subagent-per-start-cwd](2026-09-29-subagent-per-start-cwd.zh.md)），先行落地（含能力校验与 in-process provider 支持），loop 四包在其之上构建——没有它无法启动。
 
 链来自工作区 `loop.yaml`，启动时严格校验；文件缺失时使用[链定义](#chain-definition)中的默认链。轮次随节点结算推进而非时钟。中断层级固定于[恢复](#recovery)：L1 进程内自动推进、L2 跨进程手动 `/loop resume`、不做 L3 跨进程自动恢复。
 
@@ -155,22 +155,23 @@ provider 在生成侧强制角色的输出 schema；驱动器在结算前二次�
 
 ## 范围边界
 
-节点在 `writeScopes` 内的各节点工作区执行；跨项目参与既是读取（`readScopes`）也是执行/写入（`writeScopes`）。本提案不向已有会话注入消息：接续原会话内容发生在读取它并报告继承了什么的新子会话里；要「回到原对话」需要单独的会话恢复/注入缝提案。L3 自动恢复被排除（见[恢复](#recovery)）。并行 loop、DAG 节点形态、token 与费用预算、模型侧 loop 创建工具都不在本提案内。
+节点在 `writeScopes` 内的各节点工作区执行；跨项目参与既是读取（`readScopes`）也是执行/写入（`writeScopes`）。本 note 不向已有会话注入消息：接续原会话内容发生在读取它并报告继承了什么的新子会话里；要「回到原对话」需要单独的会话恢复/注入缝提案。L3 自动恢复被排除（见[恢复](#recovery)）。并行 loop、DAG 节点形态、token 与费用预算、模型侧 loop 创建工具都不在本提案内。
 
 ## 备选方案
 
 - **workflow 引擎上的固定链脚本**（推广 [`tool-ralph`](../../../../packages/workflow/tool-ralph/README.zh.md)）——落选：引擎运行是进程局部的、没有持久恢复；loop 状态放工作区文件会绕开会话日志这一持久权威；暂停、恢复、节点检查点要在 jobs 上重新实现。
 - **goal 域之上的提示词层链式编排**（`LOOP.md` 加每轮模型自行委派）——落选：结构只存在于提示词中，schema 缺失不是强制；同会话上下文照旧腐化；没有执行器级校验，「精益无损」不可验证。
-- **维持 2026-07-16 的否定决策不变**——该 note 否决的是投机的通用 loop 服务；本提案给出具体消费方并收窄范围，因此否定条款被取代而 goal 与 Ralph 策略保持不变。
+- **维持 2026-07-16 的否定决策不变**——该 note 否决的是投机的通用 loop 服务；本 note 给出具体消费方并收窄范围，因此否定条款被取代而 goal 与 Ralph 策略保持不变。
 - **持久化 activation、进程退出后在宿主内自动重启（L3）**——落选：打开会话记录的是状态，不是花费资源的新授权；显式人类 resume 才 arm 续跑，需要自动重启的 daemon 调用 resume 入口、授权在配置 daemon 时给出。
 - **时间驱动重复**（Claude Code `/loop 5m` 的等价物）——按决策排除在范围外；会话内提醒归 schedule 族，本运行的轮次随结算推进而非时钟。
 - **把 per-node cwd 推迟到第二个消费方**——被需求否决：跨项目接力就是消费方，因此缝获得能力校验的 per-start `cwd`，不再等待。
-- **回到原对话（会话注入/恢复缝）**——落选：向存活会话注入与所有权和 activation 冲突；接续发生在读取原会话的全新子会话里，未来的注入缝是独立提案。
+- **回到原对话（会话注入/恢复缝）**——落选：向存活会话注入与所有权和 activation 冲突；接续发生在读取原会话的全新子会话里，未来的注入缝是独立 note。
 - **按运行动态注册查询工具**——落选：按运行变更模型可见工具集会扰动请求前缀与注册处置；静态全局注册加执行器强制的代价是无关会话多两个 schema。
 - **长寿命 continuable 子代理之间传递持久消息**——一次性全新子会话加结构化输出以更少的常驻状态承载接力；[continuable 子代理](../../archived/feature/2026-07-21-continuable-background-subagents.md) 保留给后续节点形态。
 
-## 验收标准
+## 测试
 
+随产品交付的测试证明以下行为：
 - 以 Loader 启动包含四个包的组合，命令发现暴露 `/loop`，并能从校验过的两节点 `loop.yaml`（含评估器覆盖）启动运行。
 - 一轮为每个节点结算一条含已校验报告的 `loop/node` 事件，经配置的 provider 以冻结角色 prompt、每节点 cwd、点名报告派生每个子代理，把评估器结算为最后一个节点索引，并以评估器裁决收尾；`/loop` 渲染相位、轮次、节点进度、activation 与最新报告摘要。
 - 四类事件的重放严格：损坏记录使 loop 访问停在首个坏事件处，而会话与其他投影正常加载；重复账本键、无对应 `node-started` 的 attempt 与结算被拒绝。
@@ -182,9 +183,9 @@ provider 在生成侧强制角色的输出 schema；驱动器在结算前二次�
 - 控制会话的分叉不驱动任何运行。
 - 聚合轮报告超限以 `report-budget` 阻塞并点名轮次、节点、肇事报告与超出字符数；单份超限报告按校验失败走重试路径。
 - 一份 keyless snapshot 通过真实可运行示例记录 `/loop start`、节点接力、交接、评估器完成的组装级 transcript。
-- 四个包保持逐文件覆盖率、在存在可信自有关系处注册 `./invariant` 伴随包（两个拥有状态的包），否则携带受 gate 认可的书面省略说明（两个适配器），在 HMR 下证明注册处置，并在同一变更中改写 [Harness 级执行 note](../../implemented/feature/2026-07-16-harness-level-loop.zh.md) 中已过时的「不存在 `packages/loop/` 族」事实。
+- 四个包保持逐文件覆盖率、在存在可信自有关系处注册 `./invariant` 伴随包（两个拥有状态的包），否则携带受 gate 认可的书面省略说明（两个适配器），在 HMR 下证明注册处置；[Harness 级执行 note](../../implemented/feature/2026-07-16-harness-level-loop.zh.md) 中的部分取代已就位。
 
-## 风险
+## 后果
 
 - 跨崩溃的节点执行是 at-least-once：子代理完成与结算之间保留重复窗口，与 schedule 族如实记录自身窗口的方式一致。
 - 评估器仍是带证据引用的模型裁决而非机械认证；`complete` 的含义是裁判子代理报告完成。

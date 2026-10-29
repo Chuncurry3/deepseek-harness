@@ -1,6 +1,6 @@
 # Agent Note: Cross-session relay loop
 
-Status: proposed
+Status: implemented
 
 English | [中文](2026-09-24-cross-session-relay-loop.zh.md)
 
@@ -16,11 +16,11 @@ Handoffs done by pasting transcripts either bloat the next conversation with red
 
 Uninterrupted execution needs explicit levels: work advances automatically while the host process lives, survives process death as durable state, and never restarts without explicit human authority.
 
-## Proposal
+## Decision
 
-Add a third execution policy as the plugin family `packages/loop/`, started by a human `/loop` command and assembled from existing seams. The vocabulary extends the [harness-level execution hierarchy](../../implemented/feature/2026-07-16-harness-level-loop.md): Loop Run → Round → Node → Turn → Step. One round is one traversal of a frozen chain of role nodes; one node is one fresh child conversation.
+The `packages/loop/` plugin family is a third execution policy, started by a human `/loop` command and assembled from existing seams. The vocabulary extends the [harness-level execution hierarchy](../../implemented/feature/2026-07-16-harness-level-loop.md): Loop Run → Round → Node → Turn → Step. One round is one traversal of a frozen chain of role nodes; one node is one fresh child conversation.
 
-This proposal partially supersedes that note's clause "there is no `packages/loop/` family, `LoopDriver`, `LoopId`", which rejected a speculative universal loop service with no concrete consumer. The consumer is now concrete: human-command relay chains whose rounds connect fresh conversations through validated structured handoffs, executing and reading across explicitly granted project workspaces. The rejected abstraction stays rejected — no model-facing loop-creation tool, no generic `StopCondition`, no time-driven trigger (the [schedule family](../../../../packages/schedule/schedule/README.md) owns session-local reminders) — and the same-session goal and Ralph policies stand unchanged.
+This note supersedes that note's clause "there is no `packages/loop/` family, `LoopDriver`, `LoopId`", which rejected a speculative universal loop service with no concrete consumer. The consumer is now concrete: human-command relay chains whose rounds connect fresh conversations through validated structured handoffs, executing and reading across explicitly granted project workspaces. The rejected abstraction stays rejected — no model-facing loop-creation tool, no generic `StopCondition`, no time-driven trigger (the [schedule family](../../../../packages/schedule/schedule/README.md) owns session-local reminders) — and the same-session goal and Ralph policies stand unchanged.
 
 | Package | Role |
 |---|---|
@@ -31,7 +31,7 @@ This proposal partially supersedes that note's clause "there is no `packages/loo
 
 All four packages mount in the shipped `dsh` base composition. The command grammar follows [`command-goal`](../../../../packages/goal/command-goal/README.md): bare `/loop` or its whole-input `status` alias renders status; `/loop start <objective> [--chain <file>] [--read <path>]... [--write <path>]... [--max-rounds N] [--checkpoint none|node]` creates and arms a run, `start` being an optional prefix — any other non-empty input is itself the objective; `/loop pause`, `/loop resume [--from <node|role>]`, and `/loop clear` own the lifecycle. A control word is recognized case-insensitively only where it fits the whole input — `resume` also fits with the single `--from` flag — so `/loop pause now` starts that literal objective; quotes strip to their content before the match, so a quoted control word still acts as a verb. A start with no parsable objective is a parse-time rejection (the grammar's invalid-start member). `--read` and `--write` are repeatable single-path flags whose values may be double-quoted to carry spaces, semicolons, or a leading `--`; a quote opens a quoted run only at a token start and keeps its content verbatim with zero escapes, and a quoted token never becomes a flag; there is no list separator, so no escaping rules exist to get wrong. Every granted path is `realpath`-normalized at start and must exist and be enterable; anything else is a direct command error. `readScopes` is the union of the controlling session's own workspace, every chain node's workspace, and the `--read` grants; `writeScopes` is the controlling session's own workspace plus the `--write` grants — the implicit grant covers that one workspace, and every cross-project write is an explicit `--write`. A chain entry whose `cwd` is not a member of `writeScopes` fails at start (exact membership, not subtree containment), and the driver re-asserts the scope at spawn.
 
-Per-node workspaces require one subagent-seam extension: `SubagentStartRequest` gains an optional `cwd` (absolute, validated by the existing `assertUsableCwd` discipline), advertised as a provider capability. In-process providers set the child session's header cwd from it; providers without the capability reject a request that sets it, so behavior never silently degrades to the parent workspace. The extension lands as its own subagent-family note at implementation time, and the order is fixed: that note lands first, with capability validation and in-process provider support, and the loop packages build on it — they cannot start without it.
+Per-node workspaces ride one subagent-seam extension: `SubagentStartRequest` carries an optional `cwd` (absolute, validated by the existing `assertUsableCwd` discipline), advertised as a provider capability. In-process providers set the child session's header cwd from it; providers without the capability reject a request that sets it, so behavior never silently degrades to the parent workspace. The extension has its own subagent-family note ([2026-09-29-subagent-per-start-cwd](2026-09-29-subagent-per-start-cwd.md)) that landed first, with capability validation and in-process provider support, and the loop packages build on it — they cannot start without it.
 
 The chain comes from a workspace `loop.yaml`, strictly validated at start; a missing file yields the default chain defined in [Chain definition](#chain-definition). Rounds advance on node settlement, not wall-clock. Interruption levels are fixed in [Recovery](#recovery): L1 in-process automatic advancement, L2 cross-process manual `/loop resume`, and no L3 cross-process automatic resume.
 
@@ -151,13 +151,13 @@ Interruption levels are fixed: **L1** — in-process automatic advancement (supp
 
 ## Scope boundary
 
-Nodes execute in per-node workspaces inside `writeScopes`; cross-project participation is both read (`readScopes`) and execute/write (`writeScopes`). This proposal injects no messages into existing sessions: continuing an original conversation's content happens in new child sessions that read it and report what they inherited; returning to the original conversation would require a separate session-recovery or injection seam proposal. L3 automatic resume is excluded (see [Recovery](#recovery)). Parallel loops, DAG node shapes, token and cost budgets, and a model-facing loop-creation tool are absent from this proposal.
+Nodes execute in per-node workspaces inside `writeScopes`; cross-project participation is both read (`readScopes`) and execute/write (`writeScopes`). This note injects no messages into existing sessions: continuing an original conversation's content happens in new child sessions that read it and report what they inherited; returning to the original conversation would require a separate session-recovery or injection seam note. L3 automatic resume is excluded (see [Recovery](#recovery)). Parallel loops, DAG node shapes, token and cost budgets, and a model-facing loop-creation tool are absent from this note.
 
 ## Alternatives considered
 
 - **A fixed chain script on the workflow engine** (generalizing [`tool-ralph`](../../../../packages/workflow/tool-ralph/README.md)) — lost because engine runs are process-local with no durable resume; loop state in workspace files would bypass the session log as durable authority; pause, resume, and node checkpoints would need re-implementation over jobs.
 - **Prompt-level chaining over the goal domain** (`LOOP.md` plus model-driven delegation each round) — lost because structure would exist only in prompts and schema omission is not enforcement; same-session context still rots; the lean-lossless handoff requirement is unverifiable without executor-level validation.
-- **Keep the 2026-07-16 negative decision unchanged** — that note rejected a speculative universal loop service; this proposal supplies the concrete consumer and narrows the scope, so the negative clause is superseded while the goal and Ralph policies stand.
+- **Keep the 2026-07-16 negative decision unchanged** — that note rejected a speculative universal loop service; this note supplies the concrete consumer and narrows the scope, so the negative clause is superseded while the goal and Ralph policies stand.
 - **Persist activation and auto-restart work inside the host after process exit (L3)** — rejected because opening a session records status, not fresh authority to spend resources; explicit human resume arms continuation, and a daemon that needs automatic restart invokes the resume verb with authorization given at daemon-configuration time.
 - **Time-driven repetition** (a Claude Code `/loop 5m` equivalent) — out of scope by decision; the session-local schedule family owns reminders, and this run's rounds advance on settlement, not wall-clock.
 - **Defer per-node cwd to a second consumer** — rejected by requirement: cross-project relay is the consumer, so the seam gains a capability-checked per-start `cwd` rather than waiting.
@@ -165,8 +165,9 @@ Nodes execute in per-node workspaces inside `writeScopes`; cross-project partici
 - **Per-run dynamic registration of the query tools** — rejected: mutating the model-visible tool set per run churns request prefixes and registry disposal; static global registration with executor enforcement costs two schemas on unrelated sessions.
 - **Long-lived continuable children passing durable messages** — one-shot fresh children with structured outputs carry the relay with less standing state; [continuable children](../../archived/feature/2026-07-21-continuable-background-subagents.md) remain available for later node shapes.
 
-## Acceptance criteria
+## Testing
 
+The shipped tests prove the behavior:
 - A Loader-booted composition with the four packages mounted in the shipped base exposes `/loop` through command discovery and starts a run from a validated two-node `loop.yaml` with an evaluator override.
 - One round settles one `loop/node` event per node with validated reports, spawns each child through the configured provider with the frozen role prompt, per-node cwd, and named reports, settles the evaluator as the final node index, and ends with an evaluator verdict; `/loop` renders phase, round, node progress, activation, and the newest report digest.
 - Replay of the four event types is strict: corrupt records leave loop access failed at the first bad event while the session and other projections load; duplicate ledger keys, attempts, and settlements without a matching `node-started` reject.
@@ -178,9 +179,9 @@ Nodes execute in per-node workspaces inside `writeScopes`; cross-project partici
 - A fork of the controlling session drives no run.
 - An aggregate round-report overflow blocks `report-budget` with the round, node, offending report, and exceeded character count; a single over-cap report fails validation into the retry path.
 - A keyless snapshot records an assembled transcript of `/loop start`, node relay, handoff, and evaluator completion through a real runnable example.
-- The four packages hold per-file coverage, register `./invariant` companions where a plausible owned relationship exists (the two state-owning packages) and carry a gate-recognized documented omission otherwise (the two adapters), prove registry disposal under HMR, and the [harness-level execution note](../../implemented/feature/2026-07-16-harness-level-loop.md) has its stale "no `packages/loop/` family" fact rewritten in the same change.
+- The four packages hold per-file coverage, register `./invariant` companions where a plausible owned relationship exists (the two state-owning packages) and carry a gate-recognized documented omission otherwise (the two adapters), prove registry disposal under HMR, and the [harness-level execution note](../../implemented/feature/2026-07-16-harness-level-loop.md) carries the partial supersession in place.
 
-## Risks
+## Consequences
 
 - Node execution is at-least-once across crashes: a duplicate window remains between child completion and settlement, exactly as the schedule family documents its own.
 - The evaluator remains a model verdict with cited evidence, not mechanical certification; `complete` means the judge child reported completion.

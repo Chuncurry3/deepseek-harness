@@ -1,16 +1,16 @@
 # Bilingual-pair consistency record for 2026-09-24-cross-session-relay-loop.md (docs/i18n/README.md): per heading
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
-#   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-09-24-cross-session-relay-loop.md
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-24-cross-session-relay-loop.md
 /agent-note-cross-session-relay-loop:
-  en: 9c086e3939cc3c34
-  zh: 70f03c655b250cdc
+  en: aa6695799c136c25
+  zh: 065f5b673a20921d
 /agent-note-cross-session-relay-loop/problem:
   en: 51911d9f21f15f82
   zh: bdeb9410f964dcb7
-/agent-note-cross-session-relay-loop/proposal:
-  en: 69c30ccb213e48bb
-  zh: 228de41917806da3
+/agent-note-cross-session-relay-loop/decision:
+  en: 53aad02c9cb5bc1a
+  zh: bd5011859ec12db2
 /agent-note-cross-session-relay-loop/durable-record:
   en: 4168786a5f59aeea
   zh: ee1f492c8dfb7bbb
@@ -36,14 +36,14 @@
   en: 642ca1c9f339d48d
   zh: 29453781d7e22f0c
 /agent-note-cross-session-relay-loop/scope-boundary:
-  en: 80af34716903d600
-  zh: 5ac9d3cf0b13ed55
+  en: e909655091fa8315
+  zh: d055a15addb87ab5
 /agent-note-cross-session-relay-loop/alternatives-considered:
-  en: 2844d5ebde850269
-  zh: 27b47efb9e1618a0
-/agent-note-cross-session-relay-loop/acceptance-criteria:
-  en: f401a579fc9fb6b1
-  zh: ec82facce1a0983e
-/agent-note-cross-session-relay-loop/risks:
-  en: eb6b2e6b8b1fbde6
-  zh: 14f9156900464d7f
+  en: dd4246cdf12e9a31
+  zh: 665775a16538724e
+/agent-note-cross-session-relay-loop/testing:
+  en: 79c5649ac6315cff
+  zh: 3ae8e450eca292a0
+/agent-note-cross-session-relay-loop/consequences:
+  en: 9818ce694d0f46f6
+  zh: 3147716dc2df4a83
