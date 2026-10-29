@@ -1002,18 +1002,12 @@ Spec review: **CHANGES_REQUESTED on the record only — the mount, the two packa
 
 ### Task E1: keyless snapshot of a full relay
 
-**Files:**
-- Create: `snapshots/loop/loop-relay.snapshot.ts` (a new `loop` area beside `acp`/`sdk`/`session`/`web` — load-bearing: the snapshot vitest config includes only `snapshots/**/*.snapshot.ts`, so an `apps/cli/tests` path is never discovered; follow `snapshots/sdk/sdk.snapshot.ts`'s harness structure, fixtures dir, and recording workflow)
-- Create: its fixtures/expected-output directory under the same conventions
+**Delivered vehicle (differs from the original sketch — the scaffold lane, not a new snapshot area):**
+- Create: `apps/web/tests/loop-relay.snapshot.ts` (a `DSH_SNAPSHOT=record|refresh|replay` web scaffold scenario; record mounts the real adapter through the repo-root `.env`, replay runs keyless from committed fixtures) with fixtures in `snapshots/web/loop-relay/` (controller `session.v4.jsonl`, per-child `session.1/2.v4.jsonl`, `snapshot.yml`, golden `ui.expected.md`). The `snapshots/**/*.snapshot.ts` discovery the original sketch targeted does not extend to this scenario's browser drive; the web scaffold lane is the same one `schedule-after.e2e.ts` and the corpus register, so it keeps every recording gate.
 
-- [ ] **Step 1: Record** (`pnpm run test:snapshot:record snapshots/loop/loop-relay.snapshot.ts` with `DEEPSEEK_API_KEY` in the environment or the worktree-root `.env` — only `record` loads `.env`; replay never does): a two-node `loop.yaml` + evaluator, `--read` a sibling workspace, run to one evaluator `complete`. The transcript must show: `/loop start` echo, node relay prompts (lean push), settlement reports, evaluator verdict, completion render.
-- [ ] **Step 2: Replay keyless** — `pnpm run test:snapshot snapshots/loop` scoped to the new area (the full lane carries this host's 141 environmental symlink failures and would drown the signal); expected PASS with the recorded fixtures.
-- [ ] **Step 3: Commit**
-
-```bash
-git add snapshots/loop
-git commit -m "test(loop): keyless relay snapshot through a real composition"
-```
+- [x] **Step 1: Record** — a two-node `loop.yaml` + evaluator, `--read` a sibling workspace, run to one evaluator `complete` (record 19: 147.7s, zero attempt failures, two children). The transcript shows: the menu-completed bare `/goal` dock (a plain command row does not dock a blank session's transcript view), `/loop start` echo, node relay prompts (lean push), settlement reports, evaluator verdict, completion render. The evaluator prompt forbids tools: forced-tool structured verdicts hang on this gateway (DSML passthrough, finish=stop).
+- [x] **Step 2: Replay keyless** — `DSH_SNAPSHOT=record|refresh|replay` cycles green: record 19 (147.7s) → refresh 4 (46.7s, goldens) → keyless replay 8 (46.7s, 3/3 tests): command runs `goal`/`loop`/`loop` with no user message or turn, phase complete, settlements `[inventory-worker, evaluator]` with report shapes, exact fixture inventory, and the suite-level persisted-replay comparison.
+- [x] **Step 3: Commit** — `076d1d620d test(loop): keyless relay snapshot through a real composition` (the harness extensions: `llm-replay` `claimPrimary` for a call-free controller, scaffold `claimReplayPrimary` + lowercase cwd spellings, `normalizeLoopChangeClocks`).
 
 ### Task E2: spec sync — 2026-07-16 stale fact + note lifecycle
 
@@ -1023,11 +1017,11 @@ git commit -m "test(loop): keyless relay snapshot through a real composition"
 
 Ordering constraint: this task runs LAST — only after Task E3's acceptance sweep is green (or green under its registered exemptions). Plan completion is not implementation completion; the note moves only when the behavior it describes is shipped.
 
-- [ ] **Step 1:** Rewrite the 2026-07-16 note's stale clause — the family now exists with the concrete consumer; keep the note's rejected-abstraction reasoning and cross-link both directions (that note ↔ this note).
-- [ ] **Step 2:** Move the spec triplet to `implemented/`, set `Status: implemented`, and re-record the sidecar: `pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-24-cross-session-relay-loop.md`. Fix every inbound link to the moved note (`grep -rn "2026-09-24-cross-session-relay-loop" . --include=*.md`).
-- [ ] **Step 3: Supersession check** per [.agents/notes/AGENTS.md](../notes/AGENTS.md): audit the active tree for other notes claiming loop/relay territory; archive qualifying implemented triplets through the dsh-archive-agent-notes workflow; keep partial supersessions active and cross-linked.
-- [ ] **Step 4: Docs gates** — `pnpm run verify-agent-note-format && pnpm run verify-translation-pairing && pnpm run verify-md-links && pnpm run doc-sync`; expected all PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 1:** Rewrite the 2026-07-16 note's stale clause — the family now exists with the concrete consumer; keep the note's rejected-abstraction reasoning and cross-link both directions (that note ↔ this note).
+- [x] **Step 2:** Move the spec triplet to `implemented/`, set `Status: implemented`, and re-record the sidecar: `pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-24-cross-session-relay-loop.md`. Fix every inbound link to the moved note (`grep -rn "2026-09-24-cross-session-relay-loop" . --include=*.md`).
+- [x] **Step 3: Supersession check** per [.agents/notes/AGENTS.md](../notes/AGENTS.md): audit the active tree for other notes claiming loop/relay territory; archive qualifying implemented triplets through the dsh-archive-agent-notes workflow; keep partial supersessions active and cross-linked.
+- [x] **Step 4: Docs gates** — `pnpm run verify-agent-note-format && pnpm run verify-translation-pairing && pnpm run verify-md-links && pnpm run doc-sync`; expected all PASS.
+- [x] **Step 5: Commit**
 
 ```bash
 git add .agents/notes/implemented/feature/2026-07-16-harness-level-loop.md .agents/notes/implemented/feature/2026-07-16-harness-level-loop.zh.md .agents/notes/implemented/feature/2026-09-24-cross-session-relay-loop.md .agents/notes/implemented/feature/2026-09-24-cross-session-relay-loop.zh.md .agents/notes/proposed/feature
@@ -1048,9 +1042,9 @@ Expected: all PASS (per-file 100% coverage on every new `packages/loop/*/*/src` 
 
 - [ ] **Step 5: Land PR 2** from `feature/cross-session-relay-loop` (labels: `kind/feature`, `area/loop`, `area/subagent` when it carries the seam rebase). Follow [dsh-pre-push-checks](../skills/dsh-pre-push-checks/SKILL.md) for the outgoing diff selection — do not reflexively run the full suite locally.
 
-### Task E1 — blocked record (2026-10-16)
+### Task E1 — outcome (2026-11-20)
 
-The recording step requires a real `DEEPSEEK_API_KEY`; none exists on this machine (no worktree or main-checkout `.env`, no process variable, no user-profile `.env`), and an operator question timed out unanswered. Disposition: E1 stays open; the moment a key lands in the worktree root `.env`, the record is one command (`pnpm run test:snapshot:record`) plus its replay check. E2's note move waits on E1 per the ordering constraint — the note moves only when the behavior it describes is shipped, and the keyless relay transcript (acceptance criterion 11) is part of that.
+The key arrived on this machine (repo-root `.env`, gateway `10.3.80.25:31079`; only `deepseek_v4_flash` routable). The record is the web-scaffold lane described above, and the full cycle is green: record 19 → refresh 4 → keyless replay 8 (3/3), corpus policy 15/15, llm-replay 618/618, session-snapshot 355/355 + 1 skipped (the known Windows symlink-family EPERM). Three fixture-fidelity gaps surfaced only under replay and closed in the same commit: the controller makes no model call, so positional script binding handed the primary (empty) script to the first child — `claimPrimary`/`claimReplayPrimary` binds it to the live controller up front; `loop/change` clocks (createdAt/updatedAt) differed run to run — `normalizeLoopChangeClocks` zeroes them; and the loop's scope resolution reports lowercase Windows drive spellings the cwd tokenizer did not match — the spelling set gains the lowercase drive variants. The golden's "2 subagents" is the clean single-attempt drive (a gateway flake in an earlier record left 3 catalog entries and a phantom-empty-script replay produced the same count; both are gone in the committed fixtures).
 
 ### Task E2 — pre-work batch (2026-10-23)
 
@@ -1063,6 +1057,10 @@ Four rounds landed after the pre-work batch. The `fix(loop): align the lineage r
 A spec-compliance review of the whole unreviewed range returned **APPROVED (0 blockers, 2 MINOR, 4 NOTE)**: every note amendment verified true of the shipped code with per-clause pins, the version-discipline precedent confirmed to exist, the persistence-record refresh regen-correct, and the battery reproduced at every sanctioned number (family vitest, scoped 100% coverage, oxlint 0/0, doc-sync exactly the sanctioned trio, pairing, no-unknown-casts, package-invariants 40, hash-free across all range-added lines). Both MINORs were pin gaps, closed immediately: the `fix(loop): pin the exact-membership refusal with a nested-target test` commit refuses a target nested strictly inside a granted scope across all three lanes and was proven to bite by a temporary containment swap that failed it; the `test(loop): pin quoted control words as verbs` commit locks the quote-stripping-before-verb-matching rule. The family stands at 258/258 with pairing consistent.
 
 Three of the four review NOTEs closed in the follow-up `test(loop): pin blocked/complete serving and nested write-scope refusal` commit: the Recovery sentence now states the warn-only nature ("logged as a crashed attempt, never recovered or recorded", zh mirrored); blocked and complete lineage serving is pinned (phase asserted before each serving leg); and the write-side fence was probed, pinned, and reconciled — the shipped check is exact membership on both sides (`writeScopes.includes`), so the note's chain-fence sentence took the read side's membership wording and the nested-inside refusal is pinned at the service and command layers, bite-proven by a containment swap. Remaining from the review NOTEs at E2-final: the supersession-quote tense touch (folded into the note move), and the E3 closure record should name the exact scoped-coverage invocation whose exit code is 0 on this host — `vitest run --coverage --coverage.include='packages/loop/*/src/**/*.ts' packages/loop` (plain `vitest run --coverage packages/loop` exits 1 from unrelated per-file thresholds). Family battery after the batch: 260/260.
+
+### Task E2-final — outcome (2026-11-20)
+
+The triplet moved to `implemented/feature/` in `55ffe4666b` now that E1's keyless transcript ships the behavior. The proposal-era headings folded into implemented form: `## Proposal` → `## Decision` (tense converted to what is; the subagent-cwd note gained a same-directory cross-link), `## Acceptance criteria` → `## Testing` (the shipped tests prove the behavior), `## Risks` → `## Consequences`, and the supersession wording drops the proposal tense (EN + zh). The 2026-07-16 note's inbound links to the moved triplet point at the same directory (the moved note's own links were already depth-stable), both sidecars re-recorded, and the gates read: note-format 580/580, translation-pairing 1168 pairs, md-links 2326 files, doc-sync 41 passed / 2 failed — the documentation-site checks failure is the standing (c)/(i) Windows symlink EPERM family, and the config-catalog failure was this branch's own llm-replay `Config` source line moving 1129→1163; the regenerated catalogs are folded into the E1 commit (`076d1d620d`).
 
 ### Task E3 — outcome (local portion, 2026-10-16)
 
