@@ -1,0 +1,18 @@
+- banner:
+  - navigation "Session hierarchy": workspace
+  - button "2 subagents"
+  - text: Standard mode
+  - button "More actions"
+  - button "Open right sidebar"
+  - tablist:
+    - tab "Chat" [selected]
+    - tab "Trajectory"
+- group "Command input": /goal
+- 'button "goal No goal is currently set. Usage: /goal [<objective>|clear|edit <objective>|pause|resume]"'
+- 'button "loop Loop started Status: active Objective: Relay the inventory note into the count report Rounds: 0/1 Nodes: 0/2 (round 1) Activation: armed Commands: /loop pause, /loop clear"'
+- 'button "loop Loop Status: complete Objective: Relay the inventory note into the count report Rounds: 0/1 Nodes: 0/2 (round 0) Activation: disarmed Report: evaluator (round 1, node 1): {\"decision\":\"complete\",\"reason\":\"The carried worker report from inventory-worker (session a592c334-e6d6-4e7f-a4f2-142... Commands: /loop <objective>, /loop clear"'
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands"
+- 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Select model, current deepseek-official/deepseek_v4_flash": deepseek-official/deepseek_v4_flash
+- button "Send message" [disabled]

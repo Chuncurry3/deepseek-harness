@@ -571,6 +571,7 @@ export function scrubSessionSnapshot(rawLog: string): string {
       record.sourceEventSeqs = decodeSeqRanges(record.sourceEventSeqs)
     }
     normalizeFeedbackClocks(record)
+    normalizeLoopChangeClocks(record)
     return JSON.stringify(record)
   }).join('\n')
 }
@@ -583,6 +584,14 @@ function normalizeFeedbackClocks(record: Record<string, unknown>): void {
   const clocks = item as Record<string, unknown>
   if ('createdAt' in clocks) clocks.createdAt = 0
   if ('updatedAt' in clocks) clocks.updatedAt = 0
+}
+
+/** Zero the service-owned loop record clocks so record and replay agree. */
+function normalizeLoopChangeClocks(record: Record<string, unknown>): void {
+  if (record.type !== 'loop/change' || record.data === null || typeof record.data !== 'object') return
+  const data = record.data as Record<string, unknown>
+  if ('createdAt' in data) data.createdAt = 0
+  if ('updatedAt' in data) data.updatedAt = 0
 }
 
 /** Which independent model-request payloads a scrubber replaces. */

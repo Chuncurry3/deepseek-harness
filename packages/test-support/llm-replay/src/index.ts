@@ -172,6 +172,18 @@ export interface ReplayHandle {
   /** Remove the registered adapter or waterfall listener (HMR safety). Freestanding closure — safe to destructure. */
   dispose(this: void): void
   /**
+   * Bind the primary script to a live session before its first model call.
+   * Positional binding hands scripts to whichever live session calls first, so
+   * a scenario whose top-level session makes no model call must claim the
+   * primary (possibly empty) script for it up front — otherwise the first
+   * subagent claims the primary and every later child shifts one script.
+   * Freestanding closure — safe to destructure.
+   * @param sessionId - the live top-level session id the primary belongs to.
+   * @throws when a later script already bound (the claim must precede all calls)
+   * or no primary script exists.
+   */
+  claimPrimary(this: void, sessionId: string): void
+  /**
    * Throw unless every recorded script was bound to a live session and every
    * bound cursor consumed its full entry list. Call at scenario teardown.
    * Freestanding closure — safe to destructure.
@@ -1104,6 +1116,28 @@ export function installLlmReplay(ctx: Context, config: ReplayConfig): ReplayHand
     : ctx.on('llm/stream', (options: GenerateOptions, _next) => replay(options))
   return {
     dispose,
+    /**
+     * Bind the primary script to a live session before its first model call.
+     * Positional binding hands scripts to whichever live session calls first,
+     * so a scenario whose top-level session makes no model call must claim the
+     * primary (possibly empty) script for it up front — otherwise the first
+     * subagent claims the primary and every later child shifts one script.
+     * @param sessionId - the live top-level session id the primary belongs to.
+     * @throws when a later script already bound (the claim must precede all calls)
+     * or no primary script exists.
+     */
+    claimPrimary(sessionId: string): void {
+      const primary = scripts[0]
+      if (primary === undefined || !primary.primary) {
+        throw new Error('llm-replay: claimPrimary requires a primary script')
+      }
+      if (nextScript > 0) {
+        throw new Error('llm-replay: claimPrimary must run before the first model call binds a later script')
+      }
+      bound.set(sessionId, { entries: primary.entries, cursor: 0 })
+      liveSessionIds[0] = sessionId
+      nextScript = 1
+    },
     assertConsumed(): void {
       const problems: string[] = []
       if (nextScript < scripts.length) {

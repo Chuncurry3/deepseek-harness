@@ -300,6 +300,15 @@ export interface WebScaffold {
    * is validated call-free at boot).
    */
   close(): Promise<void>
+  /**
+   * Bind the replay's primary script to the named live session before its
+   * first model call. Required for scenarios whose top-level session makes no
+   * model call while children do: positional binding would otherwise hand the
+   * primary script to the first calling child and shift every later child.
+   * Throws in record mode (no replay row is mounted).
+   * @param sessionId - the live top-level session id the primary belongs to.
+   */
+  claimReplayPrimary(sessionId: string): void
 }
 
 /** Options for {@link launchWebScaffold}. */
@@ -947,6 +956,12 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
         })
       })
     },
+    claimReplayPrimary(sessionId: string): void {
+      if (replayHandle === undefined) {
+        throw new Error('claimReplayPrimary requires a mounted replay row: record mode has none')
+      }
+      replayHandle.claimPrimary(sessionId)
+    },
     async close(): Promise<void> {
       const failures: unknown[] = []
       if (mode !== 'record'
@@ -1119,7 +1134,10 @@ export function normalizeWebSessionVolatiles(log: string, workspaceCwd?: string)
     .flatMap((value) => {
       const forward = value.replaceAll('\\', '/')
       const native = /^[A-Za-z]:[\\/]/.test(value) ? forward.replaceAll('/', '\\') : value
-      return [value, value.replaceAll('\\', '\\\\'), forward, native]
+      // Windows paths are case-insensitive: the loop's scope resolution
+      // reports lowercase spellings that must still tokenize to {{cwd}}.
+      const lower = /^[A-Za-z]:[\\/]/.test(value) ? [forward.toLowerCase(), native.toLowerCase()] : []
+      return [value, value.replaceAll('\\', '\\\\'), forward, native, ...lower]
     }))].sort((left, right) => right.length - left.length)
   return log.split(/\r?\n/).map((line) => {
     if (line.trim() === '') return line
@@ -1239,14 +1257,27 @@ async function assertReplaySession(
 export async function recordFixture(scaffold: WebScaffold, sessionId: SessionId, fixturePath: string): Promise<void> {
   const agent = scaffold.ctx.agents.get(sessionId)
   if (agent === undefined) throw new Error(`record harvest: no live agent for ${sessionId}`)
+  await recordSessionFixture(scaffold, agent.session, fixturePath)
+}
+
+/**
+ * Record-mode fixture write-back from one Session object rather than a live
+ * agent handle: relay-chain children are disposed by the driver once they
+ * settle, while their Session objects stay readable through a
+ * session/created capture.
+ * @param scaffold - the record-mode scaffold.
+ * @param session - the harvested session (the controlling root or a settled child).
+ * @param fixturePath - the committed session.jsonl target.
+ */
+export async function recordSessionFixture(scaffold: WebScaffold, session: Session, fixturePath: string): Promise<void> {
   const manifestPath = join(dirname(fixturePath), 'snapshot.yml')
   const manifest = parseSnapshotManifest(await readFile(manifestPath, 'utf8'), manifestPath)
   if (!writesCurrentSessionFixtures(manifest, 'record')) return
-  const target = recordedSessionFixturePath(fixturePath, agent.session.header.version)
+  const target = recordedSessionFixturePath(fixturePath, session.header.version)
   const existingPath = existsSync(target) ? target : fixturePath
   const existing = existsSync(existingPath) ? await readFile(existingPath, 'utf8') : ''
   await writeFile(target, stableSessionFixture(
-    agent.session,
+    session,
     existing,
     scaffold.workspaceCwd,
     scaffold.harnessHome,
